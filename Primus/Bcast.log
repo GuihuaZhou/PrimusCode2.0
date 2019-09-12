@@ -1,0 +1,24 @@
+[2019-9-11 19:36:48]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:39:9]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:39:31]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:42:45]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:42:52]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:42:53]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:42:54]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:42:55]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:42:56]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:44:53]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:44:55]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:44:57]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:44:58]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:49:17]UDPServerBcast::HandleRead (): Bind Socket Failed.
+[2019-9-11 19:58:8]UDPClientBcast::SayHelloToAdjacency (): Recvfrom Timeout.
+[2019-9-11 20:2:19]UDPClientBcast::SayHelloToAdjacency (): Recvfrom Timeout.
+[2019-9-11 20:14:15]UDPClientBcast::SayHelloToAdjacency (): Recvfrom Timeout.
+[2019-9-11 20:14:16]UDPClientBcast::SayHelloToAdjacency (): Recvfrom Timeout.
+[2019-9-11 20:14:17]UDPClientBcast::SayHelloToAdjacency (): Recvfrom Timeout.
+[2019-9-11 20:22:13]UDPClientBcast::SayHelloToAdjacency (): Recvfrom Timeout.
+[2019-9-11 20:22:14]UDPClientBcast::SayHelloToAdjacency (): Recvfrom Timeout.
+[2019-9-11 20:22:15]UDPClientBcast::SayHelloToAdjacency (): Recvfrom Timeout.
+[2019-9-11 20:22:56]UDPClientBcast::SayHelloToAdjacency (): Recvfrom Timeout.
+[2019-9-11 20:40:35]UDPClientBcast::SayHelloToAdjacency (): Recvfrom Timeout.
