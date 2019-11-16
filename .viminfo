@@ -23,21 +23,20 @@
 # Registers:
 
 # File marks:
-'0  1  0  ~/WCMPHost.txt
-'1  109  0  ~/InfocomBGPTest.sh
-'2  109  58  /etc/screenrc
-'3  1  0  ~/tcp-throughput/pre.sh
-'4  1  0  ~/tcp-throughput/pre,sh
-'5  2  7  ~/test.sh
-'6  2  20  ~/test.sh
-'7  2  16  ~/test.sh
-'8  2  37  ~/test.sh
-'9  1  0  /etc/apt/sources.list
+'0  4  0  /var/log/Primus.log
+'1  109  58  /etc/screenrc
+'2  1  0  ~/tcp-throughput/pre.sh
+'3  1  0  ~/tcp-throughput/pre,sh
+'4  2  7  ~/test.sh
+'5  2  20  ~/test.sh
+'6  2  16  ~/test.sh
+'7  2  37  ~/test.sh
+'8  1  0  /etc/apt/sources.list
+'9  1  0  /etc/network/interfaces
 
 # Jumplist (newest first):
--'  1  0  ~/WCMPHost.txt
--'  109  0  ~/InfocomBGPTest.sh
--'  1  0  ~/InfocomBGPTest.sh
+-'  4  0  /var/log/Primus.log
+-'  1  0  /var/log/Primus.log
 -'  109  58  /etc/screenrc
 -'  1  0  /etc/screenrc
 -'  1  0  ~/tcp-throughput/pre.sh
@@ -133,14 +132,13 @@
 -'  1  0  /etc/apt/sources.list
 -'  1  0  /etc/network/interfaces
 -'  1  0  /etc/network/interfaces
+-'  1  0  /etc/network/interfaces
+-'  1  0  /etc/network/interfaces
 
 # History of marks within files (newest to oldest):
 
-> ~/WCMPHost.txt
-	"	1	0
-
-> ~/InfocomBGPTest.sh
-	"	109	0
+> /var/log/Primus.log
+	"	4	0
 
 > /etc/screenrc
 	"	109	58

@@ -1,6 +1,6 @@
 #!/bin/bash
 # 准备实验环境，确保不会启动重复的进程
-pssh -i -h /home/guolab/host.txt "killall zebra; killall bgpd;"
+pssh -i -h /home/guolab/host/host.txt "killall zebra; killall bgpd;"
 pssh -i -h /home/guolab/PCHost.txt "killall client;"
 pssh -i -H "root@10.0.8.86" "killall master;"
 # 确保所有网卡都是正常的
@@ -70,9 +70,9 @@ do
     # 启动BGP
     echo "**********************************************************************" >> /home/guolab/output/bgpTest.log
     echo "                            第"$i"次实验                               " >> /home/guolab/output/bgpTest.log
-    pssh -i -h /home/guolab/host.txt "rm /home/guolab/output/*;"
-    pssh -i -h /home/guolab/host.txt "zebra -d;bgpd -d;ps -e|grep zebra; ps -e|grep bgpd;"
-    pssh -i -h /home/guolab/host.txt "chmod 777 -R /home/guolab/output/;"
+    pssh -i -h /home/guolab/host/host.txt "rm /home/guolab/output/*;"
+    pssh -i -h /home/guolab/host/host.txt "zebra -d;bgpd -d;ps -e|grep zebra; ps -e|grep bgpd;"
+    pssh -i -h /home/guolab/host/host.txt "chmod 777 -R /home/guolab/output/;"
 
     # 启动PC
     sleep 27

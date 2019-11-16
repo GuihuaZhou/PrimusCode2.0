@@ -77,11 +77,15 @@ int main(int argc, char const *argv[])
 
   	if (*argv[2]=='1')//let net work up
   	{
+      printf("ifr.ifr_flags=%hd\n",ifr.ifr_flags);
   		ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
+      printf("ifr.ifr_flags=%hd\n",ifr.ifr_flags);
   	}
   	else if (*argv[2]=='0')//let net work down
   	{
+      printf("ifr.ifr_flags=%hd\n",ifr.ifr_flags);
   		ifr.ifr_flags &= ~IFF_UP;
+      printf("ifr.ifr_flags=%hd\n",ifr.ifr_flags);
   	}
   	//change status
   	gettimeofday(&begin,NULL);

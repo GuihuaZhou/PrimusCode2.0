@@ -110,7 +110,7 @@ void
 Ipv4GlobalRouting::InitializeMasterLinkTable()
 {
   //std::cout << "Ipv4GlobalRouting    Master InitializeMasterLinkTable and time:" << Simulator::Now().GetSeconds() << std::endl;
-  ofstream Logfout("/home/guolab/output/center.log",ios::app);
+  ofstream Logfout("/var/log/center.log",ios::app);
   // Logfout << GetNow() << "InitializeMasterLinkTable m_ToRNodes is " << m_ToRNodes << " and m_SpineNodes is " << m_SpineNodes << " and m_nPods is " << m_nPods << std::endl;
   struct linktableentry linkTableEntry;
   for (int i=0;i<m_SpineNodes;i++)//先生成Spine Node直连的链路
@@ -311,7 +311,7 @@ void
 Ipv4GlobalRouting::InitializePathEntryTable()
 {
   /*头节点*/ 
-  ofstream Logfout("/home/guolab/output/center.log",ios::app);
+  ofstream Logfout("/var/log/center.log",ios::app);
   // Logfout << GetNow() << "Initialize Path Table" << " m_ToRNodes is " << m_ToRNodes << " and m_SpineNodes is " << m_SpineNodes << " and m_nPods is " << m_nPods << std::endl;
   ident someIdent;
   someIdent.level=0;
@@ -513,7 +513,7 @@ Ipv4GlobalRouting::InitializePathEntryTable()
   select=headNode->next;//标记具有相同目的地址的第一条路径的位置
   // test
   // stringstream filename;
-  // filename << "/home/guolab/output/MappingTableIndex-output.txt";
+  // filename << "/var/log/MappingTableIndex-output.txt";
   // ofstream fout(filename.str().c_str(),ios::app);
   // end
   if (m_Node.level==1)
@@ -528,7 +528,7 @@ Ipv4GlobalRouting::InitializePathEntryTable()
       routeWeightTemp->weight[1]=0;
       routeWeightTemp->weight[2]=0;
       routeWeightTemp->weight[3]=0;    
-      cmd << "ip route add 192.168." << path->nextHop[4].position+1 << ".0/24 scope global ";
+      cmd << "ip route add 192.168." << path->nextHop[4].position+1 << ".0/24 ";
       for (int i=0;i<m_LeafNodes;i++)//先遍历路由
       {
         // infocom test
@@ -590,7 +590,7 @@ Ipv4GlobalRouting::InitializePathEntryTable()
       routeWeightTemp->weight[3]=0; 
       if (path->nextHop[2].level!=0)//该路径目的地址不在本Pod内
       {
-        cmd << "ip route add 192.168." << path->nextHop[4].position+1 << ".0/24 scope global ";
+        cmd << "ip route add 192.168." << path->nextHop[4].position+1 << ".0/24 ";
         for (int i=0;i<(m_SpineNodes/m_LeafNodes);i++)
         {
           // infocom test
@@ -677,7 +677,7 @@ Ipv4GlobalRouting::InitializePathEntryTable()
   }
   // test
   // stringstream filename;
-  // filename << "/home/guolab/output/MappingTableIndex-output.txt";
+  // filename << "/var/log/MappingTableIndex-output.txt";
   // ofstream fout(filename.str().c_str(),ios::app);
   // fout.setf(ios::fixed, ios::floatfield);
   // fout.precision(9);
@@ -688,14 +688,15 @@ Ipv4GlobalRouting::InitializePathEntryTable()
   //   fout << mappingEntryIndex[i].index << std::endl;
   // }
   // end
-  // PrintMappingTable();
+  PrintMappingTable();
+  PrintPathEntryTable();
   Logfout.close();
 }
 
 int 
 Ipv4GlobalRouting::ModifyCounterAndWeight(struct pathtableentry * iter,int increment)
 {
-  ofstream Logfout("/home/guolab/output/center.log",ios::app);
+  ofstream Logfout("/var/log/center.log",ios::app);
   int oldCounter=iter->counter;
   iter->counter+=increment;
   // Logfout << "两个计数器为： " << oldCounter << " 和 " << iter->counter << std::endl;
@@ -729,7 +730,7 @@ Ipv4GlobalRouting::ModifyCounterAndWeight(struct pathtableentry * iter,int incre
 void
 Ipv4GlobalRouting::ModifyPathEntryTable(ident high,ident low,bool interfaceFlag)//
 {
-  ofstream Logfout("/home/guolab/output/center.log",ios::app);
+  ofstream Logfout("/var/log/center.log",ios::app);
   Logfout << GetNow() << "ModifyPathEntryTableFirst and interfaceFlag is " << interfaceFlag << std::endl;
   
   int increment;//路径的计数器：+1 or -1
@@ -1089,7 +1090,7 @@ Ipv4GlobalRouting::ModifyLinkTableBySpineNode(int i,int j)//spinenode i 到pod j
 void* 
 Ipv4GlobalRouting::MasterLinkThread(void* threadParam)
 {
-  ofstream Logfout("/home/guolab/output/center.log",ios::app);
+  ofstream Logfout("/var/log/center.log",ios::app);
   Logfout.setf(ios::fixed, ios::floatfield);
   Logfout.precision(9);//设置保留的小数点位数
   threadparam *param=(threadparam *)threadParam;
@@ -1125,7 +1126,7 @@ Ipv4GlobalRouting::MasterLinkThread(void* threadParam)
 void
 Ipv4GlobalRouting::ModifyMasterLinkTable(ident high,ident low,bool * isNeedToNotice,bool interfaceFlag)
 {//此处可优化，
-  ofstream Logfout("/home/guolab/output/center.log",ios::app);
+  ofstream Logfout("/var/log/center.log",ios::app);
   Logfout.setf(ios::fixed, ios::floatfield);
   Logfout.precision(6);//设置保留的小数点位数
   int i=0;
@@ -1317,7 +1318,7 @@ Ipv4GlobalRouting::GetGateway(struct pathtableentry * iter)
 //   metric=0;
 //   //end
   
-//   ofstream Logfout("/home/guolab/output/center.log",ios::app);
+//   ofstream Logfout("/var/log/center.log",ios::app);
   
 //   // create the control socket.
 //   int fd=socket(AF_INET,SOCK_DGRAM,0);
@@ -1371,7 +1372,7 @@ Ipv4GlobalRouting::GetGateway(struct pathtableentry * iter)
 void
 Ipv4GlobalRouting::ModifyRoute(struct pathtableentry * iter,int increment)//修改路由(临时)
 {
-  ofstream Logfout("/home/guolab/output/center.log",ios::app);
+  ofstream Logfout("/var/log/center.log",ios::app);
   // Logfout << "ModifyRoute" << std::endl;
   // 根据目的地址来删除
   stringstream cmd;
@@ -1384,7 +1385,7 @@ Ipv4GlobalRouting::ModifyRoute(struct pathtableentry * iter,int increment)//修�
     }
     else 
     {
-      cmd << "route del -net 192.168." << iter->nextHop[4].position+1 << ".0/24 gw " << GetGateway(iter);
+      cmd << "route del -net 192.168." << iter->nextHop[4].position+1 << ".0/24 gw " << GetGateway(iter) << " metric 20";
     }
     system(cmd.str().c_str());
   }
@@ -1420,7 +1421,7 @@ Ipv4GlobalRouting::ModifyRoute(struct pathtableentry * iter,int increment)//修�
     else if (readyRouteNum==0);//全挂了，不处理
     else
     {
-      cmd << "ip route add 192.168." << iter->nextHop[4].position+1 << ".0/24 scope global ";
+      cmd << "ip route add 192.168." << iter->nextHop[4].position+1 << ".0/24 ";
       for (int i=0;i<temp;i++)
       {
         if (iter->recordWeight->weight[i]!=0)
@@ -1599,7 +1600,7 @@ void
 Ipv4GlobalRouting::PrintMasterLinkTable()
 {
   stringstream filename;
-  filename << "/home/guolab/output/MasterLinkTable-output.txt";
+  filename << "/var/log/MasterLinkTable-output.txt";
   ofstream fout(filename.str().c_str(),ios::trunc);
   fout.setf(ios::fixed, ios::floatfield);
   fout.precision(9);//设置保留的小数点位数
@@ -1630,6 +1631,7 @@ void
 Ipv4GlobalRouting::PrintMappingTable()
 {
   stringstream filename;
+  // filename << "/var/log/MappingTable-output.txt";
   filename << "/home/guolab/output/MappingTable-output.txt";
   ofstream fout(filename.str().c_str(),ios::app);
   fout.setf(ios::fixed, ios::floatfield);
@@ -1655,6 +1657,7 @@ void
 Ipv4GlobalRouting::PrintPathEntryTable()
 {
   stringstream filename;
+  // filename << "/var/log/PathEntryTable-output.txt";
   filename << "/home/guolab/output/PathEntryTable-output.txt";
   ofstream fout(filename.str().c_str(),ios::app);
   fout.setf(ios::fixed, ios::floatfield);
@@ -1722,7 +1725,7 @@ Ipv4GlobalRouting::RecordTime()
 {
   stringstream filename;
   //filename << "/home/guolab/ns-allinone-3.28/ns-3.28/output/TimeRecord-" << m_Node.level << "." << m_Node.position << ".txt";
-  filename << "output/CentrializedUpdateKernelTimeRecord.txt";//testbed
+  filename << "/var/log/CentrializedUpdateKernelTimeRecord.txt";//testbed
   ofstream fout(filename.str().c_str(),ios::app);
   fout.setf(ios::fixed, ios::floatfield);
   fout.precision(9);//设置保留的小数点位数
@@ -1745,7 +1748,7 @@ Ipv4GlobalRouting::PrintPathEntry(struct pathtableentry * iter)
   std::cout << (*iter).nextHop[3].level << "." << (*iter).nextHop[3].position << "   ";
   std::cout << (*iter).nextHop[4].level << "." << (*iter).nextHop[4].position << "   ";
   std::cout << (*iter).destInterfaceIndex << "   " << (*iter).counter << "   " << (*iter).isAddRouteToKernel << "   " << counter++ << std::endl;*/
-  ofstream Logfout("/home/guolab/output/center.log",ios::app);
+  ofstream Logfout("/var/log/center.log",ios::app);
   Logfout << GetNow();
   Logfout << (*iter).nextHop[0].level << "." << (*iter).nextHop[0].position << "   ";
   Logfout << (*iter).nextHop[1].level << "." << (*iter).nextHop[1].position << "   ";
@@ -1790,9 +1793,9 @@ Ipv4GlobalRouting::GetSystemTime()
 double
 Ipv4GlobalRouting::Test(bool isMaster)////Master查找和修改链路表的时间测试
 {
-  ofstream timeFout("/home/guolab/output/Test.txt",ios::app);
-  ofstream exampleFout("/home/guolab/output/Example.txt",ios::app);
-  ofstream nodeFout("/home/guolab/output/NodeTime.txt",ios::app);
+  ofstream timeFout("/var/log/Test.txt",ios::app);
+  ofstream exampleFout("/var/log/Example.txt",ios::app);
+  ofstream nodeFout("/var/log/NodeTime.txt",ios::app);
   timeFout.setf(ios::fixed, ios::floatfield);
   timeFout.precision(9);//设置保留的小数点位数
   exampleFout.setf(ios::fixed, ios::floatfield);

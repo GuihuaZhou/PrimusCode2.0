@@ -68,7 +68,7 @@ Node::Node(int level,int position,int ToRNodes,int LeafNodes,int SpineNodes,int 
 void
 Node::SetRole(string masterAddress,int masterPort)
 {
-  //ofstream Logfout("/home/guolab/output/center.log",ios::app);
+  ofstream Logfout("/home/guolab/output/center.log",ios::app);
   if(m_isMaster)
   {
     //std::cout << "I am master!" << std::endl;
@@ -85,6 +85,22 @@ Node::SetRole(string masterAddress,int masterPort)
     m_tcpClient.StartApplication();
     m_tcpClient.SayHelloToMaster(myident.level,myident.position);
     m_tcpClient.KeepAliveTimer(myident.level,myident.position);
+    // test
+    // if(myident.level == 3)
+    // {
+    //   int i;
+    //   char sndBuf[1024];
+    //   memset(sndBuf, 0, 1024);
+    //   strcat(sndBuf,this->m_routeProtocal);
+
+    //   SendRouteToMaster();
+
+    //   if((i = send(m_tcpClient.GetClientSoket(),sndBuf,1024,0))<=0)
+    //   {
+    //     Logfout << GetNow() << "send routeProtocal faild:" << i << std::endl;
+    //   }
+    // }
+    // end
     ListenInterfacesAndSubmit();
   }
   pthread_exit(NULL);
@@ -563,3 +579,300 @@ Node::CheckKeepAliveFlag()
   Logfout.close();
 }
 //end
+
+//add by pannian
+//客户端获取到netlink消息
+// int
+// Node::rtnl_receive(int fd, struct msghdr *msg, int flags)
+// {
+//   ofstream Logfout("/home/guolab/output/center.log",ios::app);
+//   int len;
+
+//   do { 
+//     len = recvmsg(fd, msg, flags);
+//   } while (len < 0 && (errno == EINTR || errno == EAGAIN));
+
+//   if (len < 0) {
+//     Logfout << GetNow() << "Netlink receive failed" << std::endl;
+//      return -errno;
+//   }
+
+//   if (len == 0) { 
+//     Logfout << GetNow() << "EOF on netlink" << std::endl;
+//     //perror("EOF on netlink");
+//     return -ENODATA;
+//   }
+
+//   return len;
+// }
+
+// static int 
+// Node::rtnl_recvmsg(int fd, struct msghdr *msg, char **answer)
+// {
+//   ofstream Logfout("/home/guolab/output/center.log",ios::app);
+//   struct iovec *iov = msg->msg_iov;
+//   char *buf;
+//   int len;
+
+//   iov->iov_base = NULL;
+//   iov->iov_len = 0;
+
+//   len = rtnl_receive(fd, msg, MSG_PEEK | MSG_TRUNC);
+
+//   if (len < 0) {
+//         return len;
+//   }
+
+//   buf = (char *)malloc(len);
+
+//   if (!buf) {
+//     Logfout << GetNow() << "malloc failed" << std::endl;
+//     //perror("malloc failed");
+//     return -ENOMEM;
+//   }
+
+//   iov->iov_base = buf;
+//   iov->iov_len = len;
+
+//   len = rtnl_receive(fd, msg, 0);
+
+//   if (len < 0) {
+//     free(buf);
+//     return len;
+//   }
+
+//   *answer = buf;
+
+//   return len;
+// }
+
+// void 
+// Node:: parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
+// {
+//   memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
+
+//   while (RTA_OK(rta, len)) {
+//     if (rta->rta_type <= max) {
+//       tb[rta->rta_type] = rta;
+//     }
+
+//     rta = RTA_NEXT(rta,len);
+//   }
+// }
+
+// static inline int 
+// Node::rtm_get_table(struct rtmsg *r, struct rtattr **tb)
+// {
+//   __u32 table = r->rtm_table;
+
+//   if (tb[RTA_TABLE]) {
+//     table = *(__u32 *)RTA_DATA(tb[RTA_TABLE]);
+//   }
+
+//   return table;
+// }
+
+// void
+// Node:: print_route(struct nlmsghdr* nl_header_answer)
+// {
+//   // printf("print_route---------------\n\n");
+//   ofstream Logfout("/home/guolab/output/center.log",ios::app);
+//   struct rtmsg* r = (struct rtmsg *)NLMSG_DATA(nl_header_answer);
+//   struct rtm Rtm ;
+//   int len = nl_header_answer->nlmsg_len;
+//   struct rtattr* tb[RTA_MAX+1];
+//   int table;
+//   char rootFlag = '3';
+//   char buf[256];
+//   char routeData[20];
+//   char routeOif[20];
+
+//   len -= NLMSG_LENGTH(sizeof(*r));
+
+//   if (len < 0) {
+//     Logfout << GetNow() << "Wrong message length" << std::endl;
+//     //printf("Wrong message length");
+//     return;
+//   }
+  
+//   parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
+
+//   table = rtm_get_table(r, tb);
+
+//   if (r->rtm_family != AF_INET && table != RT_TABLE_MAIN) {
+//      Logfout << GetNow() << "error2\n" << std::endl;
+//     //printf("error2\n");
+//     return;
+//   }
+
+//   if (tb[RTA_DST]) {
+//     /*if ((r->rtm_dst_len != 24) && (r->rtm_dst_len != 16)) {
+//       printf("error3\n");
+//       return;
+//     }*/
+//     //printf("--长度：%d----",r->rtm_dst_len);
+//      Logfout << GetNow() <<inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_DST]), buf, sizeof(buf))<<"/"<<r->rtm_dst_len<< std::endl;
+//      strcpy(routeData,inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_DST]), buf, sizeof(buf)));
+//    // printf("%s/%u ", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_DST]), buf, sizeof(buf)), r->rtm_dst_len);
+ 
+//   } else if (r->rtm_dst_len) {
+//      Logfout << GetNow() << r->rtm_dst_len << std::endl;
+//    // printf("/%u ", r->rtm_dst_len);
+//   } else {
+//    Logfout << GetNow() << "default " << std::endl;
+//     //printf("default ");
+//   }
+
+//   if (tb[RTA_GATEWAY]) {//网关
+//      Logfout << GetNow() << "via "<< inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_GATEWAY]), buf, sizeof(buf))<< std::endl;
+//    // printf("via %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_GATEWAY]), buf, sizeof(buf)));
+//   }
+
+//   if (tb[RTA_OIF]) {
+//      char if_nam_buf[IF_NAMESIZE];
+//      int ifidx = *(__u32 *)RTA_DATA(tb[RTA_OIF]);
+//      Logfout << GetNow() << "dev "<< if_indextoname(ifidx, if_nam_buf)<< std::endl;
+//     //printf(" dev %s", if_indextoname(ifidx, if_nam_buf));
+//      strcpy(routeOif,if_indextoname(ifidx, if_nam_buf));
+//   }
+
+//   if (tb[RTA_SRC]) {
+//      Logfout << GetNow() << "src  "<<inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_SRC]), buf, sizeof(buf))<< std::endl;
+//    // printf("src %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_SRC]), buf, sizeof(buf)));
+//   }
+//     Logfout << GetNow() << "协议：  "<< r->rtm_protocol << std::endl;
+//     this->m_routeProtocal = r->rtm_protocol;
+//     if(r->rtm_protocol != rootFlag)
+//     {
+//       Rtm.m_routeProtocal = r->rtm_protocol;
+//       strcpy(Rtm.m_routeData,routeData);
+//       strcpy(Rtm.m_routeOif,routeOif);
+//     }
+//     rtm.push_back(RTM);
+//  // printf("-------------%d",r->rtm_protocol);
+
+//   //printf("\n");
+// }
+
+// int 
+// Node::open_netlink()
+// {
+//   ofstream Logfout("/home/guolab/output/center.log",ios::app);
+//   struct sockaddr_nl saddr;
+
+//   int sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+
+//   if (sock < 0) {
+//      Logfout << GetNow() << "Failed to open netlink socket  "<< std::endl;
+//    // perror("Failed to open netlink socket");
+//     return -1;
+//   }
+ 
+//   memset(&saddr, 0, sizeof(saddr));
+
+//   saddr.nl_family = AF_NETLINK;
+//   saddr.nl_pid = getpid();
+//   Logfout << GetNow() << "pid is "<<saddr.nl_pid << std::endl;
+//   //printf("pid is %d\n",saddr.nl_pid );
+
+//   if (bind(sock, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) {
+//     perror("Failed to bind to netlink socket");
+//     close(sock);
+//     return -1;
+//   }
+
+//   return sock;
+// }
+
+// int 
+// Node::do_route_dump_requst(int sock)
+// {
+//     struct {
+//         struct nlmsghdr nlh;
+//         struct rtmsg rtm;
+//     } nl_request;
+
+//   nl_request.nlh.nlmsg_type = RTM_GETROUTE;//消息长度包括标题
+//   nl_request.nlh.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;//附加标志
+//   nl_request.nlh.nlmsg_len = sizeof(nl_request);
+//   nl_request.nlh.nlmsg_seq = time(NULL);//
+//   nl_request.rtm.rtm_family = AF_INET;
+
+//   return send(sock, &nl_request, sizeof(nl_request), 0);
+// }
+
+// int 
+// Node::get_route_dump_response(int sock)
+// {
+//   ofstream Logfout("/home/guolab/output/center.log",ios::app);
+//   struct sockaddr_nl saddr;
+//   struct sockaddr_nl nladdr;
+//   struct iovec iov;//多缓冲区的发送和接收处理就是一个struct iovec的数组
+//   struct msghdr msg = {//得到对方的地址和端口
+//     .msg_name = &nladdr,
+//     .msg_namelen = sizeof(nladdr),
+//     .msg_iov = &iov,
+//     .msg_iovlen = 1,//buffer缓冲区的个数
+//   };
+
+//   char *buf;
+//   int dump_intr = 0;
+
+//   int status = rtnl_recvmsg(sock, &msg, &buf);
+
+//   struct nlmsghdr *h = (struct nlmsghdr *)buf;
+//   int msglen = status;
+//   int i = 0;
+
+//   Logfout << GetNow() << "Main routing table IPv4 "<< std::endl;
+//   //printf("Main routing table IPv4\n");
+
+//   while (NLMSG_OK(h, msglen)) {
+//     if (h->nlmsg_flags & NLM_F_DUMP_INTR) {
+//       fprintf(stderr, "Dump was interrupted\n");
+//       free(buf);
+//       return -1;
+//     } 
+
+//     if (nladdr.nl_pid != 0) {
+//       continue;
+//     }
+
+//     if (h->nlmsg_type == NLMSG_ERROR) {
+//       Logfout << GetNow() <<"netlink reported error"<< std::endl;
+//       //perror("netlink reported error");
+//       free(buf);
+//     }
+
+//     print_route(h);
+//     this->routeProtocal[i] = this->m_routeProtocal;
+//     i++;
+
+//     h = NLMSG_NEXT(h, msglen);
+//   }
+
+//   free(buf);
+
+//   return status;
+// }
+
+// void 
+// Node::SendRouteToMaster()
+// {
+//   ofstream Logfout("/home/guolab/output/center.log",ios::app);
+//   int nl_sock = open_netlink();
+
+//   if (do_route_dump_requst(nl_sock) < 0) {
+//     Logfout << GetNow() <<"Failed to perfom request"<< std::endl;
+//     //perror("Failed to perfom request");
+//     close(nl_sock);
+//     return -1;
+//   }
+
+//   get_route_dump_response(nl_sock);
+
+//   close (nl_sock);
+
+//   return 0;
+// } 
+// end

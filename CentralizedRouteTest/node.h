@@ -1,14 +1,17 @@
 #include <stdio.h>  
 #include <stdlib.h>  
 #include <string.h>  
+#include <errno.h>
 #include <time.h>  
 #include <sys/types.h>  
 #include <netinet/in.h>  
 #include <arpa/inet.h>  
+#include <sys/socket.h>
 #include <ifaddrs.h>  
 #include <unistd.h>
 #include <net/if.h> 
 #include <sys/ioctl.h>
+#include <linux/rtnetlink.h>
 
 #include <iostream>
 #include <fstream>
@@ -21,6 +24,7 @@
 #include "tcp-client-route.h"
 
 using namespace std;
+#define SIZE 20
 
 class Node{
 
@@ -30,6 +34,12 @@ struct nodemaptosock
   int nodeSock;
   int keepAliveFaildNum;//未接收到的keep alive数量
   bool keepAliveFlag;
+};
+
+struct rtm{
+  char m_routeData[SIZE];//路由目的地址
+  char m_routeOif[SIZE];//输入口
+  char m_routeProtocal;//路由协议
 };
 
 public:
@@ -59,6 +69,18 @@ public:
   void RecordKeepAliveFlag(int sock);
   void CheckKeepAliveFlag();
 
+  //add by pannian
+  int rtnl_receive(int fd, struct msghdr *msg, int flags);
+  static int rtnl_recvmsg(int fd, struct msghdr *msg, char **answer);
+  void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len);
+  static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb);
+  void print_route(struct nlmsghdr* nl_header_answer);
+  int open_netlink();
+  int do_route_dump_requst(int sock);
+  int get_route_dump_response(int sock);
+  void SendRouteToMaster();
+  //end 
+
   static string GetNow();
   
 private:
@@ -67,6 +89,7 @@ private:
   ident myident;//标识自己是哪个交换机
   bool m_isMaster;
   int m_defaultKeepaliveTimer=3;
+  //char m_routeProtocal = 0;
 
   Ipv4GlobalRouting *m_globalRouting;
 
@@ -75,4 +98,5 @@ private:
 
   //建立Node和套接字之间的映射关系
   std::vector<struct nodemaptosock> nodeMapToSock;
+  std::vector<struct rtm> rootMessage;
 };

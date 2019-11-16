@@ -27,22 +27,22 @@ string Allocate_ip(int level,int position,int interface)//position从1开始,int
   stringstream ip_address;
   if (level==3)
   {
-    ip_address << "32." << position << "." << interface << "." << 0;
+    ip_address << "32." << position << "." << interface << "." << 1;
   }
   else if (level==2)
   {
     if (interface<(m_SpineNodes/m_LeafNodes+1))
     {
-      ip_address << "32." << (position-1)%m_LeafNodes*(m_SpineNodes/m_LeafNodes)+interface << "." << (position-1)/m_LeafNodes+1 << "." << 1;
+      ip_address << "32." << (position-1)%m_LeafNodes*(m_SpineNodes/m_LeafNodes)+interface << "." << (position-1)/m_LeafNodes+1 << "." << 2;
     }
     else if (interface>=(m_SpineNodes/m_LeafNodes+1))
     {
-      ip_address << "21." << position << "." << interface-(m_SpineNodes/m_LeafNodes) << "." << 0;
+      ip_address << "21." << position << "." << interface-(m_SpineNodes/m_LeafNodes) << "." << 1;
     }
   }
   else if (level==1)
   {
-    ip_address << "21." << (position-1)/m_ToRNodes*m_LeafNodes+interface << "." << (position-1)%m_ToRNodes+1 << "." << 1;
+    ip_address << "21." << (position-1)/m_ToRNodes*m_LeafNodes+interface << "." << (position-1)%m_ToRNodes+1 << "." << 2;
   }
   return ip_address.str();
 }

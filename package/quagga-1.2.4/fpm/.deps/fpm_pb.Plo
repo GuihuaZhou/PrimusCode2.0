@@ -1,0 +1,3 @@
+fpm_pb.lo: fpm_pb.c /usr/include/stdc-predef.h
+
+/usr/include/stdc-predef.h:

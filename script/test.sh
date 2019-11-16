@@ -11,11 +11,11 @@
 # g++ mytest.cc -o mytest
 # ./mytest
 
-# pssh -i -h /home/guolab/host.txt "zebra -d;bgpd -d;"
-# pssh -i -h /home/guolab/host.txt "killall zebra; killall bgpd;"
-# pssh -i -h /home/guolab/host.txt "reboot;"
-# pssh -i -h /home/guolab/host.txt "echo \'Hello\';"
-# pssh -i -h /home/guolab/host.txt "chmod 777 -R /home/guolab/CentralizedRouteTest"
+# pssh -i -h /home/guolab/host/host.txt "zebra -d;bgpd -d;"
+# pssh -i -h /home/guolab/host/host.txt "killall zebra; killall bgpd;"
+# pssh -i -h /home/guolab/host/host.txt "reboot;"
+# pssh -i -h /home/guolab/host/host.txt "echo \'Hello\';"
+# pssh -i -h /home/guolab/host/host.txt "chmod 777 -R /home/guolab/CentralizedRouteTest"
 
 # pssh -i -h /home/guolab/host.txt "echo \"net.ipv4.ip_forward=1\" | sudo tee -a /etc/sysctl.conf"
 

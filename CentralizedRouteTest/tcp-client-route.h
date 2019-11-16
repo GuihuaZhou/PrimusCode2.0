@@ -13,6 +13,9 @@
 #include <netdb.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <linux/socket.h>
+#include <linux/tcp.h>
+#include <netinet/ip.h>
 
 class Node;
 class TCPClientRoute
@@ -37,6 +40,7 @@ public:
     void SubmitLinkStatus(int sourceLevel,int sourcePos,int destLevel,int destPos,bool flag);
     void SayGoodByeToMaster();
     void KeepAliveTimer(int level,int position);
+    int  GetClientSoket();
     
     void SetFillAndSend (std::string fill);
     static string GetNow();

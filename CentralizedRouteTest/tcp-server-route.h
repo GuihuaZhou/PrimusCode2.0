@@ -11,6 +11,9 @@
 #include <fcntl.h>
 #include <iostream>
 #include <fstream>
+#include <linux/socket.h>
+#include <linux/tcp.h>
+#include <netinet/ip.h>
 
 #define CLIENTSIZE 80
 

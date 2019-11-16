@@ -9,7 +9,6 @@
 #include <iomanip>
 #include <pthread.h>
 
-
 // void MasterLinkThread(int i);
 class Node;
 class Ipv4GlobalRouting
@@ -33,7 +32,29 @@ public:
     int weight[4];
   };
 
-  struct pathtableentry//路径表条目
+  // struct linknode//
+  // {
+  //   ident nextHop;
+  //   int index;//与nexthop相连的本地端口号
+  //   struct linknode * next;
+  // };
+
+  // struct destip
+  // {
+  //   uint32_t s_addr;
+  //   struct destip * next;
+  // }
+
+  // struct pathtableentry//Node路径表条目
+  // {
+  //   struct linknode linkNode;//结点信息
+  //   struct destip destIP;//目的地址信息 
+  //   int counter;//计数器，表示故障链路数目
+  //   struct routeweight * recordWeight;//
+  //   struct pathtableentry * next;
+  // };
+  
+  struct pathtableentry//Node路径表条目
   {
     bool isAddRouteToKernel;
     ident nextHop[5];//此处应该重新考虑，万一拓扑有四层呢

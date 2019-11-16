@@ -63,6 +63,12 @@ TCPClientRoute::GetNow(){
   return time.str();
 }
 
+int 
+TCPClientRoute::GetClientSoket()
+{
+  return this->client_sockfd;
+}
+
 void
 TCPClientRoute::SetRemoteAddress(std::string remoteAddr)
 {
@@ -85,15 +91,6 @@ TCPClientRoute::StartApplication()
     return 0;
   }
    
-/*    //客户端连接前测试setsocket
-    int TestBuf=1024*1024;
-   if(setsockopt(client_sockfd, IPPROTO_TCP, TCP_CONGESTION,&TestBuf, len) <0)
-   {
-    Logfout<<GetNow()<<"TCPClientRoute::StartApplication (): setsockopt Failed."<<std::endl;
-    //break;
-    return false;   
-   }*/
-
   int nRecvBuf=1024*1024;
   setsockopt(client_sockfd,SOL_SOCKET,SO_RCVBUF,&nRecvBuf,sizeof(int));
   //发送缓冲区
@@ -162,7 +159,7 @@ void
 TCPClientRoute::SetFillAndSend (std::string fill)
 {
     /*NS_LOG_FUNCTION (this << fill);*/
-    
+    ofstream Logfout("/home/guolab/output/center.log",ios::app);
     int dataSize = fill.size () + 1;
     //while(m_dataSize != 0){}
 
@@ -176,11 +173,8 @@ TCPClientRoute::SetFillAndSend (std::string fill)
     memcpy (m_data, fill.c_str (), dataSize);
 
     m_dataSize = dataSize;
-
-    
-    // ofstream Logfout("/home/guolab/output/center.log",ios::app);
-    // Logfout << GetNow() << "Client SetFillAndSend and m_dataSize is " << m_dataSize << std::endl;
     Send(); 
+
     // Logfout.close();   
 }
 
@@ -379,4 +373,9 @@ TCPClientRoute::KeepAliveTimer(int level,int position)
   }
   Logfout.close();
 }
-// end
+
+//end
+
+
+
+
