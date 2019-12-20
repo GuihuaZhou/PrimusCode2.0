@@ -54,88 +54,83 @@ UDPServer::StartApplication()
   logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
-	vector<string> tempListenNIC=m_globalRouting->GetListenNIC();
-	vector<struct sockaddr_in> tempListenNICAddr;
+	// vector<string> tempListenNIC=m_globalRouting->GetListenNIC();
+	// vector<struct sockaddr_in> tempListenNICAddr;
 
-	struct ifaddrs *ifa;
+	// struct ifaddrs *ifa;
 
-	if (0!=getifaddrs(&ifa))
-    {
-      printf("getifaddrs error\n");
-      exit(1);
-    }
-    for (;ifa!=NULL;)
-    {
-      if (ifa->ifa_flags==69699 && ifa->ifa_name!=NULL && ifa->ifa_addr!=NULL && ifa->ifa_netmask!=NULL && (*ifa).ifa_ifu.ifu_dstaddr!=NULL && ifa->ifa_name && ifa->ifa_name[0]=='E')// 交换机
-      {
-      	for (int i=0;i<tempListenNIC.size();i++)
-      	{
-      		if (ifa->ifa_name==tempListenNIC[i]) 
-      		{
-      			tempListenNICAddr.push_back(*((struct sockaddr_in *)(ifa->ifa_addr)));
-      			break;
-      		}
-        }
-      }
-      ifa=ifa->ifa_next;
-    }
-    Logfout << "tempListenNICAddr" << endl;
-    for (int i=0;i<tempListenNICAddr.size();i++)
-    {
-    	Logfout << inet_ntoa(tempListenNICAddr[i].sin_addr) << "\t";
-    }
-    Logfout << endl;
+	// if (0!=getifaddrs(&ifa))
+ //  {
+ //    printf("getifaddrs error\n");
+ //    exit(1);
+ //  }
+ //  for (;ifa!=NULL;)
+ //  {
+ //    if (ifa->ifa_flags==69699 && ifa->ifa_name!=NULL && ifa->ifa_addr!=NULL && ifa->ifa_netmask!=NULL && (*ifa).ifa_ifu.ifu_dstaddr!=NULL && ifa->ifa_name && ifa->ifa_name[0]=='E')// 交换机
+ //    {
+ //    	for (int i=0;i<tempListenNIC.size();i++)
+ //    	{
+ //    		if (ifa->ifa_name==tempListenNIC[i]) 
+ //    		{
+ //    			tempListenNICAddr.push_back(*((struct sockaddr_in *)(ifa->ifa_addr)));
+ //    			break;
+ //    		}
+ //      }
+ //    }
+ //    ifa=ifa->ifa_next;
+ //  }
+ //  Logfout << "tempListenNICAddr" << endl;
+ //  for (int i=0;i<tempListenNICAddr.size();i++)
+ //  {
+ //  	Logfout << inet_ntoa(tempListenNICAddr[i].sin_addr) << "\t";
+ //  }
+ //  Logfout << endl;
 
-    freeifaddrs(ifa);
-	pthread_t selectThread,pathTableThread;
-	
-	for (int i=0;i<tempListenNICAddr.size();i++)
-	{
-		struct sockaddr_in * object = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
-		*object = tempListenNICAddr[i];
-		if(pthread_create(&selectThread, 0, HandleReadND, (void *)object) != 0)// 接收邻居发现时的hello信息
-	    {
-	    	Logfout<<GetNow()<<"UDPServer::StartApplication (): Create Thread Failed."<<std::endl;
-	    	return false;
-	    }  
-	    // pthread_detach(selectThread);
-	}	
+ //  freeifaddrs(ifa);
 
-	for (int i=0;i<tempListenNICAddr.size();i++)
-	{
-		struct sockaddr_in * object = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
-		*object = tempListenNICAddr[i];
-	    if (pthread_create(&pathTableThread,0,HandleReadPathTable,(void *)object)!=0)//接收路径信息
-	    {
-	    	Logfout<<GetNow()<<"UDPServer::StartApplication (): Create HandleReadPathTable Failed."<<std::endl;
-	    	return false;
-	    }
-	    // pthread_detach(pathTableThread);
-	}
-	
-	// Logfout << GetNow() << "UDPServer::StartApplication over" << endl;
-
- //    pthread_t selectThread;
-
-	// if(pthread_create(&selectThread, 0, HandleReadND, NULL) != 0)// 接收邻居发现时的hello信息
+	// pthread_t selectThread,pathTableThread;
+	// for (int i=0;i<tempListenNICAddr.size();i++)
+	// {
+	// 	struct sockaddr_in * object = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
+	// 	*object = tempListenNICAddr[i];
+	// 	if(pthread_create(&selectThread, 0, HandleReadND, (void *)object) != 0)// 接收邻居发现时的hello信息
  //    {
  //    	Logfout<<GetNow()<<"UDPServer::StartApplication (): Create Thread Failed."<<std::endl;
  //    	return false;
- //    }
- //    //将新线程与主线程分离，主线程不需要等待新线程执行完毕再接着运行
- //    pthread_detach(selectThread);
- //    // pthread_join(selectThread,NULL);
+ //    }  
+	// }	
 
- //    pthread_t pathTableThread;
- //    if (pthread_create(&pathTableThread,0,HandleReadPathTable,NULL)!=0)//接收路径信息
+	// for (int i=0;i<tempListenNICAddr.size();i++)
+	// {
+	// 	struct sockaddr_in * object = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
+	// 	*object = tempListenNICAddr[i];
+ //    if (pthread_create(&pathTableThread,0,HandleReadPathTable,(void *)object)!=0)//接收路径信息
  //    {
  //    	Logfout<<GetNow()<<"UDPServer::StartApplication (): Create HandleReadPathTable Failed."<<std::endl;
  //    	return false;
  //    }
- //    pthread_detach(pathTableThread);
-    // pthread_join(pathTableThread,NULL);
-    Logfout.close();
-    return true;
+	// }
+	
+	// Logfout << GetNow() << "UDPServer::StartApplication over" << endl;
+
+  pthread_t selectThread;
+	if(pthread_create(&selectThread,0,HandleReadND,NULL)!= 0)// 接收邻居发现时的hello信息
+  {
+  	Logfout << GetNow() << "UDPServer::StartApplication():Create Thread Failed." << endl;
+  	return false;
+  }
+  //将新线程与主线程分离，主线程不需要等待新线程执行完毕再接着运行
+  // pthread_detach(selectThread);
+
+  pthread_t pathTableThread;
+  if (pthread_create(&pathTableThread,0,HandleReadPathTable,NULL)!=0)//接收路径信息
+  {
+  	Logfout << GetNow() << "UDPServer::StartApplication():Create HandleReadPathTable Failed." << endl;
+  	return false;
+  }
+  // pthread_detach(pathTableThread);
+  Logfout.close();
+  return true;
 }
 
 void*
@@ -147,7 +142,7 @@ UDPServer::HandleReadND(void* object)
   logFoutPath << "/var/log/Primus-" << m_globalRouting->GetMyIdent().level << "." << m_globalRouting->GetMyIdent().position << ".log";
   ofstream Logfout(logFoutPath.str().c_str(),ios::app);
   
-	int ret = -1;
+	int value = -1;
 	int from_len = sizeof(struct sockaddr_in);
 	int sock = -1;
   struct sockaddr_in serverAddr;//服务端地址
@@ -155,8 +150,8 @@ UDPServer::HandleReadND(void* object)
 	
 	bzero(&serverAddr,sizeof(struct sockaddr_in));
 	serverAddr.sin_family = AF_INET;//Set as IP communication
-	// serverAddr.sin_addr.s_addr = htons(INADDR_ANY);//server IP address:allowed to connect any local address
-	serverAddr.sin_addr.s_addr = (*((struct sockaddr_in *)object)).sin_addr.s_addr;
+	serverAddr.sin_addr.s_addr = htons(INADDR_ANY);//server IP address:allowed to connect any local address
+	// serverAddr.sin_addr.s_addr = (*((struct sockaddr_in *)object)).sin_addr.s_addr;// sonic
 	serverAddr.sin_port = htons(ND_PORT);//server port
     
 	//广播地址
@@ -194,10 +189,11 @@ UDPServer::HandleReadND(void* object)
 	}
 	
 	Logfout << GetNow() << "LocalNIC(" << inet_ntoa(serverAddr.sin_addr) << ") is waiting for ND......" << endl;
+	char recvBuf[ND_BUF_SIZE];
 	while(1)
 	{
-		char recvBuf[BUF_SIZE];
-		if((ret = recvfrom(sock,recvBuf,BUF_SIZE,0,(struct sockaddr *)&fromAddr,(socklen_t*)&from_len)) < 0)
+		memset(recvBuf,'\0',ND_BUF_SIZE);
+		if((value=recvfrom(sock,recvBuf,ND_BUF_SIZE,0,(struct sockaddr *)&fromAddr,(socklen_t*)&from_len)) < 0)
 		{
 			Logfout << GetNow() << "UDPServer::HandleReadND (): Socket recvfrom Failed." << endl;
 			break;
@@ -208,38 +204,28 @@ UDPServer::HandleReadND(void* object)
 			continue;
 		}
 
+		// 先处理，再回复
 		struct NDinfo tempNDInfo;
 		memcpy(&tempNDInfo,recvBuf,sizeof(struct NDinfo));
-		m_globalRouting->NDRecvHello(tempNDInfo);
-		Logfout << GetNow() << "Recv ND from " << inet_ntoa(fromAddr.sin_addr) << "." << endl;
-		
-		tempNDInfo.ACK=true;
-		memset(recvBuf,'\0',BUF_SIZE);
-		memcpy(recvBuf,&tempNDInfo,sizeof(struct NDinfo));
-		sendto(sock,recvBuf,sizeof(struct NDinfo),0,(struct sockaddr*)&fromAddr,from_len);
-		Logfout << GetNow() << "Send ND reply to " << inet_ntoa(fromAddr.sin_addr) << "." << endl;
 
-		// int timeOutCounter=0;
-
-		// while (1)
-		// {
-		// 	if (m_globalRouting->IsDetectNeighbor(fromAddr))//探测到了则发送，否则休眠100ms
-		// 	{
-		// 		tempNDInfo.ACK=true;
-		// 		memset(recvBuf,'\0',BUF_SIZE);
-		// 		memcpy(recvBuf,&tempNDInfo,sizeof(struct NDinfo));
-		// 		sendto(sock,recvBuf,sizeof(struct NDinfo),0,(struct sockaddr*)&fromAddr,from_len);
-		// 		Logfout << GetNow() << "Send ND reply to " << inet_ntoa(fromAddr.sin_addr) << "." << endl;
-		// 		break;
-		// 	}
-		// 	else
-		// 	{
-		// 		Logfout << GetNow() << "Waiting for detecting neighbor." << endl;
-		// 		usleep(100000);
-		// 		timeOutCounter++;
-		// 		if (timeOutCounter>=10) break;
-		// 	}
-		// }
+		if (tempNDInfo.myIdent.level==0)// master
+		{
+			Logfout << GetNow() << "I should connect with master by another indirpath[sock:" << sock << "." << endl;
+			m_globalRouting->ReconnectWithMaster();
+		}
+		else 
+		{
+			Logfout << GetNow() << "Recv ND from " << inet_ntoa(fromAddr.sin_addr) << "[value:" << value << "]." << endl;
+			if ((value=sendto(sock,recvBuf,sizeof(struct NDinfo),0,(struct sockaddr*)&fromAddr,from_len))<0)
+			{
+				Logfout << GetNow() << "Send ND reply error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
+	  		break;
+			}	
+			;// 回复
+			Logfout << GetNow() << "Send ND reply to " << inet_ntoa(fromAddr.sin_addr) << "[value:" << value << "]." << endl;
+			m_globalRouting->NDRecvND(tempNDInfo);	
+			// usleep(SEND_PATH_INTERVAL);
+		}
 	}
 	Logfout << GetNow() << "LocalNIC(" << inet_ntoa(serverAddr.sin_addr) << ") receive ND thread down!!!!!!" << endl;
 	close(sock);
@@ -263,8 +249,8 @@ UDPServer::HandleReadPathTable(void* object)
 
 	bzero(&my_addr,sizeof(struct sockaddr_in));
 	my_addr.sin_family=AF_INET; 
-	// my_addr.sin_addr.s_addr=htons(INADDR_ANY);
-	my_addr.sin_addr.s_addr=(*((struct sockaddr_in *)object)).sin_addr.s_addr;
+	my_addr.sin_addr.s_addr=htons(INADDR_ANY);
+	// my_addr.sin_addr.s_addr=(*((struct sockaddr_in *)object)).sin_addr.s_addr;// sonic
 	my_addr.sin_port=htons(PT_PORT); 
 
 	bzero(&remote_addr,sizeof(struct sockaddr_in));
@@ -289,12 +275,12 @@ UDPServer::HandleReadPathTable(void* object)
 	}
 	
 	Logfout << GetNow() << "LocalNIC(" << inet_ntoa(my_addr.sin_addr) << ") is waiting for pathInfo......" << endl;
-
+	int value=0;
 	while (1)
 	{
-		char recvBuf[BUF_SIZE];
+		char recvBuf[PT_BUF_SIZE];
 		// Logfout << endl << "------waiting-------" << endl;
-		if((recvfrom(server_sockfd,recvBuf,BUF_SIZE,0,(struct sockaddr *)&remote_addr,(socklen_t*)&remote_len))<0)
+		if((value=recvfrom(server_sockfd,recvBuf,PT_BUF_SIZE,0,(struct sockaddr *)&remote_addr,(socklen_t*)&remote_len))<0)
 		{
 			Logfout << "HandleReadPathTable recvfrom failed" << endl;
 			continue;
@@ -332,51 +318,26 @@ UDPClient::SetGlobalRouting(Ipv4GlobalRouting *tempGlobalRouting)
     myIdent=m_globalRouting->GetMyIdent();
 }
 
-void
-UDPClient::SendNDTo(struct sockaddr_in localAddr)
-{
-	stringstream logFoutPath;
-	logFoutPath.str("");
-	logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-	ofstream Logfout(logFoutPath.str().c_str(),ios::app);
-  
-	pthread_t NDThread;
-	struct sockaddr_in *tempLoaclAddr=(struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
-	*tempLoaclAddr=localAddr;
-	
-	try
-  {
-    if (pthread_create(&NDThread,NULL,SendNDThread,(void*)tempLoaclAddr)!=0)
-    {
-    	Logfout << GetNow() << "Send ND failed" << endl;
-    }
-  }
-  catch(...)
-  {
-  	Logfout << GetNow() << "Send ND failed" << endl;
-    throw;
-  }
-  Logfout.close();
-}
-
 void*
-UDPClient::SendNDThread(void* tempLoaclAddr)// 发出ND信息，并等待回复
+UDPClient::SendNDThread(void* tempThreadParam)// 发出ND信息，并等待回复
 {
+	pthread_detach(pthread_self());
 	stringstream logFoutPath;
 	logFoutPath.str("");
 	logFoutPath << "/var/log/Primus-" << m_globalRouting->GetMyIdent().level << "." << m_globalRouting->GetMyIdent().position << ".log";
   ofstream Logfout(logFoutPath.str().c_str(),ios::app);
-  
-	pthread_detach(pthread_self());
-	struct sockaddr_in clientAddr=*(struct sockaddr_in *)tempLoaclAddr;
+	
+	struct sockaddr_in clientAddr=((struct threadparamA *)tempThreadParam)->localAddr;
+	struct sockaddr_in bcastAddr=((struct threadparamA *)tempThreadParam)->remoteAddr;//广播地址
+	struct NDinfo tempNDInfo=((struct threadparamA *)tempThreadParam)->tempNDInfo;
+	struct sockaddr_in fromAddr;//服务端端地址
+	bzero(&fromAddr,sizeof(struct sockaddr_in));
 	int sock = -1;
 	int so_broadcast = 1;
-	struct sockaddr_in bcastAddr;//广播地址
-	struct sockaddr_in fromAddr;//服务端端地址
 	int from_len = sizeof(struct sockaddr_in);
 	struct timeval timeout;
-	timeout.tv_sec = 5;
-	timeout.tv_usec = 0;
+	timeout.tv_sec=3;
+	timeout.tv_usec=0;
 	
 	//set dgram for client
   if((sock=socket(AF_INET, SOCK_DGRAM, 0))<0)
@@ -392,62 +353,68 @@ UDPClient::SendNDThread(void* tempLoaclAddr)// 发出ND信息，并等待回复
 	//bind socket to interface
 	if((bind(sock,(struct sockaddr*)&(clientAddr),sizeof(clientAddr))<0))
 	{
-		Logfout<<GetNow()<<"UDPClient::SayHelloToAdjacency (): Bind interface Failed."<<std::endl;
+		Logfout << GetNow() << "UDPClient::SayHelloToAdjacency (): Bind interface Failed." << endl;
     	exit(0);
 	}
 
 	//the default socket doesn't support broadcast,so we should set socket discriptor to do it.
 	if((setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &so_broadcast,sizeof(so_broadcast))) < 0)
 	{
-		Logfout<<GetNow()<<"UDPClient::SayHelloToAdjacency (): SetSocketOpt Failed."<<std::endl;
-    	exit(0);
+		Logfout << GetNow() << "UDPClient::SayHelloToAdjacency():SetSocketOpt Failed." << endl;
+    exit(0);
 	}
 	int time_live=TTL;
 	setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, (void *)&time_live, sizeof(time_live));
 
-	bzero(&bcastAddr,sizeof(struct sockaddr_in));
-	bcastAddr.sin_family = AF_INET;
-	string addr = inet_ntoa(clientAddr.sin_addr);
-	addr[addr.size()-1] = (addr[addr.size()-1]=='1')? '2':'1';
-	bcastAddr.sin_addr.s_addr = inet_addr((char*)addr.c_str());
-	bcastAddr.sin_port = htons(ND_PORT);
-
-	char sendBuf[BUF_SIZE];
-
-	struct NDinfo tempNDInfo;
-	tempNDInfo.myIdent=m_globalRouting->GetMyIdent();
-	tempNDInfo.localAddr=*(struct sockaddr_in *)tempLoaclAddr;
-	tempNDInfo.ACK=false;
-
+	char sendBuf[ND_BUF_SIZE],recvBuf[ND_BUF_SIZE];
 	memcpy(sendBuf,&tempNDInfo,sizeof(struct NDinfo));
-	if(sendto(sock,sendBuf,sizeof(struct NDinfo),0,(struct sockaddr *)&bcastAddr,sizeof(bcastAddr))<0)
-  {
-  	Logfout << GetNow() <<"UDPClient::SayHelloToAdjacency (): SentTo Failed."<<std::endl;
-  	exit(0);
-  } 
-  
-  Logfout << GetNow() << "Send ND to " << inet_ntoa(bcastAddr.sin_addr) << "." << endl;
+	int value=0;
 
-	while(1)
-	{
-		//set receive timeout
-		setsockopt(sock,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout));
-		bzero(&fromAddr,sizeof(struct sockaddr_in));
-		memset(sendBuf,'\0',BUF_SIZE);// 还要用来接收
-	  if(recvfrom(sock,sendBuf,BUF_SIZE,0,(struct sockaddr*)&fromAddr,(socklen_t*)&from_len)<0)
+  if (tempNDInfo.myIdent.level==0)// 协助Master通知间接连接的Node
+  {
+  	if((value=sendto(sock,sendBuf,sizeof(struct NDinfo),0,(struct sockaddr *)&bcastAddr,sizeof(bcastAddr)))<0)
+	  {
+	  	Logfout << GetNow() << "SendND error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
+	  	close(sock);
+			Logfout.close();
+			pthread_exit(0);
+	  } 
+	  Logfout << GetNow() << "Send ND to " << inet_ntoa(bcastAddr.sin_addr) << "[value:" << value << "]." << endl;
+  }
+  else// 是ND
+  {
+  	int timeoutNum=0;
+  	while(1)
 		{
-			Logfout<< GetNow() << "UDPClient::SayHelloToNeighbor(" << inet_ntoa(bcastAddr.sin_addr) << "): Recvfrom Timeout."<<std::endl;
-			tempNDInfo.myIdent.level=-1;
-			tempNDInfo.myIdent.position=-1;//表示超时没有收到ND
+			if((value=sendto(sock,sendBuf,sizeof(struct NDinfo),0,(struct sockaddr *)&bcastAddr,sizeof(bcastAddr)))<0)
+		  {
+		  	Logfout << GetNow() << "SendND error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
+		  	break;
+		  } 
+		  Logfout << GetNow() << "Send ND to " << inet_ntoa(bcastAddr.sin_addr) << "[value:" << value << "]." << endl;
+			//set receive timeout
+			setsockopt(sock,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout));
+			memset(recvBuf,'\0',ND_BUF_SIZE);// 还要用来接收
+		  if((value=recvfrom(sock,recvBuf,ND_BUF_SIZE,0,(struct sockaddr*)&fromAddr,(socklen_t*)&from_len))<0)
+			{
+				timeoutNum++;
+				if (timeoutNum>=3)// 超时3次，直接挂掉
+				{
+					Logfout << GetNow() << "Recv ND reply from " << inet_ntoa(bcastAddr.sin_addr) << "[error:" << strerror(errno) << "(errno:" << errno <<  ")]." << endl;
+					tempNDInfo.myIdent.level=-1;
+					tempNDInfo.myIdent.position=-1;//表示超时没有收到ND
+					m_globalRouting->NDRecvACK(tempNDInfo);
+					break;
+				}
+				else continue;
+			}
+			
+			memcpy(&tempNDInfo,recvBuf,sizeof(struct NDinfo));
+			Logfout << GetNow() << "Recv ND reply from " << inet_ntoa(fromAddr.sin_addr) << "[value:" << value << "]." << endl;
 			m_globalRouting->NDRecvACK(tempNDInfo);
 			break;
 		}
-		
-		memcpy(&tempNDInfo,sendBuf,sizeof(struct NDinfo));
-		Logfout << GetNow() << "Recv ND reply from " << inet_ntoa(fromAddr.sin_addr) << "." << endl;
-		m_globalRouting->NDRecvACK(tempNDInfo);
-		break;
-	}
+  }
 	close(sock);
 	Logfout.close();
 	pthread_exit(0);
@@ -461,8 +428,7 @@ UDPClient::SendPathInfoTo(struct sockaddr_in localAddr,struct sockaddr_in remote
 	logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
 	ofstream Logfout(logFoutPath.str().c_str(),ios::app);
   
-// Logfout << "send path table info to neighbor " << m_globalRouting->GetNeighborIdent(remoteAddr).level << "." << m_globalRouting->GetNeighborIdent(remoteAddr).position << endl;
-// test
+	// Logfout << "send path table info to neighbor " << m_globalRouting->GetNeighborIdent(remoteAddr).level << "." << m_globalRouting->GetNeighborIdent(remoteAddr).position << endl;
   Logfout << GetNow() << "Send path [ ";
   for (int i=0;i<MAX_PATH_LEN;i++)
   {
@@ -471,15 +437,14 @@ UDPClient::SendPathInfoTo(struct sockaddr_in localAddr,struct sockaddr_in remote
   		Logfout << tempPathInfo->pathNodeIdent[i].level << "." << tempPathInfo->pathNodeIdent[i].position << "\t";
   	}
   }
-  Logfout << "server address:";
+  Logfout << "serverAddr:";
   for (int i=0;i<MAX_ADDR_NUM;i++)
   {
   	if (!strcmp(inet_ntoa(tempPathInfo->addrSet[i].addr.sin_addr),"255.255.255.255")) break;
-  	Logfout << inet_ntoa(tempPathInfo->addrSet[i].addr.sin_addr) << "\t";
+  	Logfout << "(" << inet_ntoa(tempPathInfo->addrSet[i].addr.sin_addr) << ")";
   }
   Logfout << " ] to " << m_globalRouting->GetNeighborIdentByRemoteAddr(remoteAddr).level << "." << m_globalRouting->GetNeighborIdentByRemoteAddr(remoteAddr).position;
   Logfout << "(" << sizeof(*tempPathInfo) << "B)." << endl;
-  // // end
 
 	int client_sockfd;
 	struct sockaddr_in remote_addr; 
@@ -501,16 +466,46 @@ UDPClient::SendPathInfoTo(struct sockaddr_in localAddr,struct sockaddr_in remote
 	if ((bind(client_sockfd,(struct sockaddr*)&(localAddr),sizeof(localAddr))<0))
 	{
 		Logfout << GetNow() << "SendPathInfoTo bind failed"<<std::endl;
-    	exit(0);
+    exit(0);
 	}
-	char sendBuf[BUF_SIZE];
+	char sendBuf[PT_BUF_SIZE];
 	memcpy(sendBuf,tempPathInfo,sizeof(*tempPathInfo));
 
 	if (sendto(client_sockfd,sendBuf,sizeof(*tempPathInfo),0,(struct sockaddr *)&remote_addr,sizeof(remote_addr))<0)
   {
-  	Logfout << GetNow() << "SendPathInfoTo SentTo Failed"<<std::endl;
+  	Logfout << GetNow() << "SendPathInfoTo error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
   	exit(0);
   }
   // Logfout << GetNow() << "SendPathInfoTo over and size is " << sizeof(*tempPathInfo) << endl;
+  Logfout.close();
+}
+
+void
+UDPClient::SendNDTo(struct sockaddr_in localAddr,struct sockaddr_in remoteAddr,struct NDinfo tempNDInfo)
+{
+	stringstream logFoutPath;
+	logFoutPath.str("");
+	logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+	ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+
+	struct threadparamA *tempThreadParam=(struct threadparamA *)malloc(sizeof(struct threadparamA));
+	tempThreadParam->localAddr=localAddr;
+	tempThreadParam->remoteAddr=remoteAddr;
+	tempThreadParam->tempNDInfo=tempNDInfo;
+  
+	pthread_t NDThread;
+	
+	try
+  {
+    if (pthread_create(&NDThread,NULL,SendNDThread,(void*)tempThreadParam)!=0)
+    {
+    	Logfout << GetNow() << "Send ND failed" << endl;
+    }
+  }
+  catch(...)
+  {
+  	Logfout << GetNow() << "Send ND failed" << endl;
+    throw;
+  }
   Logfout.close();
 }

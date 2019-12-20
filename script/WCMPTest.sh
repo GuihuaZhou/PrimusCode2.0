@@ -48,7 +48,7 @@
 # scp root@192.168.80.6:/home/guolab/linkchange-server /home/guolab/linkchange-server
 
 
-sudo pssh -i -h /home/guolab/WCMPHost.txt -t 0 "sysctl net.ipv4.fib_multipath_hash_policy=1;"
+sudo pssh -i -h /home/guolab/host/WCMPHost.txt -t 0 "sysctl net.ipv4.fib_multipath_hash_policy=1;"
 
 # pssh -i -h /home/guolab/WCMPHost.txt -t 0 "rm /usr/local/sbin/bgpd"
 # pscp -h /home/guolab/WCMPHost.txt -l root /home/guolab/bgpd/bgpd /usr/local/sbin/bgpd
@@ -286,3 +286,128 @@ pssh -i -H "root@192.168.80.2" -t 0 "ifconfig eth2 up;"
 # scp root@192.168.80.5:/usr/local/sbin/bgpd /home/guolab/bgpd/bgpd-delay
 # pssh -i -h /home/guolab/WCMPHost.txt -t 0 "rm /usr/local/sbin/bgpd"
 # pscp -h /home/guolab/WCMPHost.txt -l root /home/guolab/bgpd/bgpd-delay /usr/local/sbin/bgpd
+
+auto eth1
+iface eth1 inet static
+        address 21.5.1.2
+        netmask 255.255.255.0
+auto eth2
+iface eth2 inet static
+        address 21.6.1.2
+        netmask 255.255.255.0
+auto eth3
+iface eth3 inet static
+        address 192.168.5.1
+        netmask 255.255.255.0
+
+auto eth1
+iface eth1 inet static
+        address 21.5.2.2
+        netmask 255.255.255.0
+auto eth2
+iface eth2 inet static
+        address 21.6.2.2
+        netmask 255.255.255.0
+auto eth3
+iface eth3 inet static
+        address 192.168.6.1
+        netmask 255.255.255.0
+
+
+
+Pod内位置为1参考        
+
+auto eth1
+iface eth1 inet static
+        address 32.1.3.2
+        netmask 255.255.255.0
+auto eth2
+iface eth2 inet static
+        address 32.2.3.2
+        netmask 255.255.255.0
+auto eth3
+iface eth3 inet static
+        address 32.3.3.2
+        netmask 255.255.255.0
+auto eth4
+iface eth4 inet static
+        address 32.4.3.2
+        netmask 255.255.255.0
+auto eth5
+iface eth5 inet static
+        address 21.5.1.1
+        netmask 255.255.255.0
+auto eth6
+iface eth6 inet static
+        address 21.5.2.1
+        netmask 255.255.255.0
+
+
+Pod内位置为2参考
+auto eth1
+iface eth1 inet static
+        address 32.5.3.2
+        netmask 255.255.255.0
+auto eth2
+iface eth2 inet static
+        address 32.6.3.2
+        netmask 255.255.255.0
+auto eth3
+iface eth3 inet static
+        address 32.7.3.2
+        netmask 255.255.255.0
+auto eth4
+iface eth4 inet static
+        address 32.8.3.2
+        netmask 255.255.255.0
+auto eth5
+iface eth5 inet static
+        address 21.6.1.1
+        netmask 255.255.255.0
+auto eth6
+iface eth6 inet static
+        address 21.6.2.1
+        netmask 255.255.255.0
+
+
+SpineNodes
+
+
+auto eth1
+iface eth1 inet static
+        address 32.2.1.1
+        netmask 255.255.255.0
+auto eth2
+iface eth2 inet static
+        address 32.2.2.1
+        netmask 255.255.255.0
+auto eth3
+iface eth3 inet static
+        address 32.2.3.1
+        netmask 255.255.255.0
+
+
+
+chiefMasterAddress:10.0.1.68
+commonMasterAddress:10.0.1.67,10.0.1.69
+level:3
+position:1
+defaultMasterTimer(ms):1000
+defaultKeepaliveTimer(s):3
+ToRNodes:2
+LeafNodes:4
+SpineNodes:16
+nPods:2
+
+sysctl net.ipv4.fib_multipath_hash_policy=1
+
+
+sudo su
+123.com
+
+vi /etc/network/interfaces
+cat /etc/network/interfaces
+
+vi /usr/local/etc/Primus.conf
+
+cat /usr/local/etc/Primus.conf
