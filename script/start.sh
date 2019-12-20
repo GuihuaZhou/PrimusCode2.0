@@ -234,3 +234,9 @@ pssh -i -h /home/guolab/host/ATChost.txt -t 0 "/home/guolab/Primus/Primus;" & # 
 # pssh -i -h /home/guolab/host/ATChost.txt "echo 'hello';"
 # pssh -i -h /home/guolab/host/ATChost.txt "reboot;"
 ########################## ##########################
+
+
+# linux update github
+# git add.
+# git commit -m "add"
+# git push -u origin master
