@@ -1,1 +1,0 @@
-g++ -std=c++0x tcp-server-route.cc tcp-client-route.cc ipv4-global-routing.cc node.cc init.cc -o CentralizedRoute -lpthread && g++ modifyRun.cc -o modifyRun

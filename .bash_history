@@ -396,3 +396,65 @@ screen -rd 1655
 sudo su
 screen
 screen -rd
+sudo su
+screen 
+screen -rd
+ls
+cd CentralizedRouteTest/
+ls
+cd cd ..
+cd ..
+cd Primus/
+ls
+screen -rd
+ifconfig
+ls
+if config
+if
+inf
+interface -a
+ifconfig
+ls
+cat /usr/local/etc/Primus.conf 
+screen -rd 
+ifconfig 
+sudo su
+screen -rd
+sudo su
+screen -rd
+ls
+cd netlink_route/
+ls
+cd ..
+ip route
+ls
+route -n
+ls
+./run.sh
+ls
+screen -rd
+screen -rd
+ls
+./run.sh
+ls
+./start.sh 
+ls
+cd Primus/
+ls
+cat start.sh
+cd ..
+ls
+cat start.sh
+screen -rd
+sudo su
+screen
+exit
+screen -rd
+ls
+screen -rd
+screen 
+exit
+screen -rd
+ping 10.0.80.4
+ping 192.168.80.4
+screen -rd
