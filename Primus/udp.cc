@@ -211,7 +211,7 @@ UDPServer::HandleReadND(void* object)
 		if (tempNDInfo.myIdent.level==0)// master
 		{
 			Logfout << GetNow() << "I should connect with master by another indirpath[sock:" << sock << "." << endl;
-			m_globalRouting->ReconnectWithMaster();
+			// m_globalRouting->ReconnectWithMaster();
 		}
 		else 
 		{

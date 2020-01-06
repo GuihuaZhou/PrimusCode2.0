@@ -19,6 +19,8 @@
 #define ND_BUF_SIZE sizeof(struct NDinfo)
 #define PT_BUF_SIZE sizeof(struct pathinfo)
 
+#define MGMT_INTERFACE "eth0"
+
 using namespace std;
 
 struct ident
@@ -34,6 +36,7 @@ struct NICinfo
   bool isMaster;
   bool isServer;
   bool isSwitch;
+  bool isNeedJudge;// 判断是否需要检测该网口的状态，直连链路故障后，邻居信息不会删除，但是以后的故障检测就可以跳过该条目
   bool flag;// 网卡状态
   ident neighborIdent;// 邻居的ident
   struct sockaddr_in localAddr;// 网口的IP地址
@@ -45,16 +48,18 @@ struct MNinfo// Master-Node通信的信息格式
 {
 	struct sockaddr_in addr;// 
 	ident destIdent;// 接收该Message的ident
+	ident forwardIdent;
 	ident srcIdent;// 发送该Message的ident
-	// 如果是链路信息，则pathNodeIdentA和pathNodeIdentB表示一条链路
-	ident pathNodeIdentA;
-	ident pathNodeIdentB;
+	// 如果是链路信息，则pathNodeIdent[0]和pathNodeIdent[1]表示一条链路
+	ident pathNodeIdent[MAX_PATH_LEN];
 	bool clusterMaster;// master内部信息格式
 	bool chiefMaster;// 
+	bool reachable;// 若转发node发现目的地址不可达，则会原路返回该message，并将此标志位标为false
 	bool keepAlive;// 表示是keep alive
 	bool linkFlag;// 表示是链路变化信息
 	bool hello;// 建立Tcp连接后向Master发送的hello信息
 	bool ACK;// 确认目的结点已经收到本地发出的信息
+	bool bye;
 };
 
 // 发送hello时，pathNodeIdentA和pathNodeIdentB都填上发送节点的ident;master回复ack时，pathNodeIdentA和pathNodeIdentB都填上master的ident;
@@ -149,6 +154,7 @@ struct mastermaptosock// node用，用来存储已经建立了tcp连接的master
   int keepAliveFaildNum;// 未接收到的keep alive数量
   bool recvKeepAlive;// 标志位，表示收到了Master的keep alive
   bool isStartKeepAlive;
+  struct pathtableentry *inDirPath;// 如果是间接连接，则保存其选择的间接路径
 };
 
 struct clustermasterinfo// chiefmaster和common master用，用来存储master内部的连接关系

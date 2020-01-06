@@ -1,0 +1,561 @@
+**********************************************************************
+                            第1次实验                               
+等待改变链路......
+开始改变链路......
+
+第1次改变链路状态
+ssh root@10.0.80.11 ifconfig eth0 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 1 1 1 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+第2次改变链路状态
+ssh root@10.0.80.22 ifconfig eth5 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 1 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第3次改变链路状态
+ssh root@10.0.80.32 ifconfig eth2 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 1 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+第4次改变链路状态
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+ssh root@10.0.80.34 ifconfig eth2 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 1 1 0 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 1 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+第5次改变链路状态
+ssh root@10.0.80.33 ifconfig eth2 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 0 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 1 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第6次改变链路状态
+ssh root@10.0.80.21 ifconfig eth5 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 0 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第7次改变链路状态
+ssh root@10.0.80.22 ifconfig eth5 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 0 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 1 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第8次改变链路状态
+ssh root@10.0.80.22 ifconfig eth5 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 0 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第9次改变链路状态
+ssh root@10.0.80.32 ifconfig eth2 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 0 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第10次改变链路状态
+ssh root@10.0.80.34 ifconfig eth2 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第11次改变链路状态
+ssh root@10.0.80.23 ifconfig eth5 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 0 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第12次改变链路状态
+ssh root@10.0.80.32 ifconfig eth2 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 1 1 1 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 0 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+第13次改变链路状态
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+ssh root@10.0.80.35 ifconfig eth2 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 1 1 0 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 0 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+第14次改变链路状态
+ssh root@10.0.80.34 ifconfig eth2 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 0 1 0 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 0 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第15次改变链路状态
+ssh root@10.0.80.22 ifconfig eth5 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 0 1 0 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 1 1 0 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第16次改变链路状态
+ssh root@10.0.80.23 ifconfig eth5 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 0 1 0 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 1 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第17次改变链路状态
+ssh root@10.0.80.34 ifconfig eth2 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 1 1 0 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 1 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第18次改变链路状态
+ssh root@10.0.80.22 ifconfig eth5 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 1 1 0 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第19次改变链路状态
+ssh root@10.0.80.12 ifconfig eth0 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 1 1 0 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 0 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第20次改变链路状态
+ssh root@10.0.80.13 ifconfig eth0 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 1 1 0 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 0 0
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第21次改变链路状态
+ssh root@10.0.80.32 ifconfig eth2 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 1
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 0 0
+等待改变链路......
+ 
+第22次改变链路状态
+ssh root@10.0.80.37 ifconfig eth2 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 0 0
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第23次改变链路状态
+ssh root@10.0.80.34 ifconfig eth2 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 0 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 0 0
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第24次改变链路状态
+ssh root@10.0.80.12 ifconfig eth0 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 0 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 0 1 0
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第25次改变链路状态
+ssh root@10.0.80.11 ifconfig eth0 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 0 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 1 1 0
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第26次改变链路状态
+ssh root@10.0.80.10 ifconfig eth0 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 0 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 0 1 1 0
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第27次改变链路状态
+ssh root@10.0.80.32 ifconfig eth2 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 0 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 0 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 0 1 1 0
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第28次改变链路状态
+ssh root@10.0.80.21 ifconfig eth5 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 0 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 1 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 0 1 1 0
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第29次改变链路状态
+ssh root@10.0.80.13 ifconfig eth0 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 0 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 1 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 0 1 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第30次改变链路状态
+ssh root@10.0.80.34 ifconfig eth2 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 1 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 1 1 1 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 0 1 1 1
+等待改变链路......
+ 
+第31次改变链路状态
+ssh root@10.0.80.20 ifconfig eth5 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 0 1 0 1 1 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 0 1 1 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 0 1 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第32次改变链路状态
+ssh root@10.0.80.32 ifconfig eth2 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 0 1 1 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 0 1 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第33次改变链路状态
+ssh root@10.0.80.10 ifconfig eth0 up
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 0 1 1 1 0 1 1 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 1 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+第34次改变链路状态
+ssh root@10.0.80.23 ifconfig eth5 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 0 1 1 1 0 1 0 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 1 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 1.2.
+   Go back to BGP......
+————————————————————————————————
+第35次改变链路状态
+ssh root@10.0.80.21 ifconfig eth5 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 0 1 0 1 0 1 0 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 1 1 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 1.0.
+   Go back to BGP......
+————————————————————————————————
+第36次改变链路状态
+ssh root@10.0.80.10 ifconfig eth0 down
+当前链路状态 
+SpineNode 下行链路: 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 0
+SpineNode 直连链路: 1 1 1 1 1 1 1 1
+LeafNode  下行链路: 0 1 0 1 0 1 0 1
+LeafNode  直连链路: 1 1 1 1
+ToRNode   直连链路: 0 1 1 1
+等待改变链路......
+ 
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 1.0.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 1.1.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 1.2.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 1.0.
+   Go back to BGP......
+————————————————————————————————
+休眠20s......
+
+
+终止进程
+————————————————————————————————
+   Can not connect with node 2.2.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 2.2.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 2.0.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 2.1.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 2.2.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 2.3.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 2.0.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 2.1.
+   Go back to BGP......
+————————————————————————————————
+————————————————————————————————
+   Can not connect with node 2.2.
+   Go back to BGP......
+————————————————————————————————
+   Can not connect with node 2.0.
+   Can not connect with node 2.0.
+   Can not connect with node 2.0.
+   Can not connect with node 2.0.
+   Can not connect with node 2.0.
+   Can not connect with node 2.0.
+   Can not connect with node 2.0.
+   Can not connect with node 2.0.

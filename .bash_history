@@ -458,3 +458,30 @@ screen -rd
 ping 10.0.80.4
 ping 192.168.80.4
 screen -rd
+sudo su
+screen -rd
+sudo su
+screen -rd
+screen
+screen -rd
+sudo su
+sudo su
+screen
+screen -rd
+screen
+netstat -anp | grep PrimusTest.sh
+sudo su
+screen -rd
+ls
+ifconfig
+screen -rd
+sudo su
+screen -rd
+sudo su
+screen
+screen -rd
+screen 
+exit
+screen -rd
+sudo su
+screen -rd

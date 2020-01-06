@@ -6,6 +6,8 @@
 Ipv4GlobalRouting *
 TCPRoute::m_globalRouting=NULL;
 
+pthread_mutex_t mutexB;
+
 TCPRoute::TCPRoute()
 {
 	// 
@@ -67,7 +69,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
   
   TCPRoute *tempTCPRoute=((struct threadparamA *)tempThreadParam)->tempTCPRoute;
   int sock=((struct threadparamA *)tempThreadParam)->tempSock;
-  struct sockaddr_in tempAddr=((struct threadparamA *)tempThreadParam)->tempAddr;
+  struct sockaddr_in tempAddr=((struct threadparamA *)tempThreadParam)->tempAddr;// Master的地址
 
   int value=0;
   char recvBuf[MNINFO_BUF_SIZE];
@@ -85,338 +87,418 @@ TCPRoute::ServerThread(void* tempThreadParam)
 
     // Logfout << GetNow() << "Recv message" << "[value:" << value << "]." << endl;
 
-    if (tempMNInfo.clusterMaster==true)// master内部通讯用
+    if (tempMNInfo.bye==true)
     {
-      // Logfout << GetNow() << "clusterMaster message." << endl;
-      if (tempMNInfo.pathNodeIdentA.level!=-1)
-      {
-        // tempMNInfo.pathNodeIdentA的indirnodenum发生了变化
-        struct clustermasterinfo tempClusterMasterInfo;
-        tempClusterMasterInfo.chiefMaster=tempMNInfo.chiefMaster;// 
-        tempClusterMasterInfo.masterAddr=tempMNInfo.addr;// master的地址
-        tempClusterMasterInfo.masterIdent=tempMNInfo.pathNodeIdentA;// master的ident
-        tempClusterMasterInfo.inDirNodeNum=tempMNInfo.pathNodeIdentB.level;
-        Logfout << GetNow() << "Recv master " << tempClusterMasterInfo.masterIdent.level << "." << tempClusterMasterInfo.masterIdent.position << "'s inDirNodeNum:" <<  tempClusterMasterInfo.inDirNodeNum << "[value:" << value << "]." << endl;
-
-        m_globalRouting->UpdateClusterMasterInfo(tempClusterMasterInfo,1);
-      }
-      else if (tempMNInfo.pathNodeIdentA.level==-1)// common 收到信息，说明正在进行新的chiefmaster选举
-      {
-        Logfout << GetNow() << "Recv cluster master message from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "." << endl;
-        m_globalRouting->NewChiefMasterElection(tempMNInfo.srcIdent);
-      }
+      Logfout << GetNow() << "Recv bye from " << inet_ntoa(tempAddr.sin_addr) << "." << endl;
+      shutdown(sock,SHUT_RDWR);
+      Logfout << GetNow() << "Sock(" << sock << ") recv error:" << strerror(errno) << "(errno:" << errno << "),";
+      break;
     }
-    // master和node都可调用此部分代码
-    else if (tempMNInfo.keepAlive==true)//keepalive信息
+
+    if (tempMNInfo.reachable==true)// 可达，一般情况
     {
-      // destident就是自己
-      if (tempTCPRoute->myIdent.level==tempMNInfo.destIdent.level && tempTCPRoute->myIdent.position==tempMNInfo.destIdent.position)
+      if (tempMNInfo.clusterMaster==true)// master内部通讯用
       {
-        // 只有chief master会回复所有的keep alive，备份的master则只回复node发送的keep alive
-        if ((tempTCPRoute->myIdent.level==0) && ((!tempTCPRoute->chiefMaster && tempMNInfo.srcIdent.level!=0) || (tempTCPRoute->chiefMaster)))
+        // Logfout << GetNow() << "clusterMaster message." << endl;
+        if (tempMNInfo.pathNodeIdent[0].level!=-1)
         {
-          m_globalRouting->UpdateKeepAliveFaildNum(tempMNInfo.srcIdent);// 清零
-          ident tempIdent=tempMNInfo.destIdent;
+          // tempMNInfo.pathNodeIdentA的indirnodenum发生了变化
+          struct clustermasterinfo tempClusterMasterInfo;
+          tempClusterMasterInfo.chiefMaster=tempMNInfo.chiefMaster;// 
+          tempClusterMasterInfo.masterAddr=tempMNInfo.addr;// master的地址
+          tempClusterMasterInfo.masterIdent=tempMNInfo.pathNodeIdent[0];// master的ident
+          tempClusterMasterInfo.inDirNodeNum=tempMNInfo.pathNodeIdent[1].level;
+          Logfout << GetNow() << "Recv master " << tempClusterMasterInfo.masterIdent.level << "." << tempClusterMasterInfo.masterIdent.position << "'s inDirNodeNum:" <<  tempClusterMasterInfo.inDirNodeNum << "[value:" << value << "][sock:" << sock << "]." << endl;
+
+          m_globalRouting->UpdateClusterMasterInfo(tempClusterMasterInfo,1);
+        }
+        else if (tempMNInfo.pathNodeIdent[0].level==-1)// common 收到信息，说明正在进行新的chiefmaster选举
+        {
+          Logfout << GetNow() << "Recv cluster master message from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[sock:" << sock << "]." << endl;
+          m_globalRouting->NewChiefMasterElection(tempMNInfo.srcIdent);
+        }
+      }
+      // master和node都可调用此部分代码
+      else if (tempMNInfo.keepAlive==true)//keepalive信息
+      {
+        // destident就是自己
+        if (tempTCPRoute->myIdent.level==tempMNInfo.destIdent.level && tempTCPRoute->myIdent.position==tempMNInfo.destIdent.position)
+        {
+          // 只有chief master会回复所有的keep alive，备份的master则只回复node发送的keep alive
+          if ((tempTCPRoute->myIdent.level==0) && ((!tempTCPRoute->chiefMaster && tempMNInfo.srcIdent.level!=0) || (tempTCPRoute->chiefMaster)))
+          {
+            m_globalRouting->UpdateKeepAliveFaildNum(tempMNInfo.srcIdent);// 清零
+            ident tempIdent=tempMNInfo.destIdent;
+            tempMNInfo.destIdent=tempMNInfo.srcIdent;
+            tempMNInfo.srcIdent=tempIdent;
+            tempMNInfo.pathNodeIdent[0]=tempTCPRoute->myIdent;// 换成master的ident
+            tempMNInfo.pathNodeIdent[1]=tempTCPRoute->myIdent;
+
+            value=tempTCPRoute->SendMessageTo(sock,tempMNInfo);
+            // Logfout << GetNow() << "Reply keepAlive to ";
+            // if (tempMNInfo.destIdent.level==0) Logfout << "master ";
+            // else Logfout << "node ";
+            // Logfout << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+          }
+          else // node和备份master收到回复的keep alive
+          {
+            // Logfout << GetNow() << "Recv keepAlive from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[sock:" << sock << "]." << endl;
+            m_globalRouting->UpdateKeepAlive(sock,tempMNInfo.srcIdent,true);
+          }
+        }
+        // node转发keepalive信息，分master-->node和node-->master两种
+        else if (tempTCPRoute->myIdent.level!=tempMNInfo.destIdent.level || tempTCPRoute->myIdent.position!=tempMNInfo.destIdent.position)
+        {
+          // Logfout << GetNow() << "forward keepAlive message" << "[value:" << value << "]." << endl;
+          if (tempMNInfo.destIdent.level==0 || tempMNInfo.destIdent.level==-1)//node-->master
+          {
+            // Logfout << GetNow() << "Forward keepAlive from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "." << endl;
+            vector<struct mastermaptosock> tempMasterMapToSock=m_globalRouting->GetMasterMapToSock();//查找本node连接了哪些master
+            for (int i=0;i<tempMasterMapToSock.size();i++)// 查找目的ident的套接字
+            {
+              if (tempMasterMapToSock[i].masterIdent.level!=-1 && tempMasterMapToSock[i].direct==true && tempMasterMapToSock[i].masterIdent.level==tempMNInfo.destIdent.level && tempMasterMapToSock[i].masterIdent.position==tempMNInfo.destIdent.position)// 首先本node和该master的连接必须有效，然后判断目的ident
+              {
+                value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
+                // Logfout << GetNow() << "Forward keepAlive from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "]." << endl;
+                break;
+              }
+            }
+            // 需要考虑没有发送成功怎么办，让林老板来写吧
+          }
+          else//master-->node
+          {
+            // Logfout << GetNow() << "Forward keepAlive from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "." << endl;
+            vector<struct nodemaptosock> tempNodeMapToSock=m_globalRouting->GetNodeMapToSock();//查找本node连接了哪些node
+            for (int i=0;i<tempNodeMapToSock.size();i++)// 查找目的ident的套接字
+            {
+              if (tempNodeMapToSock[i].nodeIdent.level==tempMNInfo.destIdent.level && tempNodeMapToSock[i].nodeIdent.position==tempMNInfo.destIdent.position)// 判断目的ident
+              {
+                value=tempTCPRoute->SendMessageTo(tempNodeMapToSock[i].nodeSock,tempMNInfo);
+                // Logfout << GetNow() << "Forward keepAlive from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "]." << endl;
+                break;
+              }
+            }
+            // 需要考虑没有发送成功怎么办，让林老板来写吧
+          }
+        }
+      }
+      else if (tempMNInfo.hello==true)//node的hello信息，node也有可能收到，因为它为其他节点转发
+      {
+        Logfout << GetNow() << "Recv hello from ";
+        if (tempMNInfo.srcIdent.level==0) Logfout << "master ";
+        else Logfout << "node ";
+        Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
+
+        if (tempTCPRoute->myIdent.level==0 || m_globalRouting->SameNode(tempTCPRoute->myIdent,tempMNInfo.destIdent))// master收到hello
+        {
+          bool direct=false;
+          int inDirNodeNum=0;
+          if (tempMNInfo.srcIdent.level==0) inDirNodeNum=tempMNInfo.pathNodeIdent[1].level;// 记录common master的indirnodenum
+          // 表示直连
+          if (tempMNInfo.srcIdent.level==tempMNInfo.pathNodeIdent[1].level && tempMNInfo.srcIdent.position==tempMNInfo.pathNodeIdent[1].position) 
+          {
+            direct=true; 
+            Logfout << "(direct)";
+          }
+          // 间接连接，间接连接时会上报间接路径
+          else 
+          {
+            direct=false;
+            Logfout << "(inDirect)";
+            // master需要记录间接路径
+            m_globalRouting->UpdateInDirPath(tempMNInfo.srcIdent,tempMNInfo.pathNodeIdent,sock);
+          }
+          Logfout << "[value:" << value << "][sock:" << sock << "]." << endl;
+
+          if (tempTCPRoute->myIdent.level!=0) Logfout << GetNow() << "I should connect with master by another indirpath[sock:" << sock << "]." << endl;
+
+          if (tempTCPRoute->myIdent.level==0) tempMNInfo.addr=*(m_globalRouting->GetAddrByNICName(MGMT_INTERFACE));// 此处有问题，应该是那个网口连接的，就返回那个网口的地址，但是做不到
           tempMNInfo.destIdent=tempMNInfo.srcIdent;
-          tempMNInfo.srcIdent=tempIdent;
-          tempMNInfo.pathNodeIdentA=tempTCPRoute->myIdent;// 换成master的ident
-          tempMNInfo.pathNodeIdentB=tempTCPRoute->myIdent;
+          tempMNInfo.srcIdent=tempTCPRoute->myIdent;
+          if (direct)// 直接连接则修改，间接不改
+          {
+            tempMNInfo.pathNodeIdent[0]=tempTCPRoute->myIdent;// 换成master的ident
+            tempMNInfo.pathNodeIdent[1]=tempTCPRoute->myIdent;
+          }
+          tempMNInfo.chiefMaster=tempTCPRoute->chiefMaster; // chiefMaster在回复ACK时要表明自己的身份
+          tempMNInfo.hello=false;
+          tempMNInfo.ACK=true;
 
           value=tempTCPRoute->SendMessageTo(sock,tempMNInfo);
-          // Logfout << GetNow() << "Reply keepAlive to ";
-          // if (tempMNInfo.destIdent.level==0) Logfout << "master ";
-          // else Logfout << "node ";
-          // Logfout << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "]." << endl;
+          Logfout << GetNow() << "Send ACK to ";
+          if (tempMNInfo.destIdent.level==0) Logfout << "master ";
+          else Logfout << "node ";
+          Logfout << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+
+          m_globalRouting->UpdateNodeMapToSock(tempMNInfo.destIdent,sock,direct);
         }
-        else // node和备份master收到回复的keep alive
+        else //node也有可能收到hello，因为它为其他节点转发
         {
-          // Logfout << GetNow() << "Recv keepAlive from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "." << endl;
-          m_globalRouting->UpdateKeepAlive(sock,tempMNInfo.srcIdent,true);
-        }
-      }
-      // node转发keepalive信息，分master-->node和node-->master两种
-      else if (tempTCPRoute->myIdent.level!=tempMNInfo.destIdent.level || tempTCPRoute->myIdent.position!=tempMNInfo.destIdent.position)
-      {
-        // Logfout << GetNow() << "forward keepAlive message" << "[value:" << value << "]." << endl;
-        if (tempMNInfo.destIdent.level==0 || tempMNInfo.destIdent.level==-1)//node-->master
-        {
-          // Logfout << GetNow() << "Forward keepAlive from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "." << endl;
+          // 目的ident不是本node，作转发
+          Logfout << "(forward)" << "[value:" << value << "][sock:" << sock << "]." << endl;
+          bool isFind=false;
+          // 获得本node和master的连接信息
           vector<struct mastermaptosock> tempMasterMapToSock=m_globalRouting->GetMasterMapToSock();//查找本node连接了哪些master
-          // tempMNInfo.pathNodeIdentA=tempTCPRoute->myIdent;// 换成转发node的ident，表示间接连接
-          // tempMNInfo.pathNodeIdentB=tempTCPRoute->myIdent;
           for (int i=0;i<tempMasterMapToSock.size();i++)// 查找目的ident的套接字
           {
-            if (tempMasterMapToSock[i].masterIdent.level!=-1 && tempMasterMapToSock[i].direct==true && tempMasterMapToSock[i].masterIdent.level==tempMNInfo.destIdent.level && tempMasterMapToSock[i].masterIdent.position==tempMNInfo.destIdent.position)// 首先本node和该master的连接必须有效，然后判断目的ident
+            if (tempMasterMapToSock[i].masterAddr==inet_ntoa(tempMNInfo.addr.sin_addr) && tempMasterMapToSock[i].masterIdent.level!=-1 && tempMasterMapToSock[i].direct==true && tempMasterMapToSock[i].masterSock>0)// 首先本node和该master的连接必须有效
             {
+              // 此时不需要判断目的ident，全部转发即可
+              tempMNInfo.destIdent=tempMasterMapToSock[i].masterIdent;
               value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
-              // Logfout << GetNow() << "Forward keepAlive from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "]." << endl;
+              Logfout << GetNow() << "Forward Hello to master " << tempMasterMapToSock[i].masterIdent.level << "." << tempMasterMapToSock[i].masterIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+              m_globalRouting->UpdateNodeMapToSock(tempMNInfo.srcIdent,sock,true);// 此处必定是直连 
+              isFind=true;
               break;
             }
           }
-          // 需要考虑没有发送成功怎么办，让林老板来写吧
-        }
-        else//master-->node
-        {
-          // Logfout << GetNow() << "Forward keepAlive from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "." << endl;
-          vector<struct nodemaptosock> tempNodeMapToSock=m_globalRouting->GetNodeMapToSock();//查找本node连接了哪些node
-          // tempMNInfo.pathNodeIdentA=tempTCPRoute->myIdent;// 换成转发node的ident，表示间接连接
-          // tempMNInfo.pathNodeIdentB=tempTCPRoute->myIdent;
-          for (int i=0;i<tempNodeMapToSock.size();i++)// 查找目的ident的套接字
+          if (isFind==false)
           {
-            if (tempNodeMapToSock[i].nodeIdent.level==tempMNInfo.destIdent.level && tempNodeMapToSock[i].nodeIdent.position==tempMNInfo.destIdent.position)// 判断目的ident
-            {
-              value=tempTCPRoute->SendMessageTo(tempNodeMapToSock[i].nodeSock,tempMNInfo);
-              // Logfout << GetNow() << "Forward keepAlive from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "]." << endl;
-              break;
-            }
+            Logfout << GetNow() << "I try to forward a hello message from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to master[" << inet_ntoa(tempMNInfo.addr.sin_addr) << "],but there is not a sock to master in my masterMapToSock table." << endl;
           }
-          // 需要考虑没有发送成功怎么办，让林老板来写吧
         }
       }
-    }
-    else if (tempMNInfo.hello==true)//node的hello信息，node也有可能收到，因为它为其他节点转发
-    {
-      Logfout << GetNow() << "Recv hello from ";
-      if (tempMNInfo.srcIdent.level==0) Logfout << "master ";
-      else Logfout << "node ";
-      Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
-      if (tempTCPRoute->myIdent.level==0)// master收到hello
+      else if (tempMNInfo.ACK==true)//node收到 ACK信息
       {
-        bool direct=false;
-        int inDirNodeNum=0;
-        if (tempMNInfo.srcIdent.level==0) inDirNodeNum=tempMNInfo.pathNodeIdentB.level;// 记录common master的indirnodenum
-        // 表示直连
-        if (tempMNInfo.srcIdent.level==tempMNInfo.pathNodeIdentB.level && tempMNInfo.srcIdent.position==tempMNInfo.pathNodeIdentB.position) 
+        // node收到master或者中间节点转发的ACK，故不再转发
+        // Logfout << GetNow() << "Recv ACK from " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[value:" << value << "]." << endl;
+        if (tempMNInfo.destIdent.level==tempTCPRoute->myIdent.level && tempMNInfo.destIdent.position==tempTCPRoute->myIdent.position)
         {
-          direct=true; 
-          Logfout << "(direct)";
-        }
-        // 间接连接，间接连接时会上报间接路径
-        else 
-        {
-          direct=false;
-          Logfout << "(inDirect)";
-          // master需要记录间接路径
-          m_globalRouting->UpdateInDirPath(tempMNInfo.srcIdent,tempMNInfo.pathNodeIdentA,tempMNInfo.pathNodeIdentB,sock);
-        }
-        Logfout << "[value:" << value << "]." << endl;
-        
-        m_globalRouting->GetAddrByNICName(&(tempMNInfo.addr),"eth0");
-        tempMNInfo.destIdent=tempMNInfo.srcIdent;
-        tempMNInfo.srcIdent=tempTCPRoute->myIdent;
-        if (direct)// 直接连接则修改，间接不改
-        {
-          tempMNInfo.pathNodeIdentA=tempTCPRoute->myIdent;// 换成master的ident
-          tempMNInfo.pathNodeIdentB=tempTCPRoute->myIdent;
-        }
-        if (tempTCPRoute->chiefMaster) tempMNInfo.chiefMaster=true; // chiefMaster在回复ACK时要表明自己的身份
-        tempMNInfo.hello=false;
-        tempMNInfo.ACK=true;
-        
-        value=tempTCPRoute->SendMessageTo(sock,tempMNInfo);
-        Logfout << GetNow() << "Send ACK to ";
-        if (tempMNInfo.destIdent.level==0) Logfout << "master ";
-        else Logfout << "node ";
-        Logfout << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "]." << endl;
+          Logfout << GetNow() << "Recv ACK from Master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+          // node收到ACK后需要判断
+          // 如果是直连ACK或者chief master重新选举的ACK，不需要继续发送
+          struct mastermaptosock tempMasterMapToSock;
+          tempMasterMapToSock.chiefMaster=tempMNInfo.chiefMaster;// 这个有效
+          tempMasterMapToSock.masterAddr=inet_ntoa(tempMNInfo.addr.sin_addr);// 这个也有效
+          tempMasterMapToSock.masterIdent=tempMNInfo.srcIdent;// 这个有效
+          tempMasterMapToSock.masterSock=sock;// 有效
+          tempMasterMapToSock.NICName="";
+          if (m_globalRouting->SameNode(tempMNInfo.srcIdent,tempMNInfo.pathNodeIdent[0]))// 直接连接
+          {
+            tempMasterMapToSock.direct=true;
+          }
+          else tempMasterMapToSock.direct=false;
+          tempMasterMapToSock.middleAddr="";
+          tempMasterMapToSock.keepAliveFaildNum=0;
+          tempMasterMapToSock.recvKeepAlive=false;
+          tempMasterMapToSock.isStartKeepAlive=false;
+          tempMasterMapToSock.inDirPath=NULL;
+          m_globalRouting->UpdateMasterMapToSock(tempMasterMapToSock,1);
+          
+          // 如果是发送间接路径的ACK包还要判断是否继续发送
+          // if (tempMNInfo.chiefMaster && tempTCPRoute->myIdent.level!=0 && tempMasterMapToSock.direct==false)
+          // {
+          //   // m_globalRouting->SendInDirPathToMaster(sock,tempMNInfo.pathNodeIdent[0],tempMNInfo.pathNodeIdent[1]); 
+          // }    
+          if (tempTCPRoute->myIdent.level==0 && !tempTCPRoute->chiefMaster)// common master收到ack后要主动向chief 发送indirnodenum
+          {
+            // common master收到ack后主动发送ClusterMasterInfo
+            struct clustermasterinfo tempClusterMasterInfo;
+            tempClusterMasterInfo.chiefMaster=false;
+            tempClusterMasterInfo.masterAddr=*(m_globalRouting->GetAddrByNICName(MGMT_INTERFACE));// common master的地址
+            // tempClusterMasterInfo.masterAddr=tempMNInfo.addr;
+            tempClusterMasterInfo.masterIdent=tempTCPRoute->myIdent;// common master的ident
+            tempClusterMasterInfo.inDirNodeNum=m_globalRouting->GetInDirNodeNum();
 
-        m_globalRouting->UpdateNodeMapToSock(tempMNInfo.destIdent,sock,direct);
-      }
-      else //node也有可能收到hello，因为它为其他节点转发
-      {
-        Logfout << "(forward)" << "[value:" << value << "]." << endl;
-        // 获得本node和master的连接信息
-        vector<struct mastermaptosock> tempMasterMapToSock=m_globalRouting->GetMasterMapToSock();//查找本node连接了哪些master
-        // tempMNInfo.pathNodeIdentA=tempTCPRoute->myIdent;// 换成转发node的ident，表示间接连接
-        // tempMNInfo.pathNodeIdentB=tempTCPRoute->myIdent;
-        for (int i=0;i<tempMasterMapToSock.size();i++)// 查找目的ident的套接字
-        {
-          if (tempMasterMapToSock[i].masterIdent.level!=-1 && tempMasterMapToSock[i].direct==true)// 首先本node和该master的连接必须有效
-          {
-            // 此时不需要判断目的ident，全部转发即可
-            value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
-            Logfout << GetNow() << "Forward Hello to master " << tempMasterMapToSock[i].masterIdent.level << "." << tempMasterMapToSock[i].masterIdent.position << "[value:" << value << "]." << endl;
-            m_globalRouting->UpdateNodeMapToSock(tempMNInfo.srcIdent,sock,true);// 此处必定是直连 
-          }
-          else//无效该怎么处理，让林老板来写吧
-          {
-            Logfout << "2" << endl;
+            m_globalRouting->SendInDirNodeNumToCommon(tempClusterMasterInfo);
           }
         }
-      }
-    }
-    else if (tempMNInfo.ACK==true)//node收到 ACK信息
-    {
-      // node收到master或者中间节点转发的ACK，故不再转发
-      // Logfout << GetNow() << "Recv ACK from " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[value:" << value << "]." << endl;
-      if (tempMNInfo.destIdent.level==tempTCPRoute->myIdent.level && tempMNInfo.destIdent.position==tempTCPRoute->myIdent.position)
-      {
-        Logfout << GetNow() << "Recv ACK from Master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[value:" << value << "]." << endl;
-        // node收到ACK后需要判断
-        // 如果是直连ACK或者chief master重新选举的ACK，不需要继续发送
-        struct mastermaptosock tempMasterMapToSock;
-        tempMasterMapToSock.chiefMaster=tempMNInfo.chiefMaster;// 这个有效
-        tempMasterMapToSock.masterAddr=inet_ntoa(tempMNInfo.addr.sin_addr);// 这个也有效
-        tempMasterMapToSock.masterIdent=tempMNInfo.srcIdent;// 这个有效
-        tempMasterMapToSock.masterSock=sock;// 有效
-        tempMasterMapToSock.NICName="";
-        if (m_globalRouting->SameNode(tempMNInfo.srcIdent,tempMNInfo.pathNodeIdentA))// 直接连接
+        else
         {
-          tempMasterMapToSock.direct=true;
-        }
-        else tempMasterMapToSock.direct=false;
-        tempMasterMapToSock.middleAddr="";
-        tempMasterMapToSock.keepAliveFaildNum=0;
-        tempMasterMapToSock.recvKeepAlive=false;
-        tempMasterMapToSock.isStartKeepAlive=false;
-        m_globalRouting->UpdateMasterMapToSock(tempMasterMapToSock,1);
-        
-        // 如果是发送间接路径的ACK包还要判断是否继续发送
-        if (tempMNInfo.chiefMaster && tempTCPRoute->myIdent.level!=0 && tempMasterMapToSock.direct==false)
-        {
-          m_globalRouting->SendInDirPathToMaster(sock,tempMNInfo.pathNodeIdentA,tempMNInfo.pathNodeIdentB); 
-        }    
-        else if (tempTCPRoute->myIdent.level==0 && !tempTCPRoute->chiefMaster)// common master收到ack后要主动向chief 发送indirnodenum
-        {
-          // common master收到ack后主动发送ClusterMasterInfo
-          struct clustermasterinfo tempClusterMasterInfo;
-          tempClusterMasterInfo.chiefMaster=false;
-          m_globalRouting->GetAddrByNICName(&(tempClusterMasterInfo.masterAddr),"eth0");// common master的地址
-          // tempClusterMasterInfo.masterAddr=tempMNInfo.addr;
-          tempClusterMasterInfo.masterIdent=tempTCPRoute->myIdent;// common master的ident
-          tempClusterMasterInfo.inDirNodeNum=m_globalRouting->GetInDirNodeNum();
-
-          m_globalRouting->SendInDirNodeNumToCommon(tempClusterMasterInfo);
-        }
-      }
-      else
-      {
-        // 需要继续转发
-        vector<struct nodemaptosock> tempNodeMapToSock=m_globalRouting->GetNodeMapToSock();//查找本node作为转发node连接了哪些node
-        for (int i=0;i<tempNodeMapToSock.size();i++)
-        {
-          if (tempNodeMapToSock[i].nodeIdent.level==tempMNInfo.destIdent.level && tempNodeMapToSock[i].nodeIdent.position==tempMNInfo.destIdent.position)
-          {
-            value=tempTCPRoute->SendMessageTo(tempNodeMapToSock[i].nodeSock,tempMNInfo);
-            Logfout << GetNow() << "Forward ACK from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "]." << endl;
-            break;
-          }
-        }
-      }
-    }
-    else if (tempMNInfo.chiefMaster==false && tempMNInfo.keepAlive==false && tempMNInfo.hello==false && tempMNInfo.ACK==false && tempMNInfo.clusterMaster==false)// 链路信息也有可能需要转发
-    {
-      // Logfout << GetNow() << "linkInfo message[value:" << value << "]." << endl;
-      // 目的node就是本node或Master
-      if ((tempMNInfo.destIdent.level==tempTCPRoute->myIdent.level && tempMNInfo.destIdent.position==tempTCPRoute->myIdent.position) || (tempMNInfo.destIdent.level==-1 && tempMNInfo.destIdent.position==-1 && tempTCPRoute->myIdent.level==0))// 无需转发
-      {
-        Logfout << GetNow();
-        if (tempTCPRoute->myIdent.level==0) Logfout << "Master ";
-        else Logfout << "Node ";
-        Logfout << tempTCPRoute->myIdent.level << "." << tempTCPRoute->myIdent.position << " recv ";
-        Logfout << tempMNInfo.pathNodeIdentA.level << "." << tempMNInfo.pathNodeIdentA.position << "--" << tempMNInfo.pathNodeIdentB.level << "." << tempMNInfo.pathNodeIdentB.position;
-        if (tempMNInfo.linkFlag==true) Logfout << " up ";
-        else if (tempMNInfo.linkFlag==false) Logfout << " down ";
-        Logfout << "from ";
-        if (tempMNInfo.srcIdent.level==0) Logfout << "Master ";
-        else Logfout << "Node ";
-        Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[value:" << value << "].";
-        Logfout << endl;
-
-        m_globalRouting->HandleMessage(tempMNInfo.pathNodeIdentA,tempMNInfo.pathNodeIdentB,tempMNInfo.linkFlag);
-        
-        if (tempMNInfo.srcIdent.level!=0)// 此信息不是master发来的，则需要转发给其他master
-        {
-          if (tempTCPRoute->myIdent.level==0)
-          {
-            // chief转发给backup master，
-            if (tempTCPRoute->chiefMaster)
-            {
-              vector<struct nodemaptosock> tempNodeMapToSock=m_globalRouting->GetNodeMapToSock();
-              tempMNInfo.srcIdent=tempTCPRoute->myIdent;
-              for (int i=0;i<tempNodeMapToSock.size();i++)
-              {
-                if (tempNodeMapToSock[i].nodeIdent.level==0)
-                {
-                  tempMNInfo.destIdent=tempNodeMapToSock[i].nodeIdent;
-                  value=tempTCPRoute->SendMessageTo(tempNodeMapToSock[i].nodeSock,tempMNInfo);
-                  // Logfout << GetNow() << "Forward linkInfo to common master " << tempNodeMapToSock[i].nodeIdent.level << "." << tempNodeMapToSock[i].nodeIdent.position << "[value:" << value << "]." << endl;
-                }
-                else break;
-              }
-            }
-            else//backup master转发给chief
-            {
-              vector<struct mastermaptosock> tempMasterMapToSock=m_globalRouting->GetMasterMapToSock();
-              tempMNInfo.srcIdent=tempTCPRoute->myIdent;
-              for (int i=0;i<tempMasterMapToSock.size();i++)
-              {
-                if (tempMasterMapToSock[i].masterIdent.level==0)
-                {
-                  tempMNInfo.destIdent=tempMasterMapToSock[i].masterIdent;
-                  value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
-                  // Logfout << GetNow() << "Forward linkInfo to chief master " << tempMasterMapToSock[i].masterIdent.level << "." << tempMasterMapToSock[i].masterIdent.position << "[value:" << value << "]." << endl;
-                }
-                else break;
-              }
-            }
-          }
-        }
-      }
-      else// node需要转发，-1，-1表示发给所有的master
-      {
-        // Logfout << "forward from " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to (master/node) " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << endl;
-        // 转发给所有的master，比如直连刚断掉，node会上传直连断掉的信息，但此时masterSock里的ident还未初始化完成
-        if (tempMNInfo.destIdent.level==-1 && tempMNInfo.destIdent.position==-1 && tempTCPRoute->myIdent.level!=0)
-        {
-          vector<struct mastermaptosock> tempMasterMapToSock=m_globalRouting->GetMasterMapToSock();//查找本node连接了哪些master
-          for (int i=0;i<tempMasterMapToSock.size();i++)
-          {
-            if (tempMasterMapToSock[i].masterIdent.level!=-1 && tempMasterMapToSock[i].direct==true)// 首先本node和该master的连接必须有效
-            {
-              value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
-              Logfout << GetNow() << "Forward linkInfo to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "]." << endl;
-              break;
-            }
-          }
-          // 没找到？
-        }
-        // 转发给node
-        else if (tempTCPRoute->myIdent.level!=0)
-        {
+          // 需要继续转发
           vector<struct nodemaptosock> tempNodeMapToSock=m_globalRouting->GetNodeMapToSock();//查找本node作为转发node连接了哪些node
-          bool isFind=false;
           for (int i=0;i<tempNodeMapToSock.size();i++)
           {
             if (tempNodeMapToSock[i].nodeIdent.level==tempMNInfo.destIdent.level && tempNodeMapToSock[i].nodeIdent.position==tempMNInfo.destIdent.position)
             {
               value=tempTCPRoute->SendMessageTo(tempNodeMapToSock[i].nodeSock,tempMNInfo);
-              Logfout << GetNow() << "Forward linkInfo from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "]." << endl;
-              isFind=true;
+              Logfout << GetNow() << "Forward ACK from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
               break;
-            }
-          }
-          // 没找到，说明这是tempMNInfo.destIdent的间接连接失效，Master正在尝试让其重新连接，需要通过UDP通知tempMNInfo.destIdent
-          if (isFind==false)
-          {
-            if (m_globalRouting->InformUnreachableNode(tempMNInfo.destIdent,tempMNInfo.srcIdent))// 可以回复master，但是MNinfo真的需要重新设计
-            {
-              Logfout << GetNow() << "Yes! I can inform node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "." << endl;
-            }
-            else
-            {
-              Logfout << GetNow() << "Sorry! I can not inform node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "." << endl;
             }
           }
         }
       }
+      else if (tempMNInfo.chiefMaster==false && tempMNInfo.keepAlive==false && tempMNInfo.hello==false && tempMNInfo.ACK==false && tempMNInfo.clusterMaster==false)// 链路信息也有可能需要转发
+      {
+        // Logfout << GetNow() << "linkInfo message[value:" << value << "]." << endl;
+        // 目的node就是本node或Master
+        // if ((tempMNInfo.destIdent.level==tempTCPRoute->myIdent.level && tempMNInfo.destIdent.position==tempTCPRoute->myIdent.position) || (tempMNInfo.destIdent.level==-1 && tempMNInfo.destIdent.position==-1 && tempTCPRoute->myIdent.level==0))// 无需转发
+        if ((m_globalRouting->SameNode(tempMNInfo.destIdent,tempTCPRoute->myIdent)) || (tempMNInfo.destIdent.level==-1 && tempMNInfo.destIdent.position==-1 && tempTCPRoute->myIdent.level==0))
+        {
+          Logfout << GetNow();
+          if (tempTCPRoute->myIdent.level==0) Logfout << "Master ";
+          else Logfout << "Node ";
+          Logfout << tempTCPRoute->myIdent.level << "." << tempTCPRoute->myIdent.position << " recv ";
+          Logfout << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
+          if (tempMNInfo.linkFlag==true) Logfout << " up ";
+          else if (tempMNInfo.linkFlag==false) Logfout << " down ";
+          Logfout << "from ";
+          if (tempMNInfo.srcIdent.level==0) Logfout << "Master ";
+          else Logfout << "Node ";
+          Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[value:" << value << "][sock:" << sock << "].";
+          Logfout << endl;
+
+          m_globalRouting->HandleMessage(tempMNInfo.pathNodeIdent[0],tempMNInfo.pathNodeIdent[1],tempMNInfo.linkFlag);
+          
+          if (tempMNInfo.srcIdent.level!=0)// 此信息不是master发来的，则需要转发给其他master
+          {
+            if (tempTCPRoute->myIdent.level==0)
+            {
+              // chief转发给backup master，
+              if (tempTCPRoute->chiefMaster)
+              {
+                vector<struct nodemaptosock> tempNodeMapToSock=m_globalRouting->GetNodeMapToSock();
+                tempMNInfo.srcIdent=tempTCPRoute->myIdent;
+                for (int i=0;i<tempNodeMapToSock.size();i++)
+                {
+                  if (tempNodeMapToSock[i].nodeIdent.level==0)
+                  {
+                    tempMNInfo.destIdent=tempNodeMapToSock[i].nodeIdent;
+                    value=tempTCPRoute->SendMessageTo(tempNodeMapToSock[i].nodeSock,tempMNInfo);
+                    // Logfout << GetNow() << "Forward linkInfo to common master " << tempNodeMapToSock[i].nodeIdent.level << "." << tempNodeMapToSock[i].nodeIdent.position << "[value:" << value << "]." << endl;
+                  }
+                  else break;
+                }
+              }
+              else//backup master转发给chief
+              {
+                vector<struct mastermaptosock> tempMasterMapToSock=m_globalRouting->GetMasterMapToSock();
+                tempMNInfo.srcIdent=tempTCPRoute->myIdent;
+                for (int i=0;i<tempMasterMapToSock.size();i++)
+                {
+                  if (tempMasterMapToSock[i].masterIdent.level==0)
+                  {
+                    tempMNInfo.destIdent=tempMasterMapToSock[i].masterIdent;
+                    value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
+                    // Logfout << GetNow() << "Forward linkInfo to chief master " << tempMasterMapToSock[i].masterIdent.level << "." << tempMasterMapToSock[i].masterIdent.position << "[value:" << value << "]." << endl;
+                  }
+                  else break;
+                }
+              }
+            }
+          }
+        }
+        else// 只有node才能转发
+        {
+          // Logfout << "forward from " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to (master/node) " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << endl;
+          if (tempTCPRoute->myIdent.level!=0)
+          {
+            if (tempMNInfo.destIdent.level==-1)// 转发给所有Master
+            {
+              vector<struct mastermaptosock> tempMasterMapToSock=m_globalRouting->GetMasterMapToSock();//查找本node连接了哪些master
+              for (int i=0;i<tempMasterMapToSock.size();i++)
+              {
+                if (tempMasterMapToSock[i].masterIdent.level!=-1 && tempMasterMapToSock[i].direct==true)// 首先本node和该master的连接必须有效
+                {
+                  value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
+                  Logfout << GetNow() << "Forward linkInfo from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.destIdent.position << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+                }
+              }
+              // 没找到？
+            }
+            else if (tempMNInfo.destIdent.level==0)// 转发给单个master
+            {
+              vector<struct mastermaptosock> tempMasterMapToSock=m_globalRouting->GetMasterMapToSock();//查找本node连接了哪些master
+              for (int i=0;i<tempMasterMapToSock.size();i++)
+              {
+                if (tempMasterMapToSock[i].masterIdent.level!=-1 && tempMasterMapToSock[i].direct==true && m_globalRouting->SameNode(tempMasterMapToSock[i].masterIdent,tempMNInfo.destIdent))// 首先本node和该master的连接必须有效
+                {
+                  value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
+                  Logfout << GetNow() << "Forward linkInfo from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.destIdent.position << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+                  break;
+                }
+              }
+            }
+            else // 转发给Node
+            {
+              vector<struct nodemaptosock> tempNodeMapToSock=m_globalRouting->GetNodeMapToSock();//查找本node作为转发node连接了哪些node
+              bool isFind=false;
+              for (int i=0;i<tempNodeMapToSock.size();i++)
+              {
+                if (m_globalRouting->SameNode(tempNodeMapToSock[i].nodeIdent,tempMNInfo.destIdent))
+                {
+                  value=tempTCPRoute->SendMessageTo(tempNodeMapToSock[i].nodeSock,tempMNInfo);
+                  Logfout << GetNow() << "Forward linkInfo from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+                  isFind=true;
+                  break;
+                }
+              }
+              if (isFind==true) continue;
+              // 没找到，说明这是tempMNInfo.destIdent的间接连接失效，Master正在尝试让其重新连接，
+              if (isFind==false && m_globalRouting->SameNode(tempMNInfo.forwardIdent,tempTCPRoute->myIdent))
+              {
+                struct pathtableentry *tempPathTableEntry=m_globalRouting->InformUnreachableNode(tempMNInfo.destIdent,tempMNInfo.srcIdent);
+                if (tempPathTableEntry!=NULL)// 可以回复master，但是MNinfo真的需要重新设计
+                {
+                  int tempSock=0;
+                  if ((tempSock=tempTCPRoute->SendHelloToMaster(tempMNInfo.destIdent,inet_ntoa(tempPathTableEntry->nodeAddr.addr.sin_addr),"",m_globalRouting->GetNICNameByRemoteAddr(tempPathTableEntry->nextHopAddr.addr),NULL,true))>0)
+                  {
+                    tempMNInfo.reachable=true;
+                    if ((value=tempTCPRoute->SendMessageTo(tempSock,tempMNInfo))>0)
+                    {
+                      tempMNInfo.bye=true;// 关闭这个连接
+                      if ((value=tempTCPRoute->SendMessageTo(tempSock,tempMNInfo))>0)
+                      {
+                        Logfout << GetNow() << "Yes! I can inform node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[sock:" << sock << "]." << endl;
+                        continue;
+                      }
+                    }
+                  }
+                }
+                Logfout << GetNow() << "Sorry! I can not inform node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[sock:" << sock << "]." << endl;
+                // 应该返回给master
+                ident tempIdent;
+                tempIdent=tempMNInfo.srcIdent;
+                tempMNInfo.srcIdent=tempMNInfo.destIdent;
+                tempMNInfo.destIdent=tempIdent;
+                tempMNInfo.reachable=false;
+                value=tempTCPRoute->SendMessageTo(sock,tempMNInfo);
+              }
+              else
+              {
+                Logfout << GetNow() << "Other message(1) " << "[value:" << value << "][sock:" << sock << "]." << endl;
+              }
+            }
+          }
+        }
+      }
+      else
+      {
+        Logfout << GetNow() << "Other message(2) " << "[value:" << value << "][sock:" << sock << "]." << endl;
+        // 应该处理一下非法信息
+      }
     }
-    else
+    else// 中转node返回的不可达message
     {
-      Logfout << GetNow() << "Other message" << "[value:" << value << "]." << endl;
-      // 应该处理一下非法信息
+      if (tempMNInfo.clusterMaster==true)
+      {
+        // 
+      }
+      else if (tempMNInfo.hello==true)
+      {
+        // 
+      }
+      else if (tempMNInfo.ACK==true)
+      {
+        // 
+      }
+      else if (tempMNInfo.chiefMaster==false && tempMNInfo.keepAlive==false && tempMNInfo.hello==false && tempMNInfo.ACK==false && tempMNInfo.clusterMaster==false)// 不可达的链路变化信息
+      {
+        Logfout << GetNow() << "Recv message from node " << tempMNInfo.forwardIdent.level << "." << tempMNInfo.forwardIdent.position << " that I need to inform ";
+        if (tempMNInfo.srcIdent.level==0) Logfout << "master ";
+        else Logfout << "node ";
+        Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " again[sock:" << sock << "]." << endl;
+        ident tempIdent;
+        tempIdent=tempMNInfo.srcIdent;
+        tempMNInfo.srcIdent=tempMNInfo.destIdent;
+        tempMNInfo.destIdent=tempIdent;
+        tempMNInfo.reachable=true;
+        m_globalRouting->ChooseNodeToInformInDirNode(tempMNInfo.destIdent,tempMNInfo.forwardIdent,tempMNInfo);
+      }
     }
   }
-  // shutdown(sock,SHUT_RDWR);
+
+  m_globalRouting->CloseSock(sock);
   Logfout << "TCPServerThread[sock:" << sock << "] thread down[value:" << value << "]." << endl;
   Logfout.close();
   // pthread_exit(0);
@@ -505,48 +587,59 @@ TCPRoute::StartListen()// 创建接收数据的线程，起服务端的作用
       Logfout << GetNow() << "Create thread for a connect failed!!!!!!!!!" << endl;
       break;
     }
-    // pthread_detach(server_thread);
   }
   Logfout << GetNow() << "TCPRoute listen thread[serverSock:" << serverSock << "] down." << endl;
   Logfout.close();
 }
 
-void
-TCPRoute::SendHelloToMaster(vector<string> masterAddress,string middleAddress,string NICName)// 可能是直连，或者是通过中间结点间接连接，所以masterAddress里也可能是中间结点的地址
+int 
+TCPRoute::SendHelloToMaster(ident destIdent,string masterAddress,string middleAddress,string NICName,struct pathtableentry *inDirPath,bool direct)// 可能是直连，或者是通过中间结点间接连接，所以masterAddress里也可能是中间结点的地址
 {
+  pthread_mutex_lock(&mutexB);
   stringstream logFoutPath;
   logFoutPath.str("");
   logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
-  if (middleAddress!="")// 间接连接
+  // 先检查是否有到目的地址的套接字，
+  // 如果没有，则先建立tcp连接，再发送hello；如果有，则直接发送hello
+  // Logfout << "masterAddress[" << masterAddress << "]middleAddress[" << middleAddress << "]NICName[" << NICName << "]." << endl;
+
+  string tempAddress="";
+  int clientSock=0;
+  int value=1;
+  if (direct==true) tempAddress=masterAddress;
+  else tempAddress=middleAddress;
+
+  if ((clientSock=m_globalRouting->GetSockByAddress(tempAddress))<=0)// 不存在，则先建立tcp连接
   {
+    Logfout << GetNow() << "There is not sock to [" << tempAddress << "]." << endl; 
     struct sockaddr_in masterAddr;
     memset(&masterAddr,0,sizeof(masterAddr)); //数据初始化--清零
     masterAddr.sin_family=AF_INET; //设置为IP通信
-    masterAddr.sin_addr.s_addr=inet_addr(middleAddress.c_str());
+    masterAddr.sin_addr.s_addr=inet_addr(tempAddress.c_str());
     masterAddr.sin_port=htons(MN_PORT);
-    int clientSock;
-    /*创建客户端套接字--IPv4协议，面向连接通信，TCP协议*/
-    if((clientSock=socket(PF_INET,SOCK_STREAM,0))<0)
+
+    if ((clientSock=socket(PF_INET,SOCK_STREAM,0))<0)
     {
       Logfout << GetNow() << "TCPRoute Create Socket Failed." << endl;
-      exit(0);
+      Logfout.close();
+      return -1;
     }
 
-    int value=1;
     if (setsockopt(clientSock,SOL_SOCKET,SO_REUSEPORT,&value,sizeof(value))<0)//设置端口复用
     {
       Logfout << GetNow() << "Set SO_REUSEPORT error" << endl;
-      exit(0);
+      Logfout.close();
+      return -1;
     }
-     
+
     int nRecvBuf=TCP_BUF_SIZE*1024;
     setsockopt(clientSock,SOL_SOCKET,SO_RCVBUF,&nRecvBuf,sizeof(int));
     // 发送缓冲区
     int nSendBuf=TCP_BUF_SIZE*1024;
     setsockopt(clientSock,SOL_SOCKET,SO_SNDBUF,&nSendBuf,sizeof(int));
-    
+
     // 绑定到网络设备上
     struct ifreq ifr;
     memset(&ifr,0x00,sizeof(ifr));
@@ -554,214 +647,183 @@ TCPRoute::SendHelloToMaster(vector<string> masterAddress,string middleAddress,st
     if (setsockopt(clientSock,SOL_SOCKET,SO_BINDTODEVICE,(char *)&ifr,sizeof(ifr))<0)
     {
       Logfout << GetNow() << "TCPRoute Binding error" << endl;
-      exit(0);
+      Logfout.close();
+      return -1;
     }
 
-    if((connect(clientSock,(const struct sockaddr *)&masterAddr,sizeof(masterAddr)))<0)
+    if ((connect(clientSock,(const struct sockaddr *)&masterAddr,sizeof(masterAddr)))<0)
     {
       Logfout << GetNow() << "Sock(" << clientSock << ") connect error:" << strerror(errno) << "(errno:" << errno << ")." << endl;
-      exit(0);
+      Logfout.close();
+      return -1;
     }
-
-    struct mastermaptosock tempMasterMapToSock;
-    tempMasterMapToSock.chiefMaster=false;
-    tempMasterMapToSock.masterIdent.level=-1;// 等收到ACK后再填写
-    tempMasterMapToSock.masterIdent.position=-1;
-    tempMasterMapToSock.masterSock=clientSock;// 有效
-    tempMasterMapToSock.NICName=NICName;// 有效
-    tempMasterMapToSock.direct=false;// 有效
-    tempMasterMapToSock.middleAddr=middleAddress;// 有效
-    tempMasterMapToSock.keepAliveFaildNum=0;// 有效
-    tempMasterMapToSock.recvKeepAlive=false;// 有效
-    tempMasterMapToSock.isStartKeepAlive=false;
-
-    for (int i=0;i<masterAddress.size();i++)
-    {
-      tempMasterMapToSock.masterAddr=masterAddress[i];
-      m_globalRouting->UpdateMasterMapToSock(tempMasterMapToSock,1);
-    }      
 
     // 为该套接字创建接收线程
     struct threadparamA *tempThreadParam=(struct threadparamA *)malloc(sizeof(struct threadparamA));
     tempThreadParam->tempTCPRoute=this;
     tempThreadParam->tempAddr=masterAddr;
     tempThreadParam->tempSock=clientSock;
-
-    if(pthread_create(&server_thread,NULL,ServerThread,(void*)tempThreadParam)<0)
+    
+    if (pthread_create(&server_thread,NULL,ServerThread,(void*)tempThreadParam)<0)
     {
       Logfout << GetNow() << "Create thread for a connect failed!!!!!!!!!" << endl;
-      exit(0);
+      Logfout.close();
+      return -1;
     }
-    // pthread_detach(server_thread);
-
-    Logfout << GetNow() << "Try to connected with forward node[" << inet_ntoa(masterAddr.sin_addr) << "][sock:" << clientSock << "]." << endl;
-
-    m_globalRouting->SendInDirPathToMaster(clientSock,tempMasterMapToSock.masterIdent,tempMasterMapToSock.masterIdent);// 通过hello包来发送路径
   }
-  else 
+
+  // tcp连接建立成功或者本已存在，发送hello
+  struct mastermaptosock tempMasterMapToSock;
+  tempMasterMapToSock.chiefMaster=false;
+  tempMasterMapToSock.masterAddr=masterAddress;
+  tempMasterMapToSock.masterIdent.level=-1;// 等收到ACK后再填写
+  tempMasterMapToSock.masterIdent.position=-1;
+  tempMasterMapToSock.masterSock=clientSock;
+  tempMasterMapToSock.NICName=NICName;
+  tempMasterMapToSock.direct=direct;
+  tempMasterMapToSock.middleAddr=middleAddress;
+  tempMasterMapToSock.keepAliveFaildNum=0;
+  tempMasterMapToSock.recvKeepAlive=false;
+  tempMasterMapToSock.isStartKeepAlive=false;
+  tempMasterMapToSock.inDirPath=inDirPath;
+
+  m_globalRouting->UpdateMasterMapToSock(tempMasterMapToSock,1);
+
+  struct MNinfo helloMNInfo;
+  helloMNInfo.addr.sin_family=AF_INET;
+  inet_aton(masterAddress.c_str(),&(helloMNInfo.addr.sin_addr));
+  helloMNInfo.addr.sin_port=htons(0);
+  helloMNInfo.destIdent=destIdent;// 此时可能还不知道目的地址的ident
+  helloMNInfo.forwardIdent=myIdent;
+  helloMNInfo.srcIdent=myIdent;
+  helloMNInfo.clusterMaster=false;
+  helloMNInfo.chiefMaster=false;
+  helloMNInfo.reachable=true;
+  helloMNInfo.keepAlive=false;
+  helloMNInfo.linkFlag=false;
+  helloMNInfo.hello=true;
+  helloMNInfo.ACK=false;
+  helloMNInfo.bye=false;
+
+  if (direct==true) 
   {
-    for (int i=0;i<masterAddress.size();i++)
+    Logfout << GetNow() << "Try to connect with master[" << masterAddress << "][sock:" << clientSock << "]." << endl;
+
+    helloMNInfo.pathNodeIdent[0]=myIdent;
+    helloMNInfo.pathNodeIdent[1]=myIdent;
+    for (int i=2;i<MAX_PATH_LEN;i++)
     {
-      struct sockaddr_in masterAddr;
-      memset(&masterAddr,0,sizeof(masterAddr)); //数据初始化--清零
-      masterAddr.sin_family=AF_INET; //设置为IP通信
-      masterAddr.sin_addr.s_addr=inet_addr(masterAddress[i].c_str());
-      masterAddr.sin_port=htons(MN_PORT);
-      
-      int clientSock;
-      /*创建客户端套接字--IPv4协议，面向连接通信，TCP协议*/
-      if((clientSock=socket(PF_INET,SOCK_STREAM,0))<0)
-      {
-        Logfout << GetNow() << "TCPRoute Create Socket Failed." << endl;
-        exit(0);
-      }
-
-      int value=1;
-      if (setsockopt(clientSock,SOL_SOCKET,SO_REUSEPORT,&value,sizeof(value))<0)//设置端口复用
-      {
-        Logfout << GetNow() << "Set SO_REUSEPORT error" << endl;
-        exit(0);
-      }
-
-      // if (setsockopt(clientSock,SOL_SOCKET,SO_REUSEADDR,&value,sizeof(value))<0)
-      // {
-      //   Logfout << GetNow() << "TCPRoute set SO_REUSEADDR error" << endl;
-      //   exit(0);
-      // }
-       
-      int nRecvBuf=TCP_BUF_SIZE*1024;
-      setsockopt(clientSock,SOL_SOCKET,SO_RCVBUF,&nRecvBuf,sizeof(int));
-      // 发送缓冲区
-      int nSendBuf=TCP_BUF_SIZE*1024;
-      setsockopt(clientSock,SOL_SOCKET,SO_SNDBUF,&nSendBuf,sizeof(int));
-      
-      // 绑定到网络设备上
-      struct ifreq ifr;
-      memset(&ifr,0x00,sizeof(ifr));
-      strncpy(ifr.ifr_name,NICName.c_str(),strlen(NICName.c_str()));
-      
-      if (setsockopt(clientSock,SOL_SOCKET,SO_BINDTODEVICE,(char *)&ifr,sizeof(ifr))<0)
-      {
-        Logfout << GetNow() << "TCPRoute Binding error" << endl;
-        exit(0);
-      }
-
-      if((connect(clientSock,(const struct sockaddr *)&masterAddr,sizeof(masterAddr)))<0)
-      {
-        Logfout << GetNow() << "Sock(" << clientSock << ") connect error:" << strerror(errno) << "(errno:" << errno << ")." << endl;
-        exit(0);
-      }
-
-      struct mastermaptosock tempMasterMapToSock;
-      tempMasterMapToSock.chiefMaster=false;
-      tempMasterMapToSock.masterAddr=masterAddress[i];
-      tempMasterMapToSock.masterIdent.level=-1;// 等收到ACK后再填写
-      tempMasterMapToSock.masterIdent.position=-1;
-      tempMasterMapToSock.masterSock=clientSock;
-      tempMasterMapToSock.NICName=NICName;
-      tempMasterMapToSock.direct=true;
-      tempMasterMapToSock.middleAddr="";
-      tempMasterMapToSock.keepAliveFaildNum=0;
-      tempMasterMapToSock.recvKeepAlive=false;
-      tempMasterMapToSock.isStartKeepAlive=false;
-
-      m_globalRouting->UpdateMasterMapToSock(tempMasterMapToSock,1);
-
-      // 为该套接字创建接收线程
-      struct threadparamA *tempThreadParam=(struct threadparamA *)malloc(sizeof(struct threadparamA));
-      tempThreadParam->tempTCPRoute=this;
-      tempThreadParam->tempAddr=masterAddr;
-      tempThreadParam->tempSock=clientSock;
-
-      if(pthread_create(&server_thread,NULL,ServerThread,(void*)tempThreadParam)<0)
-      {
-        Logfout << GetNow() << "Create thread for a connect failed!!!!!!!!!" << endl;
-        break;
-      }
-      // pthread_detach(server_thread);
-
-      Logfout << GetNow() << "Try to connected with master[" << inet_ntoa(masterAddr.sin_addr) << "][sock:" << clientSock << "]." << endl;
-
-      struct MNinfo helloMNIfo;
-      helloMNIfo.addr.sin_family=AF_INET;
-      inet_aton("255.255.255.255",&(helloMNIfo.addr.sin_addr));
-      helloMNIfo.addr.sin_port=htons(0);
-      m_globalRouting->GetAddrByNICName(&(helloMNIfo.addr),"eth0");
-      helloMNIfo.destIdent.level=-1;// 此时还不知道master的ident
-      helloMNIfo.destIdent.position=-1;
-      helloMNIfo.srcIdent=myIdent;
-      helloMNIfo.pathNodeIdentA=myIdent;
-      helloMNIfo.pathNodeIdentB=myIdent;
-      helloMNIfo.clusterMaster=false;
-      helloMNIfo.chiefMaster=chiefMaster;
-      helloMNIfo.keepAlive=false;
-      helloMNIfo.linkFlag=false;
-      helloMNIfo.hello=true;
-      helloMNIfo.ACK=false;
-
-      SendMessageTo(clientSock,helloMNIfo);
+      helloMNInfo.pathNodeIdent[i].level=-1;
+      helloMNInfo.pathNodeIdent[i].position=-1;
     }
+    value=SendMessageTo(clientSock,helloMNInfo);
+  }
+  else
+  {
+    Logfout << GetNow() << "Try to connect with forward node[" << middleAddress << "][sock:" << clientSock << "]." << endl;
+    for (int i=0;i<MAX_PATH_LEN;i++) helloMNInfo.pathNodeIdent[i]=inDirPath->pathNodeIdent[i];
+    value=SendMessageTo(clientSock,helloMNInfo);// 通过hello包来发送路径
   }
   Logfout.close();
+  pthread_mutex_unlock(&mutexB);
+  return clientSock;
 }
 
 void* 
-TCPRoute::SendHelloToChiefThread(void* tempThreadParam)
+TCPRoute::SendHelloToThread(void* tempThreadParam)
 {
   // pthread_detach(pthread_self());
   TCPRoute *tempTCPRoute=((struct threadparamB *)tempThreadParam)->tempTCPRoute;
-  vector<string> masterAddress;
-  masterAddress.push_back(((struct threadparamB *)tempThreadParam)->masterAddress);
-  string NICName=((struct threadparamB *)tempThreadParam)->NICName;
+  string masterAddress=((struct threadparamB *)tempThreadParam)->masterAddress;
+  ident destIdent=((struct threadparamB *)tempThreadParam)->destIdent;
 
   stringstream logFoutPath;
   logFoutPath.str("");
   logFoutPath << "/var/log/Primus-" << tempTCPRoute->myIdent.level << "." << tempTCPRoute->myIdent.position << ".log";
   ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
-  int interval=1;//单位s
-  int failCounter=0;//超出10次就挂了
+  ident tempIdent;
+  tempIdent.level=-1;
+  tempIdent.position=-1;
 
-  while (1)
+  int interval=0;//单位s
+  int result=-1;//
+  struct pathtableentry *tempInDirPath=new pathtableentry();
+  tempInDirPath=NULL;
+
+  // Logfout << GetNow() << "Send hello to master[" << masterAddress << "]." << endl;
+  do
   {
-    tempTCPRoute->SendHelloToMaster(masterAddress,"",NICName);
-    sleep(interval);
-    interval*=2;// double
-    vector<struct mastermaptosock> tempMasterMapToSock=m_globalRouting->GetMasterMapToSock();
-    if (tempMasterMapToSock.size()>0)
+    if ((tempTCPRoute->myIdent.level!=0 && interval==0) || tempTCPRoute->myIdent.level==0)// Node第一次尝试则选择管理网口，common master则只能尝试管理网口
     {
-      if (tempMasterMapToSock[0].masterIdent.level!=-1 && tempMasterMapToSock[0].masterIdent.position!=-1)
+      // Logfout << GetNow() << "直接路径[" << masterAddress << "]" << endl;
+      // 首先检测管理网口是否正常工作
+      if ((m_globalRouting->GetAddrByNICName(MGMT_INTERFACE))!=NULL)// 管理网口正常，尝试直接连接
       {
-        Logfout << GetNow() << "Connect with chiefMaster[" << masterAddress[0] << "]......" << endl;
+        result=tempTCPRoute->SendHelloToMaster(destIdent,masterAddress,"",MGMT_INTERFACE,NULL,true);
+        interval+=2;// 
+        sleep(interval);
+      }
+    }
+    if (tempTCPRoute->myIdent.level!=0 && result==-1)// 不是第一次尝试或者上一次连接失败（包括通过管理网口连接失败，只有node才能调用）
+    {
+      // Logfout << GetNow() << "间接路径[" << masterAddress << "]" << endl;
+      tempInDirPath=m_globalRouting->GetNodePathToMaster(tempInDirPath);
+      if (tempInDirPath==NULL) 
+      {
+        Logfout << GetNow() << "I can not connect with master[" << masterAddress << "] any longer." << endl;
         break;
       }
-      else continue;
+      result=tempTCPRoute->SendHelloToMaster(destIdent,masterAddress,inet_ntoa(tempInDirPath->nodeAddr.addr.sin_addr),m_globalRouting->GetNICNameByRemoteAddr(tempInDirPath->nextHopAddr.addr),tempInDirPath,false);
+      interval+=2;// 
+      sleep(interval);
+      if (result==-1)// 连接失败，等待重连
+      {
+        Logfout << GetNow() << "Send hello to master[" << masterAddress << "] again." << endl;
+        continue;
+      }
+      else 
+      {
+        Logfout << GetNow() << "InDirPath:[";
+        for (int i=0;i<MAX_PATH_LEN;i++) 
+        {
+          if (tempInDirPath->pathNodeIdent[i].level!=-1) Logfout << tempInDirPath->pathNodeIdent[i].level << "." << tempInDirPath->pathNodeIdent[i].position << "\t";
+          else break;
+        }
+        Logfout << "] to master[" << masterAddress << "]." << endl;
+      }
     }
-    else continue;
-  }
+    // 发送hello成功，检查是否已经收到了ACK
+    // Logfout << GetNow() << "Check hello-ACK from master[" << masterAddress << "]." << endl;
+    if (m_globalRouting->IsLegalMaster(masterAddress))
+    {
+      Logfout << GetNow() << "Recv hello-ACK from master[" << masterAddress << "]." << endl;
+      break;// 收到ACK
+    }
+  }while (interval<20);// 每次累加2，总共尝试10次
+  Logfout << GetNow() << "Stop to SendHelloTo master[" << masterAddress << "]." << endl;
   Logfout.close();
   // pthread_exit(0);
 }
 
 void // master尝试和chiefMaster建立连接
-TCPRoute::SendHelloToChief(string masterAddress,string NICName)
+TCPRoute::SendHelloTo(ident destIdent,string masterAddress)
 {
   stringstream logFoutPath;
   logFoutPath.str("");
   logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
-  // struct threadparamB *tempThreadParam=(struct threadparamB *)malloc(sizeof(struct threadparamB));
   threadparamB *tempThreadParam=new threadparamB();
   tempThreadParam->tempTCPRoute=this;
   tempThreadParam->masterAddress=masterAddress;
-  tempThreadParam->NICName=NICName;
-
-  if (pthread_create(&hellotochief_thread,NULL,SendHelloToChiefThread,(void *)tempThreadParam)<0)
+  tempThreadParam->destIdent=destIdent;
+  
+  if (pthread_create(&helloto_thread,NULL,SendHelloToThread,(void *)tempThreadParam)<0)
   {
     Logfout << GetNow() << "Create thread to connect with chiefMaster failed!!!!!!!!!" << endl;
     exit(0);
   }
-  // pthread_detach(hellotochief_thread);
+  // pthread_detach(helloto_thread);
   Logfout.close();
 }

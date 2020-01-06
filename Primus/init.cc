@@ -324,6 +324,21 @@ pid_t getDaemon(pid_t primusPid, uint32_t intervalSeconds)
 
 int main(int argc,char *argv[])
 {
+  struct sockaddr_in sockaddr;
+  vector<struct DestNetmaskProtoNum> destNetmaskProtoNum_vector;//把每一条路由的协议号、网络号和掩码存储在destNetmaskProtoNum_vector向量里
+  vector<struct DestNetmaskProtoNum> * p_destNetmaskProtoNum_vector=&destNetmaskProtoNum_vector;
+    
+  get_destNetmaskProtoNum_info_all(p_destNetmaskProtoNum_vector);
+  for(int i=0;i<(*p_destNetmaskProtoNum_vector).size(); i++)
+  {
+      if ((*p_destNetmaskProtoNum_vector)[i].protocolNum == RTPROT_ZEBRA)
+      {
+          sockaddr.sin_family = AF_INET;
+          sockaddr.sin_addr.s_addr = (*p_destNetmaskProtoNum_vector)[i].des;
+          DelRoute( sockaddr, (*p_destNetmaskProtoNum_vector)[i].netmask);    //网络字节序IP
+      }
+  }
+  
   ifstream fin("/usr/local/etc/Primus.conf",ios::in);
   string config;
   int begin,end;
@@ -331,7 +346,7 @@ int main(int argc,char *argv[])
   config="";
   getline(fin,config);
   begin=config.find(':',0)+1;
-  masterAddress.push_back(config.substr(begin,config.length()-begin));
+  // masterAddress.push_back(config.substr(begin,config.length()-begin));
 
   config="";
   getline(fin,config);
@@ -339,9 +354,13 @@ int main(int argc,char *argv[])
   for (int i=begin;i<config.length();)
   {
     while (i<config.length() && config[i]!=',') i++;
-    masterAddress.push_back(config.substr(begin,i-begin));
+    // masterAddress.push_back(config.substr(begin,i-begin));
     begin=++i;
   }
+
+  masterAddress.push_back("172.16.80.1");
+  masterAddress.push_back("172.16.80.2");
+  masterAddress.push_back("172.16.80.3");
 
   config="";
   getline(fin,config);
@@ -388,7 +407,7 @@ int main(int argc,char *argv[])
   else if (level==2) pod=position/LeafNodes+1;
   else if (level==1) pod=position/ToRNodes+1;
   m_globalRouting=new Ipv4GlobalRouting(level,position,ToRNodes,LeafNodes,SpineNodes,nPods,pod,nMaster,Links,defaultLinkTimer,defaultKeepaliveTimer,true,true);
-  pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
+  // pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
   m_globalRouting->Start(masterAddress);
   pthread_exit(NULL);
   return 0;

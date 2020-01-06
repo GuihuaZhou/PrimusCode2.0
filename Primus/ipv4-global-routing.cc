@@ -1,7 +1,7 @@
 #include "ipv4-global-routing.h"
 
-using namespace std;
-pthread_mutex_t mutex;
+// using namespace std;
+pthread_mutex_t mutexA;
 
 Ipv4GlobalRouting::~Ipv4GlobalRouting()
 {
@@ -60,7 +60,7 @@ Ipv4GlobalRouting::Ipv4GlobalRouting(int level,int position,int ToRNodes,int Lea
   tempNode.level=-1;
   tempNode.position=-1;
 
-  if (myIdent.level==0 && myIdent.position==1) chiefMaster=true;
+  if (myIdent.level==0 && myIdent.position==0) chiefMaster=true;
   else chiefMaster=false;
 
   if (myIdent.level!=0)//node
@@ -160,29 +160,30 @@ Ipv4GlobalRouting::Start(vector<string> tempMasterAddress)
   ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   masterAddress=tempMasterAddress;
+  ident tempIdent;
+  tempIdent.level=-1;
+  tempIdent.position=-1;
   if(myIdent.level==0)
   {
     // cout << "I am master!" << endl;
-    if (!chiefMaster)
-    {
-      m_tcpRoute->SendHelloToChief(masterAddress[1],"eth0");
-    }
+    if (!chiefMaster) m_tcpRoute->SendHelloTo(tempIdent,masterAddress[0]);
 
-    // threadparamA *threadParam=new threadparamA();
-    // threadParam->tempGlobalRouting=this;
-    // threadParam->tempLinkTableEntry=NULL;
-    // if(pthread_create(&listenKeepAlive_thread,NULL,ListenKeepAliveThread,(void *)threadParam)<0)
-    // {
-    //   Logfout << GetNow() << "Master could not check keepAlive." << endl;
-    //   exit(0);
-    // }
-    // pthread_detach(listenKeepAlive_thread);
+    threadparamA *threadParam=new threadparamA();
+    threadParam->tempGlobalRouting=this;
+    threadParam->tempLinkTableEntry=NULL;
+    if(pthread_create(&listenKeepAlive_thread,NULL,ListenKeepAliveThread,(void *)threadParam)<0)
+    {
+      Logfout << GetNow() << "Master could not check keepAlive." << endl;
+      exit(0);
+    }
     m_tcpRoute->StartListen();
   }
   else
   {
     // cout << "I am not master!" << endl;
     m_udpServer.StartApplication();
+    // for (int i=0;i<masterAddress.size();i++) m_tcpRoute->SendHelloTo(tempIdent,masterAddress[i]);
+    // sleep(5);
     ListenNIC();
     m_tcpRoute->StartListen();
   }
@@ -194,6 +195,26 @@ ident
 Ipv4GlobalRouting::GetMyIdent()
 {
   return myIdent;
+}
+
+int 
+Ipv4GlobalRouting::GetSockByAddress(string tempAddress)
+{
+  for (int i=0;i<masterMapToSock.size();i++)
+  {
+    if (masterMapToSock[i].masterAddr==tempAddress || masterMapToSock[i].middleAddr==tempAddress) return masterMapToSock[i].masterSock;
+  }
+  return -1;
+}
+
+int 
+Ipv4GlobalRouting::GetSockByMasterIdent(ident masterIdent)
+{
+  for (int i=0;i<masterMapToSock.size();i++)
+  {
+    if (SameNode(masterMapToSock[i].masterIdent,masterIdent)) return masterMapToSock[i].masterSock;
+  }
+  return -1;
 }
 
 int
@@ -302,6 +323,36 @@ Ipv4GlobalRouting::GetSystemTime()
   return tv.tv_sec+tv.tv_nsec*0.000000001;
 }
 
+void 
+Ipv4GlobalRouting::CloseSock(int sock)
+{
+  bool first=true;
+  for (int i=0;i<masterMapToSock.size();i++) 
+  {
+    if (masterMapToSock[i].masterSock==sock) 
+    {
+      masterMapToSock[i].masterSock=-1;
+      if (first==true) 
+      {
+        shutdown(sock,SHUT_RDWR);
+        first=false;
+      }
+    }
+  }
+  for (int i=0;i<nodeMapToSock.size();i++) 
+  {
+    if (nodeMapToSock[i].nodeSock==sock) 
+    {
+      nodeMapToSock[i].nodeSock=-1;
+      if (first==true) 
+      {
+        shutdown(sock,SHUT_RDWR);
+        first=false;
+      }
+    }
+  }
+}
+
 bool
 Ipv4GlobalRouting::SameNode(ident nodeA,ident nodeB)
 {
@@ -337,7 +388,7 @@ Ipv4GlobalRouting::UpdateKeepAlive(int masterSock,ident masterIdent,bool recvKee
           masterMapToSock[i].keepAliveFaildNum++;
           if (masterMapToSock[i].keepAliveFaildNum>3)
           {
-            Logfout << GetNow() << "KeepAlive timeout,connect with master " << masterIdent.level << "." << masterIdent.position << " failed." << endl;
+            // Logfout << GetNow() << "KeepAlive timeout,connect with master " << masterIdent.level << "." << masterIdent.position << " failed." << endl;
             return 2;
           }
           return 1;
@@ -361,7 +412,7 @@ Ipv4GlobalRouting::KeepAliveThread(void* tempThreadParam)
   Ipv4GlobalRouting *tempGlobalRouting=((struct threadparamC *)tempThreadParam)->tempGlobalRouting;
   TCPRoute *tempTCPRoute=((struct threadparamC *)tempThreadParam)->tempTCPRoute;
   ident masterIdent=((struct threadparamC *)tempThreadParam)->masterIdent;
-  int masterSock=((struct threadparamC *)tempThreadParam)->masterSock;
+  int masterSock=0;
 
   stringstream logFoutPath;
   logFoutPath.str("");
@@ -375,48 +426,67 @@ Ipv4GlobalRouting::KeepAliveThread(void* tempThreadParam)
   inet_aton("255.255.255.255",&(tempMNInfo.addr.sin_addr));
   tempMNInfo.addr.sin_port=htons(0);
   tempMNInfo.destIdent=masterIdent;
+  tempMNInfo.forwardIdent=masterIdent;
   tempMNInfo.srcIdent=tempGlobalRouting->myIdent;
-  tempMNInfo.pathNodeIdentA=tempGlobalRouting->myIdent;
-  tempMNInfo.pathNodeIdentB=tempGlobalRouting->myIdent;
+  tempMNInfo.pathNodeIdent[0]=tempGlobalRouting->myIdent;
+  tempMNInfo.pathNodeIdent[1]=tempGlobalRouting->myIdent;
+  for (int i=2;i<MAX_PATH_LEN;i++)
+  {
+    tempMNInfo.pathNodeIdent[i].level=-1;
+    tempMNInfo.pathNodeIdent[i].position=-1;
+  }
   tempMNInfo.clusterMaster=false;
   tempMNInfo.chiefMaster=false;
+  tempMNInfo.reachable=true;
   tempMNInfo.keepAlive=true;
   tempMNInfo.linkFlag=false;
   tempMNInfo.hello=false;
   tempMNInfo.ACK=false;
+  tempMNInfo.bye=false;
 
   int tempDefaultKeepaliveTimer=tempGlobalRouting->m_defaultKeepaliveTimer;
   int temp=0;
   while (1)
   {
     sleep(tempDefaultKeepaliveTimer);
+    masterSock=tempGlobalRouting->GetSockByMasterIdent(masterIdent);
+    if (masterSock==-1) break;// 更换了新的套接字，默默退出
     tempTCPRoute->SendMessageTo(masterSock,tempMNInfo);
     temp=tempGlobalRouting->UpdateKeepAlive(masterSock,masterIdent,false);
     if (temp==2) // keepalive timeout
     {
-      Logfout << GetNow() << "Node stop to send keepAlive to master " << masterIdent.level << "." << masterIdent.position << "[sock:" << masterSock << "]." << endl;
       if (tempGlobalRouting->myIdent.level==0)// common Master处理chief Master宕机
       {
         if (tempGlobalRouting->SameNode(tempGlobalRouting->GetChiefMasterIdent(),masterIdent))// chiefmaster挂了
         {
           Logfout << GetNow() << "ChiefMaster may be DOWN!" << endl;
           tempGlobalRouting->NewChiefMasterElection(masterIdent);// 选举新的chief master
-          shutdown(masterSock,SHUT_RDWR);
+          tempGlobalRouting->CloseSock(masterSock);
         }
       }
       else if (tempGlobalRouting->myIdent.level!=0)// node处理chiefmaster宕机
       {
-        shutdown(masterSock,SHUT_RDWR);
+        tempGlobalRouting->CloseSock(masterSock);
       }
       break;
     }
     else if (temp==3) // 套接字已经不存在了，可能是换了新的连接
     {
-      Logfout << GetNow() << "Node stop to send keepAlive to master " << masterIdent.level << "." << masterIdent.position << "[sock:" << masterSock << "]." << endl;
-      shutdown(masterSock,SHUT_RDWR);
+      tempGlobalRouting->CloseSock(masterSock);
       break;
     }
   }
+
+  for (int i=0;i<tempGlobalRouting->masterMapToSock.size();i++)
+  {
+    if (tempGlobalRouting->SameNode(tempGlobalRouting->masterMapToSock[i].masterIdent,masterIdent))
+    {
+      tempGlobalRouting->masterMapToSock[i].isStartKeepAlive=false;
+      break;
+    }
+  }
+  tempTCPRoute->SendHelloTo(masterIdent,tempGlobalRouting->GetMasterAddrByIdent(masterIdent));
+  Logfout << GetNow() << "Node stop to send keepAlive to master " << masterIdent.level << "." << masterIdent.position << "[sock:" << masterSock << "]." << endl;
   Logfout.close();
   // pthread_exit(0);
 }
@@ -428,7 +498,7 @@ Ipv4GlobalRouting::UpdateMasterMapToSock(struct mastermaptosock tempMasterMapToS
   logFoutPath.str("");
   logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   ofstream Logfout(logFoutPath.str().c_str(),ios::app);
-
+  // 此处有问题
   if (cmd==1)
   {
     bool isFind=false;
@@ -446,11 +516,15 @@ Ipv4GlobalRouting::UpdateMasterMapToSock(struct mastermaptosock tempMasterMapToS
           masterMapToSock[i].middleAddr=tempMasterMapToSock.middleAddr;
           masterMapToSock[i].keepAliveFaildNum=tempMasterMapToSock.keepAliveFaildNum;
           masterMapToSock[i].recvKeepAlive=tempMasterMapToSock.recvKeepAlive;
+          masterMapToSock[i].inDirPath=tempMasterMapToSock.inDirPath;
           PrintMasterMapToSock();
           isFind=true;
         }
         else if (tempMasterMapToSock.masterIdent.level==0)// 收到ack后来修改ident
         {
+          masterMapToSock[i].keepAliveFaildNum=tempMasterMapToSock.keepAliveFaildNum;
+          masterMapToSock[i].recvKeepAlive=tempMasterMapToSock.recvKeepAlive;
+
           if (masterMapToSock[i].isStartKeepAlive==false)
           {
             // 收到ACK时调用该函数是不知道网口名称的
@@ -459,16 +533,15 @@ Ipv4GlobalRouting::UpdateMasterMapToSock(struct mastermaptosock tempMasterMapToS
             masterMapToSock[i].direct=tempMasterMapToSock.direct;
             masterMapToSock[i].chiefMaster=tempMasterMapToSock.chiefMaster;
             masterMapToSock[i].isStartKeepAlive=true;
-            // struct threadparamC *threadParam=(struct threadparamC *)malloc(sizeof(struct threadparamC));
-            // threadParam->tempGlobalRouting=this;
-            // threadParam->tempTCPRoute=m_tcpRoute;
-            // threadParam->masterIdent=tempMasterMapToSock.masterIdent;
-            // threadParam->masterSock=tempMasterMapToSock.masterSock;
-            // if (pthread_create(&keepalive_thread,NULL,KeepAliveThread,(void *)threadParam)<0)
-            // {
-            //   Logfout << GetNow() << "Create KeepAliveThread for sock[" << tempMasterMapToSock.masterSock << "] failed." << endl;
-            // }
-            // pthread_detach(keepalive_thread);
+
+            struct threadparamC *threadParam=(struct threadparamC *)malloc(sizeof(struct threadparamC));
+            threadParam->tempGlobalRouting=this;
+            threadParam->tempTCPRoute=m_tcpRoute;
+            threadParam->masterIdent=tempMasterMapToSock.masterIdent;
+            if (pthread_create(&keepalive_thread,NULL,KeepAliveThread,(void *)threadParam)<0)
+            {
+              Logfout << GetNow() << "Create KeepAliveThread for sock[" << tempMasterMapToSock.masterSock << "] failed." << endl;
+            }
             PrintMasterMapToSock();
           }
           isFind=true;
@@ -603,24 +676,48 @@ Ipv4GlobalRouting::GetLocalAddrByRemoteAddr(struct sockaddr_in *localAddr,struct
   } 
 }
 
-void 
-Ipv4GlobalRouting::GetAddrByNICName(struct sockaddr_in *addr,string NICName)// 通过rtnetlink获取网口的地址
+struct sockaddr_in *
+Ipv4GlobalRouting::GetAddrByNICName(string NICName)// 通过rtnetlink获取网口的地址
 {
   struct ifaddrs *ifa;
   if (0!=getifaddrs(&ifa))
   {
     printf("getifaddrs error\n");
-    return;
+    return NULL;
   }
   for (;ifa!=NULL;)
   {
     if (ifa->ifa_name==NICName && ifa->ifa_flags==69699 && ifa->ifa_name!=NULL && ifa->ifa_addr!=NULL && ifa->ifa_netmask!=NULL && (*ifa).ifa_ifu.ifu_dstaddr!=NULL)
     {
-      *addr=*(struct sockaddr_in *)(ifa->ifa_addr);
-      return;
+      return (struct sockaddr_in *)(ifa->ifa_addr);
     }
     ifa=ifa->ifa_next;
   }
+  freeifaddrs(ifa);
+  return NULL;
+}
+
+struct pathtableentry *
+Ipv4GlobalRouting::GetNodePathToMaster(struct pathtableentry *lastPath)// 获得一条通往master的路径，可能是直连，可能是间接连接
+{
+  stringstream logFoutPath;
+  logFoutPath.str("");
+  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+
+  for (int i=0;i<nodeInDirPathTable.size();i++)
+  {
+    if (lastPath!=nodeInDirPathTable[i])// 不是上次选的路径
+    {
+      if (nodeInDirPathTable[i]->linkCounter==0 && nodeInDirPathTable[i]->dirConFlag==true)
+      {
+        Logfout.close();
+        return nodeInDirPathTable[i];
+      }
+    }
+  }
+  Logfout.close();
+  return NULL;
 }
 
 vector<struct mastermaptosock> 
@@ -692,13 +789,37 @@ Ipv4GlobalRouting::IsDetectNeighbor(struct sockaddr_in addr)//根据邻居的地
   return false;
 }
 
+string 
+Ipv4GlobalRouting::GetMasterAddrByIdent(ident masterIdent)
+{
+  for (int i=0;i<masterMapToSock.size();i++)
+  {
+    if (SameNode(masterIdent,masterMapToSock[i].masterIdent)) return masterMapToSock[i].masterAddr;
+  }
+  return NULL;
+}
+
+bool 
+Ipv4GlobalRouting::IsLegalMaster(string masterAddress)// 检查和master的连接是否合法
+{
+  for (int i=0;i<masterMapToSock.size();i++)
+  {
+    if (!strcmp(masterAddress.c_str(),masterMapToSock[i].masterAddr.c_str()))
+    {
+      if (masterMapToSock[i].masterIdent.level!=-1 && masterMapToSock[i].masterIdent.position!=-1 && masterMapToSock[i].masterSock>0) return true;
+      else return false;
+    }
+  }
+  return false;
+}
+
 bool 
 Ipv4GlobalRouting::IsLegalNeighbor(struct NICinfo tempNICInfo)//判断邻居是否合法，如果邻居为无效连接或者服务器，返回false
 {
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   // 判断neighborIdent、isSwitch和isServer
   if (tempNICInfo.neighborIdent.level!=-1 && tempNICInfo.neighborIdent.position!=-1)
@@ -707,7 +828,7 @@ Ipv4GlobalRouting::IsLegalNeighbor(struct NICinfo tempNICInfo)//判断邻居是�
     else return false;
   }
   else return false;
-  Logfout.close();
+  // Logfout.close();
 }
 
 // 完成邻居发现有两个条件：收到邻居发来的ND和向邻居发送ND后收到回复
@@ -747,6 +868,7 @@ Ipv4GlobalRouting::NDRecvND(struct NDinfo tempNDInfo)//改neighborIdent，收到
     temp.isMaster=false;
     temp.isServer=false;
     temp.isSwitch=true;// 主动收到对面的ND，肯定是switch
+    temp.isNeedJudge=true;
     temp.flag=true;//up
     temp.neighborIdent=tempNDInfo.myIdent;
     temp.neighborAddr=tempNDInfo.localAddr;// 此localAddr是邻居发来的
@@ -814,7 +936,7 @@ Ipv4GlobalRouting::IsLegalPathInfo(ident tempPathNodeIdent[],ident neighborIdent
 void 
 Ipv4GlobalRouting::FreshNeighboorList(struct NICinfo tempNICInfo)//邻居发现完成
 {
-  // pthread_mutex_lock(&mutex);
+  // pthread_mutex_lock(&mutexA);
   stringstream logFoutPath;
   logFoutPath.str("");
   logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
@@ -837,21 +959,29 @@ Ipv4GlobalRouting::FreshNeighboorList(struct NICinfo tempNICInfo)//邻居发现�
     inet_aton("255.255.255.255",&(tempMNInfo.addr.sin_addr));
     tempMNInfo.addr.sin_port=htons(0);
     tempMNInfo.srcIdent=myIdent;
-    tempMNInfo.pathNodeIdentA=myIdent;
-    tempMNInfo.pathNodeIdentB=tempNICInfo.neighborIdent;
+    tempMNInfo.forwardIdent=myIdent;
+    tempMNInfo.pathNodeIdent[0]=myIdent;
+    tempMNInfo.pathNodeIdent[1]=tempNICInfo.neighborIdent;
+    for (int i=2;i<MAX_PATH_LEN;i++)
+    {
+      tempMNInfo.pathNodeIdent[i].level=-1;
+      tempMNInfo.pathNodeIdent[i].position=-1;
+    }
     tempMNInfo.clusterMaster=false;
     tempMNInfo.chiefMaster=false;
+    tempMNInfo.reachable=true;
     tempMNInfo.keepAlive=false;
     tempMNInfo.linkFlag=true;
     tempMNInfo.hello=false;
     tempMNInfo.ACK=false;
+    tempMNInfo.bye=false;
 
     int value=0;
     for (int j=0;j<masterMapToSock.size();j++)// 向master上报链路信息
     {
       tempMNInfo.destIdent=masterMapToSock[j].masterIdent;
       value=m_tcpRoute->SendMessageTo(masterMapToSock[j].masterSock,tempMNInfo);
-      Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdentA.level << "." << tempMNInfo.pathNodeIdentA.position << "--" << tempMNInfo.pathNodeIdentB.level << "." << tempMNInfo.pathNodeIdentB.position << " up to master ";
+      Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position << " up to master ";
       Logfout << masterMapToSock[j].masterIdent.level << "." << masterMapToSock[j].masterIdent.position << "[value:" << value << "]." << endl;
     }
   }
@@ -997,13 +1127,13 @@ Ipv4GlobalRouting::FreshNeighboorList(struct NICinfo tempNICInfo)//邻居发现�
     }
   }
   Logfout.close();
-  // pthread_mutex_unlock(&mutex);
+  // pthread_mutex_unlock(&mutexA);
 }
 
 void 
 Ipv4GlobalRouting::FreshPathTable(struct pathinfo *tempPathInfo,struct sockaddr_in remote_addr)//收到了新的路径
 {
-  // pthread_mutex_lock(&mutex);
+  // pthread_mutex_lock(&mutexA);
   stringstream logFoutPath;
   logFoutPath.str("");
   logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
@@ -1044,35 +1174,65 @@ Ipv4GlobalRouting::FreshPathTable(struct pathinfo *tempPathInfo,struct sockaddr_
     } 
   }
   Logfout.close();
-  // pthread_mutex_unlock(&mutex);
+  // pthread_mutex_unlock(&mutexA);
 }
 
-void 
-Ipv4GlobalRouting::ReconnectWithMaster()// 重连Master，1、如果是本地检测到网口关闭且影响与master的连接，2、master通过其他node来通知重连
+bool 
+Ipv4GlobalRouting::IsNewNeighbor(string NICName)
 {
   stringstream logFoutPath;
   logFoutPath.str("");
   logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
-  // for (int i=0;i<masterMapToSock.size();i++) shutdown(masterMapToSock[i].masterSock,SHUT_RDWR);
-  masterMapToSock.clear();
-  // 应该先判断是否可以通过管理网口连接
-  // 然后再考虑通过间接路径
-  for (int i=0;i<nodeInDirPathTable.size();i++)
+  for (int i=0;i<NICInfo.size();i++)
   {
-    if (selectInDirPathIndex!=i && nodeInDirPathTable[i]->linkCounter==0 && nodeInDirPathTable[i]->dirConFlag==true)
+    if (NICInfo[i].NICName==NICName) // 邻居信息已经存在
     {
-      ident tempIdent=nodeInDirPathTable[i]->pathNodeIdent[nodeInDirPathTable[i]->nodeCounter-1];
-      // int port=tempIdent.level*1000+tempIdent.position*100;// sonic test
-      string middleAddress=inet_ntoa(nodeInDirPathTable[i]->nodeAddr.addr.sin_addr);
-      // tempTCPRoute->SendHelloToMaster(tempMasterAddress,middleAddress,nextHopNICName,port);// sonic test
-      selectInDirPathIndex=i;// 记录选中的间接路径，再发送给master
-      m_tcpRoute->SendHelloToMaster(masterAddress,middleAddress,GetNICNameByRemoteAddr(nodeInDirPathTable[i]->nodeAddr.addr));
-      break;
+      if (NICInfo[i].neighborIdent.level==-1 && NICInfo[i].neighborIdent.position==-1) 
+      {
+        Logfout.close();
+        return true;
+      }
+      else 
+      {
+        struct MNinfo tempMNInfo;
+        tempMNInfo.addr.sin_family=AF_INET;// 此时addr无实际意义
+        inet_aton("255.255.255.255",&(tempMNInfo.addr.sin_addr));
+        tempMNInfo.addr.sin_port=htons(0);
+        tempMNInfo.srcIdent=myIdent;
+        tempMNInfo.forwardIdent=myIdent;
+        tempMNInfo.pathNodeIdent[0]=myIdent;
+        tempMNInfo.pathNodeIdent[1]=NICInfo[i].neighborIdent;
+        for (int i=2;i<MAX_PATH_LEN;i++)
+        {
+          tempMNInfo.pathNodeIdent[i].level=-1;
+          tempMNInfo.pathNodeIdent[i].position=-1;
+        }
+        tempMNInfo.clusterMaster=false;
+        tempMNInfo.chiefMaster=false;
+        tempMNInfo.reachable=true;
+        tempMNInfo.keepAlive=false;
+        tempMNInfo.linkFlag=true;
+        tempMNInfo.hello=false;
+        tempMNInfo.ACK=false;
+        tempMNInfo.bye=false;
+
+        int value=0;
+        for (int j=0;j<masterMapToSock.size();j++)// 向master上报链路信息
+        {
+          tempMNInfo.destIdent=masterMapToSock[j].masterIdent;
+          value=m_tcpRoute->SendMessageTo(masterMapToSock[j].masterSock,tempMNInfo);
+          Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position << " up to master ";
+          Logfout << masterMapToSock[j].masterIdent.level << "." << masterMapToSock[j].masterIdent.position << "[value:" << value << "]." << endl;
+        }
+        Logfout.close();
+        return false;
+      }
     }
   }
   Logfout.close();
+  return true;
 }
 
 bool
@@ -1088,11 +1248,9 @@ Ipv4GlobalRouting::IsNewNIC(struct ifaddrs *ifa)
     {
       NICInfo[i].flag=true;
       // 故障网口恢复
-      if (NICInfo[i].isServer==true && NICInfo[i].isSwitch==true && NICInfo[i].isMaster==true) 
+      if (NICInfo[i].isNeedJudge==false) 
       {
-        NICInfo[i].isServer=false;
-        NICInfo[i].isSwitch=false;
-        NICInfo[i].isMaster=false;
+        NICInfo[i].isNeedJudge=true;
         return true;
       }
       else return false;//不是新的NIC
@@ -1108,7 +1266,9 @@ Ipv4GlobalRouting::IsNewNIC(struct ifaddrs *ifa)
       }
     }
   }
-  if (isFindNIC==false)// 不存在就添加
+  // 10.0.80.0/24是用来控制vm的，其网口不计入
+  string unexceptAddress=inet_ntoa(((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr);
+  if (isFindNIC==false && unexceptAddress.substr(0,7)!="10.0.80")// 不是控制网口不存在就添加
   {
     struct NICinfo tempNICInfo;
     // if (ifa->ifa_name[0]=='e') // sonic 
@@ -1118,6 +1278,7 @@ Ipv4GlobalRouting::IsNewNIC(struct ifaddrs *ifa)
       tempNICInfo.isMaster=true;
       tempNICInfo.isServer=false;
       tempNICInfo.isSwitch=false;
+      tempNICInfo.isNeedJudge=true;
       tempNICInfo.flag=true;//up
       tempNICInfo.neighborIdent.level=0;
       tempNICInfo.neighborIdent.position=0;
@@ -1134,6 +1295,7 @@ Ipv4GlobalRouting::IsNewNIC(struct ifaddrs *ifa)
       tempNICInfo.isMaster=false;
       tempNICInfo.isServer=false;
       tempNICInfo.isSwitch=false;
+      tempNICInfo.isNeedJudge=true;
       tempNICInfo.flag=true;//up
       tempNICInfo.neighborIdent.level=-1;
       tempNICInfo.neighborIdent.position=-1;
@@ -1148,6 +1310,7 @@ Ipv4GlobalRouting::IsNewNIC(struct ifaddrs *ifa)
     }
     return true;
   }
+  return false;
 }
 
 void*
@@ -1186,32 +1349,36 @@ Ipv4GlobalRouting::ListenNICThread(void* tempThreadParam)
         if (tempGlobalRouting->IsNewNIC(ifa))
         {
           // if (ifa->ifa_name[0]=='e')// sonic
-          if (!strcmp(ifa->ifa_name,"eth0"))
+          if (!strcmp(ifa->ifa_name,MGMT_INTERFACE))
           {
-            Logfout << GetNow() << "New NIC " << ifa->ifa_name << "(" << inet_ntoa(((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr) << ") UP." << endl;
-            // 应该先找出没有连接上的master，放后面再写
-            if (tempGlobalRouting->nodeInDirPathTable.size()==0)// 说明没有master连上
+            Logfout << GetNow() << "NIC " << ifa->ifa_name << "(" << inet_ntoa(((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr) << ") UP." << endl;
+            ident tempIdent;
+            tempIdent.level=-1;
+            tempIdent.position=-1;
+            for (int i=0;i<tempGlobalRouting->masterAddress.size();i++)
             {
-              string middleAddress="";
-              tempTCPRoute->SendHelloToMaster(tempGlobalRouting->masterAddress,middleAddress,ifa->ifa_name);
+              if (!tempGlobalRouting->IsLegalMaster(tempGlobalRouting->masterAddress[i])) tempTCPRoute->SendHelloTo(tempIdent,tempGlobalRouting->masterAddress[i]);
             }
           }
           // else if (ifa->ifa_name[0]=='E')// sonic
           else
           {
-            Logfout << GetNow() << "New NIC " << ifa->ifa_name << "(" << inet_ntoa(((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr) << ") UP." << endl;
-            struct sockaddr_in localAddr,remoteAddr;
-            localAddr=*((struct sockaddr_in *)(ifa->ifa_addr));
-            bzero(&remoteAddr,sizeof(struct sockaddr_in));
-            remoteAddr.sin_family=AF_INET;
-            string address=inet_ntoa(localAddr.sin_addr);
-            address[address.size()-1]=(address[address.size()-1]=='1')? '2':'1';
-            remoteAddr.sin_addr.s_addr=inet_addr((char*)address.c_str());
-            remoteAddr.sin_port=htons(ND_PORT);
-            struct NDinfo tempNDInfo;
-            tempNDInfo.myIdent=tempGlobalRouting->myIdent;
-            tempNDInfo.localAddr=localAddr;
-            tempUdpClient->SendNDTo(localAddr,remoteAddr,tempNDInfo);
+            Logfout << GetNow() << "NIC " << ifa->ifa_name << "(" << inet_ntoa(((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr) << ") UP." << endl;
+            if (tempGlobalRouting->IsNewNeighbor(ifa->ifa_name)) // 判断是否为新的邻居
+            {
+              struct sockaddr_in localAddr,remoteAddr;
+              localAddr=*((struct sockaddr_in *)(ifa->ifa_addr));
+              bzero(&remoteAddr,sizeof(struct sockaddr_in));
+              remoteAddr.sin_family=AF_INET;
+              string address=inet_ntoa(localAddr.sin_addr);
+              address[address.size()-1]=(address[address.size()-1]=='1')? '2':'1';
+              remoteAddr.sin_addr.s_addr=inet_addr((char*)address.c_str());
+              remoteAddr.sin_port=htons(ND_PORT);
+              struct NDinfo tempNDInfo;
+              tempNDInfo.myIdent=tempGlobalRouting->myIdent;
+              tempNDInfo.localAddr=localAddr;
+              tempUdpClient->SendNDTo(localAddr,remoteAddr,tempNDInfo);
+            }
           }
         }
       }
@@ -1222,23 +1389,27 @@ Ipv4GlobalRouting::ListenNICThread(void* tempThreadParam)
     for (auto iter=tempGlobalRouting->NICInfo.begin();iter!=tempGlobalRouting->NICInfo.end();)
     {
       // 网口或者链路失效后，邻居关系依然保存，所以以下是判断是否为正常的邻居关系转为异常
-      if ((*iter).flag==false && ((*iter).isServer==false || (*iter).isSwitch==false || (*iter).isMaster==false))// 网卡或者链路出故障了
+      if ((*iter).flag==false && (*iter).isNeedJudge==true)// 网卡或者链路出故障了
       {
         Logfout << GetNow() << "NIC " << (*iter).NICName << "(" << inet_ntoa((*iter).localAddr.sin_addr) << ") DOWN." << endl; 
         // 判断是否要和master重连
+        // Logfout << endl << "tempGlobalRouting->masterMapToSock" << endl;
         for (auto tempIter=tempGlobalRouting->masterMapToSock.begin();tempIter!=tempGlobalRouting->masterMapToSock.end();)
         {
+          // Logfout << (*tempIter).masterAddr << "\t" << (*tempIter).NICName << "\t" << (*tempIter).masterSock << endl;
           if ((*iter).NICName==(*tempIter).NICName) // 本地网口故障导致master需要重连
           {
-            tempGlobalRouting->ReconnectWithMaster();
-            break;
+            shutdown((*tempIter).masterSock,SHUT_RDWR);
+            (*tempIter).masterSock=-1;
+            tempTCPRoute->SendHelloTo((*tempIter).masterIdent,(*tempIter).masterAddr);
           }
           tempIter++;
         }
+        // Logfout << endl;
         
         // 如果是到master的直连挂了，也可以上报，但是还没有写和master有关的ND
         // if ((*iter).NICName[0]!='e')// sonic
-        if (strcmp((*iter).NICName.c_str(),"eth0"))// 此处处理非管理网口，管理网口关闭，直连断掉需要另外处理
+        if (strcmp((*iter).NICName.c_str(),MGMT_INTERFACE))// 此处处理非管理网口，管理网口关闭，直连断掉需要另外处理
         {
           // 不需要或者重连完毕
           struct MNinfo tempMNInfo;
@@ -1246,28 +1417,35 @@ Ipv4GlobalRouting::ListenNICThread(void* tempThreadParam)
           inet_aton("255.255.255.255",&(tempMNInfo.addr.sin_addr));
           tempMNInfo.addr.sin_port=htons(0);
           tempMNInfo.srcIdent=tempGlobalRouting->myIdent;
-          tempMNInfo.pathNodeIdentA=tempGlobalRouting->myIdent;
-          tempMNInfo.pathNodeIdentB=(*iter).neighborIdent;
+          tempMNInfo.forwardIdent=tempGlobalRouting->myIdent;
+          tempMNInfo.pathNodeIdent[0]=tempGlobalRouting->myIdent;
+          tempMNInfo.pathNodeIdent[1]=(*iter).neighborIdent;
+          for (int i=2;i<MAX_PATH_LEN;i++)
+          {
+            tempMNInfo.pathNodeIdent[i].level=-1;
+            tempMNInfo.pathNodeIdent[i].position=-1;
+          }
           tempMNInfo.clusterMaster=false;
           tempMNInfo.chiefMaster=false;
+          tempMNInfo.reachable=true;
           tempMNInfo.keepAlive=false;
           tempMNInfo.linkFlag=false;
           tempMNInfo.hello=false;
           tempMNInfo.ACK=false;
+          tempMNInfo.bye=false;
           // 上传信息
           for (int i=0;i<tempGlobalRouting->masterMapToSock.size();i++)
           {
             tempMNInfo.destIdent=tempGlobalRouting->masterMapToSock[i].masterIdent;
-            tempTCPRoute->SendMessageTo(tempGlobalRouting->masterMapToSock[i].masterSock,tempMNInfo);
+            int value=tempTCPRoute->SendMessageTo(tempGlobalRouting->masterMapToSock[i].masterSock,tempMNInfo);
+            Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position << " down to master ";
+            Logfout << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "]." << endl;
           }
         }
 
         // iter=tempGlobalRouting->NICInfo.erase(iter);
         // if (iter==tempGlobalRouting->NICInfo.end()) break;
-        // 做一些特殊标记，表示之前邻居发现已经完成，由于网口或者链路故障，但继续保留邻居信息
-        (*iter).isServer=true;
-        (*iter).isSwitch=true;
-        (*iter).isMaster=true;
+        (*iter).isNeedJudge=false;
         continue;
       }
       else if ((*iter).flag==true) (*iter).flag=false;
@@ -1297,7 +1475,6 @@ Ipv4GlobalRouting::ListenNIC()
     Logfout << GetNow() << "Create thread for ListenNIC failed!!!!!!!!!" << endl;
     exit(0);
   }
-  // pthread_detach(listenNIC_thread);
   Logfout.close();
 }
 
@@ -1416,7 +1593,7 @@ Ipv4GlobalRouting::NetmaskToPrefixlen(struct sockaddr_in netMask)
   return prefixLen;
 }
 
-bool 
+struct pathtableentry *
 Ipv4GlobalRouting::InformUnreachableNode(ident destIdent,ident srcIdent)
 {
   stringstream logFoutPath;
@@ -1438,16 +1615,21 @@ Ipv4GlobalRouting::InformUnreachableNode(ident destIdent,ident srcIdent)
       {
         if (tempPathTableEntry->linkCounter==0)
         {
-          struct sockaddr_in localAddr,remoteAddr;
-          remoteAddr=tempPathTableEntry->nodeAddr.addr;
-          localAddr=tempPathTableEntry->nodeAddr.addr;
-          remoteAddr.sin_port=htons(ND_PORT);
-          GetLocalAddrByNeighborIdent(&localAddr,tempPathTableEntry->pathNodeIdent[1]);
-          struct NDinfo tempNDInfo;
-          tempNDInfo.myIdent=srcIdent;
-          tempNDInfo.localAddr=localAddr;
-          m_udpClient.SendNDTo(localAddr,remoteAddr,tempNDInfo);
-          return true;
+          // struct sockaddr_in localAddr,remoteAddr;
+          // remoteAddr=tempPathTableEntry->nodeAddr.addr;
+          // localAddr=tempPathTableEntry->nodeAddr.addr;
+          // remoteAddr.sin_port=htons(ND_PORT);
+          // GetLocalAddrByNeighborIdent(&localAddr,tempPathTableEntry->pathNodeIdent[1]);
+          // struct NDinfo tempNDInfo;
+          // tempNDInfo.myIdent=srcIdent;
+          // tempNDInfo.localAddr=localAddr;
+          // m_udpClient.SendNDTo(localAddr,remoteAddr,tempNDInfo);
+          // 首先建立tcp连接，再转发信息
+          // Logfout << GetNow() << "1111111111" << endl;
+          // m_tcpRoute->SendHelloTo(inet_ntoa(tempPathTableEntry->nodeAddr.addr.sin_addr));
+          // sleep(3);
+          // Logfout << GetNow() << "3333333333" << endl;
+          return tempPathTableEntry;
         }
         diffLinkCounter=0;
       }
@@ -1459,78 +1641,7 @@ Ipv4GlobalRouting::InformUnreachableNode(ident destIdent,ident srcIdent)
       tempPathTableEntry=tempPathTableEntry->next;
     }
   }
-  return false;
-  Logfout.close();
-}
-
-void 
-Ipv4GlobalRouting::SendInDirPathToMaster(int sock,ident pathNodeIdentA,ident pathNodeIdentB)// pathNodeIdentA和pathNodeIdentB是上一个hello包发送的
-{
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
-
-  if (selectInDirPathIndex==-1) 
-  {
-    Logfout << GetNow() << "selectInDirPathIndex:" << selectInDirPathIndex << "." << endl;
-    return;
-  }
-
-  struct pathtableentry tempPathTableEntry=*(nodeInDirPathTable[selectInDirPathIndex]);
-  struct MNinfo helloMNIfo;
-  helloMNIfo.addr.sin_family=AF_INET;
-  inet_aton("255.255.255.255",&(helloMNIfo.addr.sin_addr));
-  helloMNIfo.addr.sin_port=htons(0);
-  GetLocalAddrByNeighborIdent(&(helloMNIfo.addr),tempPathTableEntry.pathNodeIdent[0]);
-  helloMNIfo.destIdent.level=-1;// 发给所有的master
-  helloMNIfo.destIdent.position=-1;
-  helloMNIfo.srcIdent=myIdent;
-
-  bool isNeedToSend=false;
-
-  if (pathNodeIdentA.level==-1 || pathNodeIdentB.level==-1)// 第一次发送
-  {
-    // master通过pathNodeIdentA、pathNodeIdentB来判断连接是否为直接连接
-    // 如果是间接连接则pathNodeIdentA、pathNodeIdentB代表间接路径的一部分
-    helloMNIfo.pathNodeIdentA=tempPathTableEntry.pathNodeIdent[0];
-    helloMNIfo.pathNodeIdentB=tempPathTableEntry.pathNodeIdent[1];
-    isNeedToSend=true;
-  }
-  else 
-  {
-    for (int i=0;i<tempPathTableEntry.nodeCounter;i++)
-    {
-      if (SameNode(pathNodeIdentB,tempPathTableEntry.pathNodeIdent[i]))// 上一次发送到这里了
-      {
-        if (i==tempPathTableEntry.nodeCounter-1)// 已经全部发送完毕
-        {
-          isNeedToSend=false;
-        }
-        else 
-        {
-          helloMNIfo.pathNodeIdentA=pathNodeIdentB;
-          helloMNIfo.pathNodeIdentB=tempPathTableEntry.pathNodeIdent[i+1];
-          isNeedToSend=true;
-        }
-        break;
-      }
-    }
-  }
-  // master通过pathNodeIdentA、pathNodeIdentB来判断连接是否为直接连接
-  // 如果是间接连接则pathNodeIdentA、pathNodeIdentB代表间接路径的一部分
-  if (isNeedToSend)
-  {
-    helloMNIfo.clusterMaster=false;
-    helloMNIfo.chiefMaster=chiefMaster;
-    helloMNIfo.keepAlive=false;
-    helloMNIfo.linkFlag=false;
-    helloMNIfo.hello=true;
-    helloMNIfo.ACK=false;
-    Logfout << GetNow() << "Send inDirPath(" << helloMNIfo.pathNodeIdentA.level << "." << helloMNIfo.pathNodeIdentA.position << "--" << helloMNIfo.pathNodeIdentB.level << "." << helloMNIfo.pathNodeIdentB.position << ")to master." << endl;
-    m_tcpRoute->SendMessageTo(sock,helloMNIfo);
-  }
-  // else Logfout << GetNow() << "Send inDirPath over." << endl;
+  return NULL;
   Logfout.close();
 }
 
@@ -1763,8 +1874,8 @@ Ipv4GlobalRouting::DelRoute(struct sockaddr_in destAddr,unsigned int prefixLen)
   
   int status=send(rt_sock,&req,req.n.nlmsg_len,0);
   close(rt_sock);
-  Logfout << GetNow() << "DelRoute--------------" << endl;
-  Logfout << GetNow() << inet_ntoa(destAddr.sin_addr) << "/" << prefixLen << endl;
+  // Logfout << GetNow() << "DelRoute--------------" << endl;
+  // Logfout << GetNow() << inet_ntoa(destAddr.sin_addr) << "/" << prefixLen << endl;
   Logfout.close();
 }
 
@@ -1792,10 +1903,11 @@ Ipv4GlobalRouting::UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int n
       while (1)
       {
         bool isFindNextHopAndWeight=false;
-        if (nodeCounter==tempPathTableEntry->nodeCounter && tempPathTableEntry->linkCounter==0)// 两条路径长度必须相等，且linkCounter为0，0表示故障链路数为0
+        // 两条路径长度必须相等，最后一个结点也必须相同
+        if (nodeCounter==tempPathTableEntry->nodeCounter && SameNode(pathNodeIdentA,tempPathTableEntry->pathNodeIdent[tempPathTableEntry->nodeCounter-1]))
         {
-          // 最后一个结点也必须相同
-          if (SameNode(pathNodeIdentA,tempPathTableEntry->pathNodeIdent[tempPathTableEntry->nodeCounter-1]))
+          // 且linkCounter为0，0表示故障链路数为0
+          if (tempPathTableEntry->linkCounter==0)
           {
             while (1)
             {
@@ -1825,10 +1937,9 @@ Ipv4GlobalRouting::UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int n
               tempNextHopAndWeight.weight=1;
               nextHopAndWeight.push_back(tempNextHopAndWeight);
             }
-            if (tempPathTableEntry->next==NULL) break;
-            else tempPathTableEntry=tempPathTableEntry->next;
           }
-          else break;// 长度相等，最后目的节点不同，直接退出
+          if (tempPathTableEntry->next==NULL) break;
+          else tempPathTableEntry=tempPathTableEntry->next;
         }
         else break;// 长度不相等，直接退出
       }
@@ -1842,53 +1953,55 @@ Ipv4GlobalRouting::UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int n
       while (1)
       {
         bool isFindNextHopAndWeight=false;
-        // 两条路径长度必须相等，且linkCounter为0，0表示故障链路数为0
-        if (nodeCounter==tempPathTableEntry->nodeCounter && tempPathTableEntry->linkCounter==0)
+        // 两条路径长度必须相等，最后两个结点也必须相同
+        if (nodeCounter==tempPathTableEntry->nodeCounter && SameNode(pathNodeIdentA,tempPathTableEntry->pathNodeIdent[tempPathTableEntry->nodeCounter-1]) && SameNode(pathNodeIdentB,tempPathTableEntry->pathNodeIdent[tempPathTableEntry->nodeCounter-2]))
         {
-          // 最后两个结点也必须相同
-          if (SameNode(pathNodeIdentA,tempPathTableEntry->pathNodeIdent[tempPathTableEntry->nodeCounter-1]))
+          // 且linkCounter为0，0表示故障链路数为0
+          if (tempPathTableEntry->linkCounter==0)
           {
-            if (SameNode(pathNodeIdentB,tempPathTableEntry->pathNodeIdent[tempPathTableEntry->nodeCounter-2]))
+            while (1)
             {
-              while (1)
+              NICName=GetNICNameByRemoteAddr(tempPathTableEntry->nextHopAddr.addr);
+              if (NICName=="")// 还没有探测到这个邻居
               {
-                NICName=GetNICNameByRemoteAddr(tempPathTableEntry->nextHopAddr.addr);
-                if (NICName=="")// 还没有探测到这个邻居
-                {
-                  Logfout << GetNow() << "!!!!!!!!!!!!!!" << endl;
-                  usleep(100000);//休眠100ms
-                }
-                else break;//否则继续进行
+                Logfout << GetNow() << "!!!!!!!!!!!!!!" << endl;
+                usleep(100000);//休眠100ms
               }
-              for (int j=0;j<nextHopAndWeight.size();j++)
-              {
-                if (nextHopAndWeight[j].NICName==NICName)//
-                {
-                  isFindNextHopAndWeight=true;
-                  nextHopAndWeight[j].weight++;
-                  break;
-                }
-              }
-              if (!isFindNextHopAndWeight)//没有找到相应的条目
-              {
-                struct nexthopandweight tempNextHopAndWeight;
-                tempNextHopAndWeight.NICName=NICName;
-                GetLocalAddrByRemoteAddr(&(tempNextHopAndWeight.srcAddr),tempPathTableEntry->nextHopAddr.addr);
-                tempNextHopAndWeight.gateAddr=tempPathTableEntry->nextHopAddr.addr;
-                tempNextHopAndWeight.weight=1;
-                nextHopAndWeight.push_back(tempNextHopAndWeight);
-              }
-              if (tempPathTableEntry->next==NULL) break;
-              else tempPathTableEntry=tempPathTableEntry->next;
+              else break;//否则继续进行
             }
-            else break;
+            for (int j=0;j<nextHopAndWeight.size();j++)
+            {
+              if (nextHopAndWeight[j].NICName==NICName)//
+              {
+                isFindNextHopAndWeight=true;
+                nextHopAndWeight[j].weight++;
+                break;
+              }
+            }
+            if (!isFindNextHopAndWeight)//没有找到相应的条目
+            {
+              struct nexthopandweight tempNextHopAndWeight;
+              tempNextHopAndWeight.NICName=NICName;
+              GetLocalAddrByRemoteAddr(&(tempNextHopAndWeight.srcAddr),tempPathTableEntry->nextHopAddr.addr);
+              tempNextHopAndWeight.gateAddr=tempPathTableEntry->nextHopAddr.addr;
+              tempNextHopAndWeight.weight=1;
+              nextHopAndWeight.push_back(tempNextHopAndWeight);
+            }
           }
-          else break;
+          if (tempPathTableEntry->next==NULL) break;
+          else tempPathTableEntry=tempPathTableEntry->next;
         }
         else break;
       }
     }
   } 
+
+  Logfout << "------------------" << endl << "addrSet:";
+  for (int i=0;i<addrSet.size();i++) Logfout << inet_ntoa(addrSet[i].addr.sin_addr) << "\t";
+  Logfout << endl << "weight:" << endl;
+  for (int i=0;i<nextHopAndWeight.size();i++) Logfout << nextHopAndWeight[i].NICName << "--" << nextHopAndWeight[i].weight << "\t";
+  Logfout << endl;
+  Logfout << "------------------" << endl;
 
   // 更新路由
   if (nextHopAndWeight.size()==0)
@@ -2680,14 +2793,23 @@ Ipv4GlobalRouting::PrintMasterMapToSock()
   ofstream Logfout(logFoutPath.str().c_str(),ios::trunc);
 
   Logfout << "Node" << myIdent.level << "." << myIdent.position << "'s masterMapToSock" << endl;
-  Logfout << "MasterAddr\tMasterIdent\tMasterSock\tNICName\tchiefMaster\tDirect\tMiddleAddr\tKeepAliveFaildNum\tKeepAliveFlag\tisStartKeepAlive" << endl;
+  Logfout << "MasterAddr\tMasterIdent\tMasterSock\tNICName\tchiefMaster\tDirect\tMiddleAddr\tKeepAliveFaildNum\tKeepAliveFlag\tInDirPath" << endl;
   for (int i=0;i<masterMapToSock.size();i++)
   {
     Logfout << masterMapToSock[i].masterAddr << "\t" << masterMapToSock[i].masterIdent.level << "." << masterMapToSock[i].masterIdent.position << "\t\t";
     Logfout << masterMapToSock[i].masterSock << "\t\t" << masterMapToSock[i].NICName << "\t" << masterMapToSock[i].chiefMaster << "\t\t" << masterMapToSock[i].direct << "\t";
     if (masterMapToSock[i].middleAddr=="") Logfout << "\t";
     else Logfout << masterMapToSock[i].middleAddr;
-    Logfout << "\t" << masterMapToSock[i].keepAliveFaildNum << "\t\t\t" << masterMapToSock[i].recvKeepAlive << "\t" << masterMapToSock[i].isStartKeepAlive << endl;
+    Logfout << "\t" << masterMapToSock[i].keepAliveFaildNum << "\t\t\t" << masterMapToSock[i].recvKeepAlive << "\t\t\t";
+    if (masterMapToSock[i].inDirPath!=NULL)
+    {
+      for (int j=0;j<MAX_PATH_LEN;j++)
+      {
+        if (masterMapToSock[i].inDirPath->pathNodeIdent[j].level!=-1) Logfout << masterMapToSock[i].inDirPath->pathNodeIdent[j].level << "." << masterMapToSock[i].inDirPath->pathNodeIdent[j].position << "--";
+        else break;
+      }
+    }
+    Logfout << endl;
   }
   Logfout.close();
 }
@@ -2720,6 +2842,31 @@ Ipv4GlobalRouting::InsertNodeInDirPathTable(struct pathtableentry *tempPathTable
     PrintNodeInDirPathTable();
   }
   
+  Logfout.close();
+}
+
+void
+Ipv4GlobalRouting::CheckMasterMapToSock()// 更新完路径表中的链路或者直连标志后都要检查和master的连接的间接路径是否受到影响
+{
+  stringstream logFoutPath;
+  logFoutPath.str("");
+  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+
+  for (int i=0;i<masterMapToSock.size();i++)
+  {
+    if (masterMapToSock[i].inDirPath!=NULL)
+    {
+      if (masterMapToSock[i].inDirPath->linkCounter!=0 || masterMapToSock[i].inDirPath->dirConFlag==false)// 与master连接的该间接路径受到影响，需要重连
+      {
+        shutdown(masterMapToSock[i].masterSock,SHUT_RDWR);
+        masterMapToSock[i].masterSock=-1;
+        Logfout << GetNow() << "I need to reconnect with Master " << masterMapToSock[i].masterIdent.level << "." << masterMapToSock[i].masterIdent.position << "[" << masterMapToSock[i].masterAddr << "]." << endl;
+        m_tcpRoute->SendHelloTo(masterMapToSock[i].masterIdent,masterMapToSock[i].masterAddr);
+      }
+    }
+  }
+
   Logfout.close();
 }
 
@@ -2781,6 +2928,7 @@ Ipv4GlobalRouting::UpdateNodeInDirPathTable()// 修改路径表或者直连标�
       }
     }
   }
+  CheckMasterMapToSock();// 更新完路径表中的链路或者直连标志后都要检查和master的连接的间接路径是否受到影响
   PrintNodeInDirPathTable();
   Logfout.close();
 }
@@ -2895,7 +3043,7 @@ Ipv4GlobalRouting::ModifyPathEntryTable(ident high,ident low,bool linkFlag)// �
           if (isNeedToUpdateRoute==true)
           {
             // 先更新服务器地址
-            UpdateAddrSet(tempDestIdent,tempIdent,tempNodeCounter,tempAddrSet);
+            if (tempAddrSet.size()>0) UpdateAddrSet(tempDestIdent,tempIdent,tempNodeCounter,tempAddrSet);
             tempAddrSet.clear();
             // 再更新到节点的地址
             tempAddrSet.push_back(tempNodeAddr);
@@ -2936,11 +3084,11 @@ Ipv4GlobalRouting::ModifyPathEntryTable(ident high,ident low,bool linkFlag)// �
     if (isNeedToUpdateRoute==true)// 终止循环时也要考虑修改路由
     {
       // 先更新服务器地址
-      UpdateAddrSet(tempDestIdent,tempIdent,tempNodeCounter,tempAddrSet);
+      if (tempAddrSet.size()>0) UpdateAddrSet(tempDestIdent,tempIdent,tempNodeCounter,tempAddrSet);
       tempAddrSet.clear();
       // 再更新到节点的地址
       tempAddrSet.push_back(tempNodeAddr);
-      Logfout << GetNow() << "***************要更新的Node地址：" << inet_ntoa(tempAddrSet[0].addr.sin_addr) << endl;
+      // Logfout << GetNow() << "***************要更新的Node地址：" << inet_ntoa(tempAddrSet[0].addr.sin_addr) << endl;
       UpdateAddrSet(tempDestIdent,tempNextIdent,tempNodeCounter,tempAddrSet);
     }
   }
@@ -2989,6 +3137,7 @@ Ipv4GlobalRouting::PrintMasterLinkTable()
     Logfout << "\t" << tempLinkTableEntry->linkFlag << "\t\t" << tempLinkTableEntry->lastLinkFlag << "\t\t" << tempLinkTableEntry->isStartTimer << endl;
     tempLinkTableEntry=tempLinkTableEntry->next;
   }
+  if (myIdent.level==0 && myIdent.position==0) system("cp -f /var/log/MasterLinkTable-0.0.txt /home/guolab/MasterLinkTable.txt");
   Logfout.close();
 }
 
@@ -3064,18 +3213,26 @@ Ipv4GlobalRouting::OldChiefFindNewOneThread(void* threadParam)
   tempMNInfo.addr.sin_family=AF_INET;
   inet_aton("255.255.255.255",&(tempMNInfo.addr.sin_addr));
   tempMNInfo.addr.sin_port=htons(0);
-  tempGlobalRouting->GetAddrByNICName(&(tempMNInfo.addr),"eth0");
+  tempMNInfo.addr=*(tempGlobalRouting->GetAddrByNICName(MGMT_INTERFACE));
+  tempMNInfo.forwardIdent=tempGlobalRouting->myIdent;
   tempMNInfo.srcIdent=tempGlobalRouting->myIdent;
-  tempMNInfo.pathNodeIdentA.level=-1;// 全部置为-1表示当前的chief Master决定放弃chief Master的地位
-  tempMNInfo.pathNodeIdentA.position=-1;
-  tempMNInfo.pathNodeIdentB.level=tempGlobalRouting->inDirNodeNum;
-  tempMNInfo.pathNodeIdentB.position=tempGlobalRouting->inDirNodeNum;
+  tempMNInfo.pathNodeIdent[0].level=-1;// 全部置为-1表示当前的chief Master决定放弃chief Master的地位
+  tempMNInfo.pathNodeIdent[0].position=-1;
+  tempMNInfo.pathNodeIdent[1].level=tempGlobalRouting->inDirNodeNum;
+  tempMNInfo.pathNodeIdent[1].position=tempGlobalRouting->inDirNodeNum;
+  for (int i=2;i<MAX_PATH_LEN;i++)
+  {
+    tempMNInfo.pathNodeIdent[i].level=-1;
+    tempMNInfo.pathNodeIdent[i].position=-1;
+  }
   tempMNInfo.clusterMaster=true;
   tempMNInfo.chiefMaster=false;
+  tempMNInfo.reachable=true;
   tempMNInfo.keepAlive=false;
   tempMNInfo.linkFlag=false;
   tempMNInfo.hello=false;
   tempMNInfo.ACK=false;
+  tempMNInfo.bye=false;
   // 理想做法是Chief master询问其他common，待common做出反应后再决定是否放弃
   // 但是现在是不询问，直接放弃当老大
   Logfout << GetNow() << "I am looking for a better master!" << endl;
@@ -3104,7 +3261,6 @@ Ipv4GlobalRouting::ListenKeepAliveThread(void* threadParam)
   logFoutPath << "/var/log/Primus-" << tempGlobalRouting->myIdent.level << "." << tempGlobalRouting->myIdent.position << ".log";
   ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
-  bool isEnd=false;
   while (1)
   {
     // 每遍历检查一次，keepAliveFaildNum++；每收到一个keep alive，keepAliveFaildNum清零；keepAliveFaildNum>=3，连接失效，回退BGP
@@ -3117,30 +3273,46 @@ Ipv4GlobalRouting::ListenKeepAliveThread(void* threadParam)
         if (tempGlobalRouting->chiefMaster) 
         {
           Logfout << GetNow() << "Go back to BGP." << endl;
-          struct MNinfo endMNInfo;
-          endMNInfo.addr.sin_family=AF_INET;
-          inet_aton("255.255.255.255",&(endMNInfo.addr.sin_addr));
-          endMNInfo.addr.sin_port=htons(0);
-          tempGlobalRouting->GetAddrByNICName(&(endMNInfo.addr),"eth0");
-          endMNInfo.destIdent.level=-1;// 此时还不知道master的ident
-          endMNInfo.destIdent.position=-1;
-          endMNInfo.srcIdent=tempGlobalRouting->myIdent;
-          endMNInfo.pathNodeIdentA=tempGlobalRouting->myIdent;
-          endMNInfo.pathNodeIdentB=tempGlobalRouting->myIdent;
-          endMNInfo.clusterMaster=false;
-          endMNInfo.chiefMaster=tempGlobalRouting->chiefMaster;
-          endMNInfo.keepAlive=false;
-          endMNInfo.linkFlag=false;
-          endMNInfo.hello=false;
-          endMNInfo.ACK=false;
+          // struct MNinfo stopMNInfo;
+          // stopMNInfo.addr.sin_family=AF_INET;
+          // inet_aton("255.255.255.255",&(stopMNInfo.addr.sin_addr));
+          // stopMNInfo.addr.sin_port=htons(0);
+          // stopMNInfo.addr=*(tempGlobalRouting->GetAddrByNICName(MGMT_INTERFACE));
+          // stopMNInfo.destIdent.level=-1;// 此时还不知道master的ident
+          // stopMNInfo.destIdent.position=-1;
+          // stopMNInfo.forwardIdent=tempGlobalRouting->myIdent;
+          // stopMNInfo.srcIdent=tempGlobalRouting->myIdent;
+          // stopMNInfo.pathNodeIdent[0]=tempGlobalRouting->myIdent;
+          // stopMNInfo.pathNodeIdent[1]=tempGlobalRouting->myIdent;
+          // for (int i=2;i<MAX_PATH_LEN;i++)
+          // {
+          //   stopMNInfo.pathNodeIdent[i].level=-1;
+          //   stopMNInfo.pathNodeIdent[i].position=-1;
+          // }
+          // stopMNInfo.clusterMaster=false;
+          // stopMNInfo.chiefMaster=tempGlobalRouting->chiefMaster;
+          // stopMNInfo.reachable=true;
+          // stopMNInfo.keepAlive=false;
+          // stopMNInfo.linkFlag=false;
+          // stopMNInfo.hello=false;
+          // stopMNInfo.ACK=false;
+          // stopMNInfo.bye=false;
+          // 准备发送，以后写
+          system("echo \"————————————————————————————————\" >> /home/guolab/output/ATCTest-primus.log"); 
+          string command;
+          command="echo \"   Can not connect with node "+to_string(tempGlobalRouting->nodeMapToSock[i].nodeIdent.level)+"."+to_string(tempGlobalRouting->nodeMapToSock[i].nodeIdent.position)+".\" >> /home/guolab/output/ATCTest-primus.log";
+          system(command.c_str());
+          system("echo \"   Go back to BGP......\" >> /home/guolab/output/ATCTest-primus.log"); 
+          system("echo \"————————————————————————————————\" >> /home/guolab/output/ATCTest-primus.log"); 
+          // system("/home/guolab/script/stop.sh");
+          // system("bash /home/guolab/script/stopPrimusTest.sh");     
         }
-        isEnd=true;
-        break;
+        tempGlobalRouting->nodeMapToSock[i].keepAliveFaildNum=0;
       }
     }
-    if (isEnd==true) break;
     sleep(tempGlobalRouting->m_defaultKeepaliveTimer);
   }
+  Logfout << GetNow() << "Master " << tempGlobalRouting->myIdent.level << "." << tempGlobalRouting->myIdent.position << "'s ListenKeepAliveThread down." << endl;
   Logfout.close();
   // pthread_exit(0);
 }
@@ -3359,18 +3531,16 @@ Ipv4GlobalRouting::NewChiefMasterElection(ident chiefMasterIdent)
     // Logfout << GetNow() << "Try to connect with the new chiefMaster......" << endl;
     chiefMaster=false;
     m_tcpRoute->UpdateChiefMaster(false);
-    sleep(5);// 等待新的chiefmaster做好准备
-    vector<string> masterAddress;
+    // sleep(5);// 等待新的chiefmaster做好准备
     for (int i=0;i<clusterMasterInfo.size();i++)
     {
       if (SameNode(clusterMasterInfo[i].masterIdent,chiefMasterIdent))
       {
-        masterAddress.push_back(inet_ntoa(clusterMasterInfo[i].masterAddr.sin_addr));
+        m_tcpRoute->SendHelloTo(chiefMasterIdent,inet_ntoa(clusterMasterInfo[i].masterAddr.sin_addr));
         break;
       }
     }
     
-    m_tcpRoute->SendHelloToMaster(masterAddress,"","eth0");
     for (auto iter=nodeMapToSock.begin();iter!=nodeMapToSock.end();)
     {
       if (iter->nodeIdent.level==0)
@@ -3383,29 +3553,17 @@ Ipv4GlobalRouting::NewChiefMasterElection(ident chiefMasterIdent)
     }
     PrintNodeMapToSock();
   }
-  else // common master选出新的chief master
+  else // common master选出新的chief master，可能现在的chief master本身就是最优的，不需要重新选举
   {
-    // 先删除chief master
-    for (auto iter=clusterMasterInfo.begin();iter!=clusterMasterInfo.end();)
-    {
-      if (SameNode((*iter).masterIdent,chiefMasterIdent))
-      {
-        clusterMasterInfo.erase(iter);// 删除该项           
-        break;
-      }
-      iter++;
-    }
-    PrintClusterMasterInfo();
-
     struct sockaddr_in newTempMasterAddr;
     newTempMasterAddr.sin_family=AF_INET;
     inet_aton("255.255.255.255",&(newTempMasterAddr.sin_addr));
     newTempMasterAddr.sin_port=htons(0);
-    GetAddrByNICName(&(newTempMasterAddr),"eth0");
+    newTempMasterAddr=*(GetAddrByNICName(MGMT_INTERFACE));
     ident newTempChiefMasterIdent=myIdent;
     int newTempInDirNodeNum=inDirNodeNum;
 
-    // 再找出一个新的最优master
+    // 尝试找出一个新的最优master
     for (int i=0;i<clusterMasterInfo.size();i++)
     {
       if (clusterMasterInfo[i].inDirNodeNum<newTempInDirNodeNum)
@@ -3424,6 +3582,24 @@ Ipv4GlobalRouting::NewChiefMasterElection(ident chiefMasterIdent)
         }
       }
     }
+    // 新选出的Chief Master是原来的
+    if (SameNode(newTempChiefMasterIdent,chiefMasterIdent)) 
+    {
+      Logfout << GetNow() << "Master " << chiefMasterIdent.level << "." << chiefMasterIdent.position << " is still the chiefMaster." << endl;
+      Logfout.close();
+      return;
+    }
+
+    for (auto iter=clusterMasterInfo.begin();iter!=clusterMasterInfo.end();)
+    {
+      if (SameNode((*iter).masterIdent,chiefMasterIdent))
+      {
+        clusterMasterInfo.erase(iter);// 删除该项           
+        break;
+      }
+      iter++;
+    }
+    PrintClusterMasterInfo();
 
     int oldChiefMasterSock=0;
     for (int i=0;i<masterMapToSock.size();i++)
@@ -3449,26 +3625,34 @@ Ipv4GlobalRouting::NewChiefMasterElection(ident chiefMasterIdent)
       tempMNInfo.addr.sin_family=AF_INET;
       inet_aton("255.255.255.255",&(tempMNInfo.addr.sin_addr));
       tempMNInfo.addr.sin_port=htons(0);
-      GetAddrByNICName(&(tempMNInfo.addr),"eth0");
+      tempMNInfo.addr=*(GetAddrByNICName(MGMT_INTERFACE));
+      tempMNInfo.forwardIdent=myIdent;
       tempMNInfo.srcIdent=myIdent;
+      tempMNInfo.clusterMaster=true;
       tempMNInfo.chiefMaster=true;
+      tempMNInfo.reachable=true;
       tempMNInfo.keepAlive=false;
       tempMNInfo.linkFlag=false;
-      tempMNInfo.hello=false;     
+      tempMNInfo.hello=false;  
+      tempMNInfo.ACK=false; 
+      tempMNInfo.bye=false;  
 
       // 先通知old chief master
-      tempMNInfo.pathNodeIdentA.level=-1;
-      tempMNInfo.pathNodeIdentA.position=-1;
-      tempMNInfo.pathNodeIdentB.level=inDirNodeNum;
-      tempMNInfo.pathNodeIdentB.position=inDirNodeNum;
-      tempMNInfo.clusterMaster=true;
-      tempMNInfo.ACK=false;
+      tempMNInfo.pathNodeIdent[0].level=-1;
+      tempMNInfo.pathNodeIdent[0].position=-1;
+      tempMNInfo.pathNodeIdent[1].level=inDirNodeNum;
+      tempMNInfo.pathNodeIdent[1].position=inDirNodeNum;
+      for (int i=2;i<MAX_PATH_LEN;i++)
+      {
+        tempMNInfo.pathNodeIdent[i].level=-1;
+        tempMNInfo.pathNodeIdent[i].position=-1;
+      }
       tempMNInfo.destIdent=chiefMasterIdent;
       m_tcpRoute->SendMessageTo(oldChiefMasterSock,tempMNInfo);
 
       // 通知所有的node，chiefmaster已经发生变化，即发送一个ACK包
-      tempMNInfo.pathNodeIdentA=myIdent;
-      tempMNInfo.pathNodeIdentB=myIdent; 
+      tempMNInfo.pathNodeIdent[0]=myIdent;
+      tempMNInfo.pathNodeIdent[1]=myIdent; 
       tempMNInfo.clusterMaster=false;
       tempMNInfo.ACK=true;
 
@@ -3481,14 +3665,14 @@ Ipv4GlobalRouting::NewChiefMasterElection(ident chiefMasterIdent)
     }
     else // 其他master最优
     {
-      m_tcpRoute->SendHelloToChief(inet_ntoa(newTempMasterAddr.sin_addr),"eth0");
+      m_tcpRoute->SendHelloTo(newTempChiefMasterIdent,inet_ntoa(newTempMasterAddr.sin_addr));
     }
   }
   Logfout.close();
 }
 
 void
-Ipv4GlobalRouting::UpdateInDirPath(ident nodeIdent,ident pathNodeIdentA,ident pathNodeIdentB,int nodeSock)
+Ipv4GlobalRouting::UpdateInDirPath(ident nodeIdent,ident pathNodeIdent[MAX_PATH_LEN],int nodeSock)
 {
   stringstream logFoutPath;
   logFoutPath.str("");
@@ -3505,39 +3689,17 @@ Ipv4GlobalRouting::UpdateInDirPath(ident nodeIdent,ident pathNodeIdentA,ident pa
     if (SameNode(masterInDirPathTable[i].pathNodeIdent[0],nodeIdent))// 判断某个结点的间接路径是否存在
     {
       isFind=true;
-      // 通过sock来判断间接连接是否发生过变化
-      if (masterInDirPathTable[i].nodeSock!=nodeSock)
+      // 直接添加
+      for (int j=0;j<MAX_PATH_LEN;j++) masterInDirPathTable[i].pathNodeIdent[j]=pathNodeIdent[j];
+      masterInDirPathTable[i].nodeSock=nodeSock;
+      // 检查是否有积压的未发送的MNInfo
+      struct accumulationMNinfo *currentAccumulationMNInfo=masterInDirPathTable[i].headAccumulationMNInfo;
+      while (currentAccumulationMNInfo->next!=NULL) 
       {
-        // 先全部清空间接路径，再添加
-        for (int j=0;j<MAX_PATH_LEN;j++) masterInDirPathTable[i].pathNodeIdent[j]=tempNode;
-        masterInDirPathTable[i].nodeSock=nodeSock;
-        if (SameNode(pathNodeIdentA,nodeIdent)) 
-        {
-          masterInDirPathTable[i].pathNodeIdent[0]=pathNodeIdentA;
-          masterInDirPathTable[i].pathNodeIdent[1]=pathNodeIdentB;
-        }
-        // 检查是否有积压的未发送的MNInfo
-        struct accumulationMNinfo *currentAccumulationMNInfo=masterInDirPathTable[i].headAccumulationMNInfo;
-        while (currentAccumulationMNInfo->next!=NULL) 
-        {
-          currentAccumulationMNInfo=currentAccumulationMNInfo->next;
-          // Logfout << "send later" << endl;
-          m_tcpRoute->SendMessageTo(masterInDirPathTable[i].nodeSock,*(currentAccumulationMNInfo->tempMNInfo));
-          // Logfout << "send later over" << endl;
-        }
-        masterInDirPathTable[i].headAccumulationMNInfo->next=NULL;
+        currentAccumulationMNInfo=currentAccumulationMNInfo->next;
+        m_tcpRoute->SendMessageTo(masterInDirPathTable[i].nodeSock,*(currentAccumulationMNInfo->tempMNInfo));
       }
-      else 
-      {
-        for (int j=0;j<MAX_PATH_LEN;j++)
-        {
-          if (masterInDirPathTable[i].pathNodeIdent[j].level==-1) 
-          {
-            masterInDirPathTable[i].pathNodeIdent[j]=pathNodeIdentB;
-            break;
-          }
-        }
-      }
+      masterInDirPathTable[i].headAccumulationMNInfo->next=NULL;
       break;
     }
   }
@@ -3545,12 +3707,7 @@ Ipv4GlobalRouting::UpdateInDirPath(ident nodeIdent,ident pathNodeIdentA,ident pa
   if (isFind==false) 
   {
     struct indirpathtableentry *tempInDirPathTableEntry=(struct indirpathtableentry *)malloc(sizeof(struct indirpathtableentry));
-    for (int i=0;i<MAX_PATH_LEN;i++) tempInDirPathTableEntry->pathNodeIdent[i]=tempNode;
-    if (SameNode(pathNodeIdentA,nodeIdent)) 
-    {
-      tempInDirPathTableEntry->pathNodeIdent[0]=pathNodeIdentA;
-      tempInDirPathTableEntry->pathNodeIdent[1]=pathNodeIdentB;
-    }
+    for (int i=0;i<MAX_PATH_LEN;i++) tempInDirPathTableEntry->pathNodeIdent[i]=pathNodeIdent[i];
     tempInDirPathTableEntry->nodeSock=nodeSock;
     struct accumulationMNinfo *tempAccumulationMNInfo=(struct accumulationMNinfo *)malloc(sizeof(struct accumulationMNinfo));
     tempAccumulationMNInfo->tempMNInfo=NULL;
@@ -3584,6 +3741,22 @@ Ipv4GlobalRouting::UpdateNodeMapToSock(ident nodeIdent,int sock,bool direct)// m
         // 如果之前是间接连接，现在是直连，则inDirNodeNum--；如果之前是直连，现在是间接连接，则inDirNodeNum++；
         if (nodeMapToSock[i].direct==false && direct==true) 
         {
+          for (auto iter=masterInDirPathTable.begin();iter!=masterInDirPathTable.end();)
+          {
+            if (SameNode(iter->pathNodeIdent[0],nodeIdent))// 间接路径表里要删除相关表项
+            {
+              iter=masterInDirPathTable.erase(iter);// 删除该项           
+              // if (iter==masterInDirPathTable.end()) break;
+              PrintMasterInDirPathTable();
+              break;
+            }
+            iter++;
+          }
+          nodeMapToSock[i].direct=direct;
+          nodeMapToSock[i].nodeSock=sock;
+          nodeMapToSock[i].keepAliveFaildNum=0;
+          nodeMapToSock[i].recvKeepAlive=false;
+          
           if (nodeIdent.level!=0 && chiefMaster==true) SendMessageToNode(nodeIdent,myIdent,direct);
           inDirNodeNum--;
 
@@ -3592,7 +3765,7 @@ Ipv4GlobalRouting::UpdateNodeMapToSock(ident nodeIdent,int sock,bool direct)// m
           tempClusterMasterInfo.masterAddr.sin_family=AF_INET;
           inet_aton("255.255.255.255",&(tempClusterMasterInfo.masterAddr.sin_addr));
           tempClusterMasterInfo.masterAddr.sin_port=htons(0);
-          GetAddrByNICName(&(tempClusterMasterInfo.masterAddr),"eth0");// common master的地址
+          tempClusterMasterInfo.masterAddr=*(GetAddrByNICName(MGMT_INTERFACE));// common master的地址
           tempClusterMasterInfo.masterIdent=myIdent;// common master的ident
           tempClusterMasterInfo.inDirNodeNum=inDirNodeNum;
           // 主动发出indirnodenum
@@ -3601,6 +3774,11 @@ Ipv4GlobalRouting::UpdateNodeMapToSock(ident nodeIdent,int sock,bool direct)// m
         else if (nodeMapToSock[i].direct==true && direct==false) 
         {
           shutdown(nodeMapToSock[i].nodeSock,SHUT_RDWR);
+          nodeMapToSock[i].direct=direct;
+          nodeMapToSock[i].nodeSock=sock;
+          nodeMapToSock[i].keepAliveFaildNum=0;
+          nodeMapToSock[i].recvKeepAlive=false;
+
           if (nodeIdent.level!=0 && chiefMaster==true) SendMessageToNode(nodeIdent,myIdent,direct);
           inDirNodeNum++;
           // test
@@ -3612,46 +3790,42 @@ Ipv4GlobalRouting::UpdateNodeMapToSock(ident nodeIdent,int sock,bool direct)// m
           tempClusterMasterInfo.masterAddr.sin_family=AF_INET;
           inet_aton("255.255.255.255",&(tempClusterMasterInfo.masterAddr.sin_addr));
           tempClusterMasterInfo.masterAddr.sin_port=htons(0); 
-          GetAddrByNICName(&(tempClusterMasterInfo.masterAddr),"eth0");// common master的地址
+          tempClusterMasterInfo.masterAddr=*(GetAddrByNICName(MGMT_INTERFACE));// common master的地址
           tempClusterMasterInfo.masterIdent=myIdent;// common master的ident
           tempClusterMasterInfo.inDirNodeNum=inDirNodeNum;
           // 主动发出indirnodenum
           SendInDirNodeNumToCommon(tempClusterMasterInfo);
         }
-        Logfout << GetNow() << "My inDirNodeNum:" << inDirNodeNum << endl;
-
-        nodeMapToSock[i].direct=direct;
-        nodeMapToSock[i].nodeSock=sock;
-        nodeMapToSock[i].keepAliveFaildNum=0;
-        nodeMapToSock[i].recvKeepAlive=false;
+        else if (nodeMapToSock[i].direct==false && direct==false)
+        {
+          nodeMapToSock[i].direct=direct;
+          nodeMapToSock[i].nodeSock=sock;
+          nodeMapToSock[i].keepAliveFaildNum=0;
+          nodeMapToSock[i].recvKeepAlive=false;
+        }
         PrintNodeMapToSock();
+        Logfout << GetNow() << "My inDirNodeNum:" << inDirNodeNum << "." << endl;
 
         // 判断是否为最优的Chief Master
-        if (inDirNodeNum>MAX_INDIR_NUM)
+        if (inDirNodeNum>MAX_INDIR_NUM && chiefMaster==true && isStartMasterElection==false)
         {
-          if (chiefMaster==true)
-          {
-            Logfout << GetNow() << "I may be not the chiefMaster!" << endl;
-            // chiefMasterStatusChange=false;// 标志位，chief master判断出自己不是最优后，会等待3s再询问其他master，在这期间如果chief master的状态发生变化，则还要等待3s
-            if (isStartMasterElection==false)
-            {
-              threadparamB *threadParam=new threadparamB();
-              threadParam->tempGlobalRouting=this;
-              threadParam->tempUdpClient=NULL;
-              threadParam->tempTCPRoute=m_tcpRoute;
+          Logfout << GetNow() << "I may be not the chiefMaster!" << endl;
 
-              if (pthread_create(&oldChiefFindNewOne_thread,NULL,OldChiefFindNewOneThread,(void *)threadParam)<0)
-              {
-                Logfout << GetNow() << "Create OldChiefFindNewOneThread failed!" << endl;
-                exit(0);
-              }
-              // pthread_detach(oldChiefFindNewOne_thread);
-              isStartMasterElection=true;
-              chiefMasterStatusChange=true;
-            }
-            else chiefMasterStatusChange=false;
+          isStartMasterElection=true;
+          chiefMasterStatusChange=true;
+            
+          threadparamB *threadParam=new threadparamB();
+          threadParam->tempGlobalRouting=this;
+          threadParam->tempUdpClient=NULL;
+          threadParam->tempTCPRoute=m_tcpRoute;
+
+          if (pthread_create(&oldChiefFindNewOne_thread,NULL,OldChiefFindNewOneThread,(void *)threadParam)<0)
+          {
+            Logfout << GetNow() << "Create OldChiefFindNewOneThread failed!" << endl;
+            exit(0);
           }
         }
+        else chiefMasterStatusChange=false;// 标志位，chief master判断出自己不是最优后，会等待3s再询问其他master，在这期间如果chief master的状态发生变化，则还要等待3s
       }
       Logfout.close();
       return;
@@ -3676,15 +3850,23 @@ Ipv4GlobalRouting::UpdateNodeMapToSock(ident nodeIdent,int sock,bool direct)// m
     tempMNInfo.addr.sin_family=AF_INET;// 此时addr无实际意义
     inet_aton("255.255.255.255",&(tempMNInfo.addr.sin_addr));
     tempMNInfo.addr.sin_port=htons(0);
+    tempMNInfo.forwardIdent=myIdent;
     tempMNInfo.srcIdent=myIdent;
-    tempMNInfo.pathNodeIdentA=nodeIdent;
-    tempMNInfo.pathNodeIdentB=myIdent;
+    tempMNInfo.pathNodeIdent[0]=nodeIdent;
+    tempMNInfo.pathNodeIdent[1]=myIdent;
+    for (int i=2;i<MAX_PATH_LEN;i++)
+    {
+      tempMNInfo.pathNodeIdent[i].level=-1;
+      tempMNInfo.pathNodeIdent[i].position=-1;
+    }
     tempMNInfo.clusterMaster=false;
     tempMNInfo.chiefMaster=false;
+    tempMNInfo.reachable=true;
     tempMNInfo.keepAlive=false;
     tempMNInfo.linkFlag=direct;
     tempMNInfo.hello=false;
     tempMNInfo.ACK=false;
+    tempMNInfo.bye=false;
 
     for (int i=0;i<nodeMapToSock.size();i++)
     {
@@ -3692,11 +3874,11 @@ Ipv4GlobalRouting::UpdateNodeMapToSock(ident nodeIdent,int sock,bool direct)// m
       {
         // 先向已经建立连接了的Node转发这个新的连接
         tempMNInfo.destIdent=nodeMapToSock[i].nodeIdent;
-        tempMNInfo.pathNodeIdentA=nodeIdent;
+        tempMNInfo.pathNodeIdent[0]=nodeIdent;
         m_tcpRoute->SendMessageTo(GetSockByIdent(nodeMapToSock[i].nodeIdent),tempMNInfo);
         // 然后再向新建立连接的Node转发之前已经和Master建立了的连接
         tempMNInfo.destIdent=nodeIdent;
-        tempMNInfo.pathNodeIdentA=nodeMapToSock[i].nodeIdent;
+        tempMNInfo.pathNodeIdent[0]=nodeMapToSock[i].nodeIdent;
         m_tcpRoute->SendMessageTo(sock,tempMNInfo);
       }
     }
@@ -3766,16 +3948,24 @@ Ipv4GlobalRouting::SendInDirNodeNumToCommon(struct clustermasterinfo tempCluster
 
   struct MNinfo tempMNInfo;
   tempMNInfo.addr=tempClusterMasterInfo.masterAddr;
+  tempMNInfo.forwardIdent=myIdent;
   tempMNInfo.srcIdent=myIdent;
-  tempMNInfo.pathNodeIdentA=tempClusterMasterInfo.masterIdent;// 
-  tempMNInfo.pathNodeIdentB.level=tempClusterMasterInfo.inDirNodeNum;// pathNodeIdentB有效，值为indirnodenum
-  tempMNInfo.pathNodeIdentB.position=tempClusterMasterInfo.inDirNodeNum;
+  tempMNInfo.pathNodeIdent[0]=tempClusterMasterInfo.masterIdent;// 
+  tempMNInfo.pathNodeIdent[1].level=tempClusterMasterInfo.inDirNodeNum;// pathNodeIdentB有效，值为indirnodenum
+  tempMNInfo.pathNodeIdent[1].position=tempClusterMasterInfo.inDirNodeNum;
+  for (int i=2;i<MAX_PATH_LEN;i++)
+  {
+    tempMNInfo.pathNodeIdent[i].level=-1;
+    tempMNInfo.pathNodeIdent[i].position=-1;
+  }
   tempMNInfo.clusterMaster=true;
   tempMNInfo.chiefMaster=tempClusterMasterInfo.chiefMaster;
   tempMNInfo.keepAlive=false;
+  tempMNInfo.reachable=true;
   tempMNInfo.linkFlag=false;
   tempMNInfo.hello=false;
   tempMNInfo.ACK=false;
+  tempMNInfo.bye=false;
 
   if (chiefMaster)// chiefMaster转发给所有的common master
   {
@@ -3839,28 +4029,41 @@ Ipv4GlobalRouting::UpdateClusterMasterInfo(struct clustermasterinfo tempClusterM
       inet_aton("255.255.255.255",&(tempMNInfo.addr.sin_addr));
       tempMNInfo.addr.sin_port=htons(0);
       tempMNInfo.destIdent=tempClusterMasterInfo.masterIdent;
+      tempMNInfo.forwardIdent=myIdent;
       tempMNInfo.srcIdent=myIdent;
       tempMNInfo.clusterMaster=true;
+      tempMNInfo.reachable=true;
       tempMNInfo.keepAlive=false;
       tempMNInfo.linkFlag=false;
       tempMNInfo.hello=false;
       tempMNInfo.ACK=false;
+      tempMNInfo.bye=false;
 
       int tempSock=GetSockByIdent(tempClusterMasterInfo.masterIdent);
       for (int i=0;i<clusterMasterInfo.size();i++)
       {
         tempMNInfo.addr=clusterMasterInfo[i].masterAddr;
-        tempMNInfo.pathNodeIdentA=clusterMasterInfo[i].masterIdent;// 
-        tempMNInfo.pathNodeIdentB.level=clusterMasterInfo[i].inDirNodeNum;// pathNodeIdentB有效，值为indirnodenum
-        tempMNInfo.pathNodeIdentB.position=clusterMasterInfo[i].inDirNodeNum;
+        tempMNInfo.pathNodeIdent[0]=clusterMasterInfo[i].masterIdent;// 
+        tempMNInfo.pathNodeIdent[1].level=clusterMasterInfo[i].inDirNodeNum;// pathNodeIdentB有效，值为indirnodenum
+        tempMNInfo.pathNodeIdent[1].position=clusterMasterInfo[i].inDirNodeNum;
+        for (int j=2;j<MAX_PATH_LEN;j++)
+        {
+          tempMNInfo.pathNodeIdent[j].level=-1;
+          tempMNInfo.pathNodeIdent[j].position=-1;
+        }
         tempMNInfo.chiefMaster=clusterMasterInfo[i].chiefMaster;
         m_tcpRoute->SendMessageTo(tempSock,tempMNInfo);
       }
       // 最后就是chief自己的indirnodenum
-      GetAddrByNICName(&(tempMNInfo.addr),"eth0");
-      tempMNInfo.pathNodeIdentA=myIdent;// 
-      tempMNInfo.pathNodeIdentB.level=inDirNodeNum;// pathNodeIdentB有效，值为indirnodenum
-      tempMNInfo.pathNodeIdentB.position=inDirNodeNum;
+      tempMNInfo.addr=*(GetAddrByNICName(MGMT_INTERFACE));
+      tempMNInfo.pathNodeIdent[0]=myIdent;// 
+      tempMNInfo.pathNodeIdent[1].level=inDirNodeNum;// pathNodeIdentB有效，值为indirnodenum
+      tempMNInfo.pathNodeIdent[1].position=inDirNodeNum;
+      for (int i=2;i<MAX_PATH_LEN;i++)
+      {
+        tempMNInfo.pathNodeIdent[i].level=-1;
+        tempMNInfo.pathNodeIdent[i].position=-1;
+      }
       tempMNInfo.chiefMaster=chiefMaster;
       
       m_tcpRoute->SendMessageTo(tempSock,tempMNInfo);
@@ -3905,7 +4108,7 @@ Ipv4GlobalRouting::GetIdentBySock(int sock)
 }
 
 bool 
-Ipv4GlobalRouting::IsUnreachableNode(ident tempNode,vector<ident> effectInDirNode,struct MNinfo tempMNInfo)// 判断Node是否为不可达的间接node
+Ipv4GlobalRouting::IsUnreachableInDirNode(ident tempNode,vector<ident> effectInDirNode,struct MNinfo tempMNInfo)// 判断Node是否为不可达的间接node
 {
   stringstream logFoutPath;
   logFoutPath.str("");
@@ -3920,13 +4123,16 @@ Ipv4GlobalRouting::IsUnreachableNode(ident tempNode,vector<ident> effectInDirNod
       {
         if (SameNode(tempNode,masterInDirPathTable[i].pathNodeIdent[0]))
         {
-          struct accumulationMNinfo *currentAccumulationMNInfo=masterInDirPathTable[i].headAccumulationMNInfo;
-          while (currentAccumulationMNInfo->next!=NULL) currentAccumulationMNInfo=currentAccumulationMNInfo->next;
-          struct accumulationMNinfo *newAccumulationMNInfo=(struct accumulationMNinfo *)malloc(sizeof(struct accumulationMNinfo));
-          newAccumulationMNInfo->tempMNInfo=new MNinfo();
-          *(newAccumulationMNInfo->tempMNInfo)=tempMNInfo;
-          newAccumulationMNInfo->next=NULL;
-          currentAccumulationMNInfo->next=newAccumulationMNInfo;
+          // // 某个Node不可达，就记录那些需要发送给他的信息，等连接成功后再发送
+          // // 但是应该对这些信息进行甄别，当node重连上后，只需要把当前的网络状态发给它即可，而不是将失联期间的整个历史纪录都下发
+          // struct accumulationMNinfo *currentAccumulationMNInfo=masterInDirPathTable[i].headAccumulationMNInfo;
+          // // 应该在此处修改
+          // while (currentAccumulationMNInfo->next!=NULL) currentAccumulationMNInfo=currentAccumulationMNInfo->next;
+          // struct accumulationMNinfo *newAccumulationMNInfo=(struct accumulationMNinfo *)malloc(sizeof(struct accumulationMNinfo));
+          // newAccumulationMNInfo->tempMNInfo=new MNinfo();
+          // *(newAccumulationMNInfo->tempMNInfo)=tempMNInfo;
+          // newAccumulationMNInfo->next=NULL;
+          // currentAccumulationMNInfo->next=newAccumulationMNInfo;
           Logfout.close();
           return true;
         }
@@ -3938,7 +4144,7 @@ Ipv4GlobalRouting::IsUnreachableNode(ident tempNode,vector<ident> effectInDirNod
 }
 
 void // 求出tempNode内node的上行或者下行链路的另一端结点的ident，存放于tempEffectNode中
-Ipv4GlobalRouting::GetEffectNode(vector<ident> effectInDirNode,vector<ident> tempNode,ident noNeedToNotice,string type,vector<ident> *tempEffectNode,struct MNinfo *tempMNInfo)
+Ipv4GlobalRouting::GetEffectNode(vector<ident> effectInDirNode,vector<ident> tempNode,ident noNeedToNotice,string type,vector<ident> *tempEffectNode,struct MNinfo tempMNInfo)
 {
   stringstream logFoutPath;
   logFoutPath.str("");
@@ -3997,22 +4203,33 @@ Ipv4GlobalRouting::GetEffectNode(vector<ident> effectInDirNode,vector<ident> tem
       }while(nextLinkTableEntry!=NULL);
     }
   }
-  // 
+
   for (int i=0;i<tempNode.size();i++)// 先给一部分Node下发
   {
     if (type=="DOWN" || tempEffectNode->size()==0)//
     {
-      tempMNInfo->destIdent=tempNode[i];
-      if (SameNode(tempMNInfo->destIdent,noNeedToNotice));// 此Node不需要通知
-      else if (!IsUnreachableNode(tempMNInfo->destIdent,effectInDirNode,*tempMNInfo))// 不是受影响的node，直接发送
+      tempMNInfo.destIdent=tempNode[i];
+      if (SameNode(tempMNInfo.destIdent,noNeedToNotice));// 此Node不需要通知
+      else if (!IsUnreachableInDirNode(tempMNInfo.destIdent,effectInDirNode,tempMNInfo))// 不是受影响的node，直接发送
       {
-        m_tcpRoute->SendMessageTo(GetSockByIdent(tempNode[i]),*tempMNInfo);
-        Logfout << GetNow() << "Send linkInfo to node " << tempNode[i].level << "." << tempNode[i].position << "." << endl;
+        m_tcpRoute->SendMessageTo(GetSockByIdent(tempNode[i]),tempMNInfo);
+        Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position << " ";
+        if (tempMNInfo.linkFlag==true) Logfout << "up";
+        else Logfout << "down";
+        Logfout << " to node " << tempNode[i].level << "." << tempNode[i].position << "." << endl;
       }
-      else Logfout << GetNow() << "Send linkInfo to node " << tempNode[i].level << "." << tempNode[i].position << " later." << endl;
+      else 
+      {
+        Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position << " ";
+        if (tempMNInfo.linkFlag==true) Logfout << "up";
+        else Logfout << "down";
+        Logfout << " to node " << tempNode[i].level << "." << tempNode[i].position << " later." << endl;      
+      }
     }
   }
+
   if (tempEffectNode->size()==0) return;// 不存在相关的下一跳节点了，直接退出
+
   tempNode.clear();// 清空
   // 继续求下一跳
   for (int i=0;i<tempEffectNode->size();i++) tempNode.push_back((*tempEffectNode)[i]);
@@ -4036,18 +4253,58 @@ Ipv4GlobalRouting::GetEffectNode(vector<ident> effectInDirNode,vector<ident> tem
   {
     for (int i=0;i<tempEffectNode->size();i++)
     {
-      tempMNInfo->destIdent=(*tempEffectNode)[i];
-      if (SameNode(tempMNInfo->destIdent,noNeedToNotice));// 此Node不需要通知
-      else if (!IsUnreachableNode(tempMNInfo->destIdent,effectInDirNode,*tempMNInfo))// 不是受影响的node，直接发送
+      tempMNInfo.destIdent=(*tempEffectNode)[i];
+      if (SameNode(tempMNInfo.destIdent,noNeedToNotice));// 此Node不需要通知
+      else if (!IsUnreachableInDirNode(tempMNInfo.destIdent,effectInDirNode,tempMNInfo))// 不是受影响的node，直接发送
       {
-        m_tcpRoute->SendMessageTo(GetSockByIdent((*tempEffectNode)[i]),*tempMNInfo);
-        Logfout << GetNow() << "Send linkInfo to node " << (*tempEffectNode)[i].level << "." << (*tempEffectNode)[i].position << "." << endl;
+        m_tcpRoute->SendMessageTo(GetSockByIdent((*tempEffectNode)[i]),tempMNInfo);
+        Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position << " ";
+        if (tempMNInfo.linkFlag==true) Logfout << "up";
+        else Logfout << "down";
+        Logfout << " to node " << (*tempEffectNode)[i].level << "." << (*tempEffectNode)[i].position << "." << endl;
       }
-      else Logfout << GetNow() << "Send linkInfo to node " << (*tempEffectNode)[i].level << "." << (*tempEffectNode)[i].position << " later." << endl;
+      else 
+      {
+        Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position << " ";
+        if (tempMNInfo.linkFlag==true) Logfout << "up";
+        else Logfout << "down";
+        Logfout << " to node " << (*tempEffectNode)[i].level << "." << (*tempEffectNode)[i].position << " later." << endl;
+      }
     }
     return;
   }
   Logfout.close();
+}
+
+void 
+Ipv4GlobalRouting::ChooseNodeToInformInDirNode(ident destIdent,ident lastNode,struct MNinfo tempMNInfo)
+{
+  pthread_mutex_lock(&mutexA);
+  stringstream logFoutPath;
+  logFoutPath.str("");
+  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+
+  // 随机选几个直连的Node尝试通知该间接Node重新和master建立连接
+  // srand((int)time(0));
+  // srand((int)time(NULL));
+  int randIndex=0;
+  while (1)
+  {
+    randIndex=((int)GetSystemTime())%(nodeMapToSock.size());
+    // Logfout << "randIndex:" << randIndex << endl;
+    if (!SameNode(lastNode,nodeMapToSock[randIndex].nodeIdent) && nodeMapToSock[randIndex].nodeIdent.level!=0 && nodeMapToSock[randIndex].direct==true)
+    {
+      tempMNInfo.destIdent=destIdent;
+      tempMNInfo.forwardIdent=nodeMapToSock[randIndex].nodeIdent;
+      Logfout << GetNow() << "Choose node " << nodeMapToSock[randIndex].nodeIdent.level << "." << nodeMapToSock[randIndex].nodeIdent.position;
+      m_tcpRoute->SendMessageTo(nodeMapToSock[randIndex].nodeSock,tempMNInfo);
+      Logfout << " to inform node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "." << endl;
+      break;
+    }
+  }
+  Logfout.close();
+  pthread_mutex_unlock(&mutexA);
 }
 
 void
@@ -4065,46 +4322,57 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,bool linkFlag)
   tempMNInfo->addr.sin_port=htons(0);
   tempMNInfo->destIdent=high;// 不可省略，未初始化不能使用
   tempMNInfo->srcIdent=myIdent;
-  tempMNInfo->pathNodeIdentA=high;
-  tempMNInfo->pathNodeIdentB=low;
+  tempMNInfo->pathNodeIdent[0]=high;
+  tempMNInfo->pathNodeIdent[1]=low;
+  for (int i=2;i<MAX_PATH_LEN;i++)
+  {
+    tempMNInfo->pathNodeIdent[i].level=-1;
+    tempMNInfo->pathNodeIdent[i].position=-1;
+  }
   tempMNInfo->clusterMaster=false;
   tempMNInfo->chiefMaster=false;
+  tempMNInfo->reachable=true;
   tempMNInfo->keepAlive=false;
   tempMNInfo->linkFlag=linkFlag;
   tempMNInfo->hello=false;
   tempMNInfo->ACK=false;
+  tempMNInfo->bye=false;
 
   // 某些间接连接的Node可能会因为这次链路变化而导致master的信息无法传达，所以需要记录
   vector<ident> effectInDirNode;
-  ident noNeedToNotice;
+  ident noNeedToNotice,lastNode;
   noNeedToNotice.level=-1;
   noNeedToNotice.position=-1;
-  if (low.level==0)// 直连链路故障
+  lastNode=noNeedToNotice;
+  if (linkFlag==false)
   {
-    noNeedToNotice=high;// 避免将信息发给直连失效的那个结点，因为这会导致它再次尝试重连
-    for (int i=0;i<masterInDirPathTable.size();i++)
+    if (low.level==0)// 直连链路故障
     {
-      if (SameNode(high,masterInDirPathTable[i].pathNodeIdent[0])) continue;// 不需要通知，直连失联的Node会自动重连
-      for (int j=MAX_PATH_LEN-1;j>=0;j--)
+      noNeedToNotice=high;// 避免将信息发给直连失效的那个结点
+      for (int i=0;i<masterInDirPathTable.size();i++)
       {
-        if (masterInDirPathTable[i].pathNodeIdent[j].level!=-1) // 间接路径是通过该masterInDirPathTable[i].pathNodeIdent[j]的直接连接与Master通信
+        if (SameNode(high,masterInDirPathTable[i].pathNodeIdent[0])) continue;// 不需要通知，直连失联的Node会自动重连
+        for (int j=MAX_PATH_LEN-1;j>=0;j--)
         {
-          if (SameNode(high,masterInDirPathTable[i].pathNodeIdent[j]))
+          if (masterInDirPathTable[i].pathNodeIdent[j].level!=-1) // 间接路径是通过该masterInDirPathTable[i].pathNodeIdent[j]的直接连接与Master通信
           {
-            // 随机选几个直连的Node尝试通知该间接Node重新和master建立连接
-            srand((int)time(0));
-            int randIndex=0;
-            while (1)
+            if (SameNode(high,masterInDirPathTable[i].pathNodeIdent[j]))
             {
-              randIndex=rand()%nodeMapToSock.size();
-              if (nodeMapToSock[randIndex].nodeIdent.level!=0 && nodeMapToSock[randIndex].direct==true)
-              {
-                tempMNInfo->destIdent=masterInDirPathTable[i].pathNodeIdent[0];
-                m_tcpRoute->SendMessageTo(nodeMapToSock[randIndex].nodeSock,*tempMNInfo);
-                Logfout << GetNow() << "Choose node " << nodeMapToSock[randIndex].nodeIdent.level << "." << nodeMapToSock[randIndex].nodeIdent.position << " to inform node " << tempMNInfo->destIdent.level << "." << tempMNInfo->destIdent.position << "." << endl;
-                break;
-              }
+              effectInDirNode.push_back(masterInDirPathTable[i].pathNodeIdent[0]);
             }
+            break;
+          }
+        }
+      }
+    }
+    else// 拓扑中的某条链路故障
+    {
+      for (int i=0;i<masterInDirPathTable.size();i++)
+      {
+        for (int j=0;j<MAX_PATH_LEN-1;j++)
+        {
+          if ((SameNode(high,masterInDirPathTable[i].pathNodeIdent[j]) && SameNode(low,masterInDirPathTable[i].pathNodeIdent[j+1])) || (SameNode(low,masterInDirPathTable[i].pathNodeIdent[j]) && SameNode(high,masterInDirPathTable[i].pathNodeIdent[j+1])))
+          {
             effectInDirNode.push_back(masterInDirPathTable[i].pathNodeIdent[0]);
             break;
           }
@@ -4112,33 +4380,9 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,bool linkFlag)
       }
     }
   }
-  else
+  else 
   {
-    for (int i=0;i<masterInDirPathTable.size();i++)
-    {
-      for (int j=0;j<MAX_PATH_LEN-1;j++)
-      {
-        if ((SameNode(high,masterInDirPathTable[i].pathNodeIdent[j]) && SameNode(low,masterInDirPathTable[i].pathNodeIdent[j+1])) || (SameNode(low,masterInDirPathTable[i].pathNodeIdent[j]) && SameNode(high,masterInDirPathTable[i].pathNodeIdent[j+1])))
-        {
-          // 随机选几个直连的Node尝试通知该间接Node重新和master建立连接
-          srand((int)time(0));
-          int randIndex=0;
-          while (1)
-          {
-            randIndex=rand()%nodeMapToSock.size();
-            if (nodeMapToSock[randIndex].nodeIdent.level!=0 && nodeMapToSock[randIndex].direct==true)
-            {
-              tempMNInfo->destIdent=masterInDirPathTable[i].pathNodeIdent[0];
-              m_tcpRoute->SendMessageTo(nodeMapToSock[randIndex].nodeSock,*tempMNInfo);
-              Logfout << GetNow() << "Choose node " << nodeMapToSock[randIndex].nodeIdent.level << "." << nodeMapToSock[randIndex].nodeIdent.position << " to inform node " << tempMNInfo->destIdent.level << "." << tempMNInfo->destIdent.position << "." << endl;
-              break;
-            }
-          }
-          effectInDirNode.push_back(masterInDirPathTable[i].pathNodeIdent[0]);
-          break;
-        }
-      }
-    }
+    if (low.level==0) noNeedToNotice=high;// 避免将信息发给直连失效的那个结点
   }
 
   Logfout << GetNow() << "Master start to send message:" << endl;
@@ -4146,9 +4390,14 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,bool linkFlag)
   vector<ident> tempNode,tempEffectNode;
   tempNode.push_back(high);
 
-  if (high.level==1) GetEffectNode(effectInDirNode,tempNode,noNeedToNotice,"UP",&tempEffectNode,tempMNInfo);
-  else if (high.level==2) GetEffectNode(effectInDirNode,tempNode,noNeedToNotice,"UP",&tempEffectNode,tempMNInfo);
-  else if (high.level==3) GetEffectNode(effectInDirNode,tempNode,noNeedToNotice,"DOWN",&tempEffectNode,tempMNInfo);
+  if (high.level==1) GetEffectNode(effectInDirNode,tempNode,noNeedToNotice,"UP",&tempEffectNode,*tempMNInfo);
+  else if (high.level==2) GetEffectNode(effectInDirNode,tempNode,noNeedToNotice,"UP",&tempEffectNode,*tempMNInfo);
+  else if (high.level==3) GetEffectNode(effectInDirNode,tempNode,noNeedToNotice,"DOWN",&tempEffectNode,*tempMNInfo);
+
+  for (int i=0;i<effectInDirNode.size();i++) 
+  {
+    ChooseNodeToInformInDirNode(effectInDirNode[i],lastNode,*tempMNInfo);
+  }
 }
 
 /**************************Master**************************/

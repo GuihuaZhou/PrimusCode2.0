@@ -79,7 +79,6 @@ public:
     Ipv4GlobalRouting *tempGlobalRouting;
     TCPRoute *tempTCPRoute;
     ident masterIdent;
-    int masterSock;
   };
 
   // sonic test
@@ -93,15 +92,20 @@ public:
   // 通用
   static void* KeepAliveThread(void* tempThreadParam);
   ident GetMyIdent();
+  int GetSockByAddress(string tempAddress);
+  int GetSockByMasterIdent(ident masterIdent);
   static string GetNow();//获取当前时间，精确到秒
   double GetSystemTime();//获取系统时间
+  string GetMasterAddrByIdent(ident masterIdent);
+  bool IsLegalMaster(string masterAddress);// 检查和master的连接是否合法
   bool IsLegalNeighbor(struct NICinfo tempNICInfo);
   bool IsDetectNeighbor(struct sockaddr_in addr);
   bool SameNode(ident nodeA,ident nodeB);//判断两个Node是否相同
   bool IsLegalPathInfo(ident tempPathNodeIdent[],ident neighborIdent);
+  void CloseSock(int sock);
   void GetLocalAddrByRemoteAddr(struct sockaddr_in *localAddr,struct sockaddr_in remoteAddr);
   void GetLocalAddrByNeighborIdent(struct sockaddr_in *localAddr,ident neighborIdent);
-  void GetAddrByNICName(struct sockaddr_in *addr,string NICName);// 通过rtnetlink获取网口的地址
+  struct sockaddr_in *GetAddrByNICName(string NICName);// 通过rtnetlink获取网口的地址
   string GetNICNameByRemoteAddr(struct sockaddr_in addr);
   ident GetNeighborIdentByRemoteAddr(struct sockaddr_in addr);
   ident GetChiefMasterIdent();
@@ -110,6 +114,7 @@ public:
   // node ND
   static void* ListenNICThread(void* tempThreadParam);
   void Start(vector<string> tempMasterAddress);
+  bool IsNewNeighbor(string NICName);
   bool IsNewNIC(struct ifaddrs *ifa);
   void ListenNIC();
   void HandleMessage(ident nodeA,ident nodeB,bool linkFlag);
@@ -134,9 +139,7 @@ public:
   void PrintNodeInDirPathTable();//打印备用路径
   void PrintMasterMapToSock();//记录node和master的连接情况
 
-  bool InformUnreachableNode(ident destIdent,ident srcIdent);
-  void ReconnectWithMaster();
-  void SendInDirPathToMaster(int sock,ident pathNodeIdentA,ident pathNodeIdentB);
+  struct pathtableentry *InformUnreachableNode(ident destIdent,ident srcIdent);
   void GetHeadPathTableEntry(struct pathtableentry **tempPathTableEntry);//获得路径表的第一条路径
   void UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int nodeCounter,vector<struct addrset> addrSet);
   void UpdateMappingTableEntry(struct pathtableentry *newPathTableEntry);//更新映射表
@@ -148,9 +151,11 @@ public:
   void ModifyNodeDirConFlag(ident high,ident low,bool dirConFlag);// 修改dirConFlag
   void ModifyPathEntryTable(ident high,ident low,bool linkFlag);// 修改路径表项，linkCounter
   void InsertNodeInDirPathTable(struct pathtableentry *tempPathTableEntry);//插入node和master间接连接的路径
+  void CheckMasterMapToSock();// 更新完路径表中的链路或者直连标志后都要检查和master的连接的间接路径是否受到影响
   void UpdateNodeInDirPathTable();// 修改路径表或者直连标志位后，需要检查间接路径表是否需要更新
   void UpdateMasterMapToSock(struct mastermaptosock tempMasterMapToSock,int cmd);//node连接的Master的一些信息
-  vector<struct mastermaptosock> GetMasterMapToSock();//获得node和master的连接信息
+  struct pathtableentry *GetNodePathToMaster(struct pathtableentry *lastPath);// 获得一条通往master的路径，可能是直连，可能是间接连接
+  vector<struct mastermaptosock> GetMasterMapToSock();// 获得node和master的连接信息
   vector<struct nodemaptosock> GetNodeMapToSock();
   int GetMappingTableEntryIndex(ident high);// 获取映射表的索引，返回值就是索引的位置
   int UpdateKeepAlive(int masterSock,ident masterIdent,bool recvKeepAlive);// keepAliveFlag为真，则表示master回复了keep alive；为假，则表示node发出了keep alive
@@ -169,16 +174,17 @@ public:
   void PrintMasterInDirPathTable();
   int GetSockByIdent(ident nodeIdent);// 通过ident获得套接字
   int GetInDirNodeNum();// 获得间接连接的Node数量
-  bool IsUnreachableNode(ident tempNode,vector<ident> effectInDirNode,struct MNinfo tempMNInfo);// 判断Node是否为不可达的间接node
+  bool IsUnreachableInDirNode(ident tempNode,vector<ident> effectInDirNode,struct MNinfo tempMNInfo);// 判断Node是否为不可达的间接node
   bool UpdateMasterLinkTable(ident high,ident low,bool linkFlag);
-  void UpdateInDirPath(ident nodeIdent,ident pathNodeIdentA,ident pathNodeIdentB,int nodeSock);
+  void UpdateInDirPath(ident nodeIdent,ident pathNodeIdent[MAX_PATH_LEN],int nodeSock);
   void UpdateNodeMapToSock(ident nodeIdent,int sock,bool direct);
   void UpdateKeepAliveFaildNum(ident nodeIdent);
   void UpdateClusterMasterInfo(struct clustermasterinfo tempClusterMasterMapToSock,int cmd);
   void SendInDirNodeNumToCommon(struct clustermasterinfo tempClusterMasterMapToSock);// master向其他master转发indirnodenum
-  void GetEffectNode(vector<ident> effectInDirNode,vector<ident> tempNode,ident noNeedToNotice,string type,vector<ident> *tempEffectNode,struct MNinfo *tempMNInfo);// 求出nodeIdent的上行或者下行链路的另一端结点的ident
+  void GetEffectNode(vector<ident> effectInDirNode,vector<ident> tempNode,ident noNeedToNotice,string type,vector<ident> *tempEffectNode,struct MNinfo tempMNInfo);// 求出nodeIdent的上行或者下行链路的另一端结点的ident
   void SendMessageToNode(ident high,ident low,bool linkFlag);
   void NewChiefMasterElection(ident chiefMasterIdent);
+  void ChooseNodeToInformInDirNode(ident destIdent,ident lastNode,struct MNinfo tempMNInfo);// 随机选择一个直连node来通知某个间接连接且需要重连的destIdent
 
 private:
   // 预期拓扑
@@ -197,7 +203,6 @@ private:
   bool chiefMaster;
   int inDirNodeNum=0;// 非直连的node个数
   int m_defaultKeepaliveTimer=3;
-  int selectInDirPathIndex=-1;// 选中的间接路径的index
   bool chiefMasterStatusChange=false;// 标志位，chief master判断出自己不是最优后，会等待3s再询问其他master，在这期间如果chief master的状态发生变化，则还要等待3s
   bool isStartMasterElection=false;
   vector<struct NICinfo> NICInfo;// 状态为up的网卡信息存储数组
