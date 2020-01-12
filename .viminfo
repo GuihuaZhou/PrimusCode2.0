@@ -21,20 +21,125 @@
 # Input Line History (newest to oldest):
 
 # Registers:
+""1	LINE	0
+	#include<math.h>
+	#include<stdlib.h>
+	#include<stdio.h>
+	#include <time.h>
+	#define pi 3.1415926535
+	
+	double UniformDistribution(double min, double max);
+	double NormalDistribution(double mu,double sigma);
+	double LogNormalDistribution(double mu,double sigma);
+	
+	int main(int argc, char **argv)
+	{
+	  if(argc!=4)
+	  {
+	    printf("usage: failure_startTime_mu, failure_startTime_sigma, totalFailureNumber");
+	    exit(0);
+	  }
+	  double failure_startTime_mu, failure_startTime_sigma;
+	  failure_startTime_mu=strtod(argv[1],NULL);
+	  failure_startTime_sigma=strtod(argv[2],NULL);
+	  int totalFailureNumber=atoi(argv[3]);
+	  
+	  double failure_startTime;
+	  for(int i=0;i<totalFailureNumber;i++) {
+	    failure_startTime=LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma);
+	    printf("%d\n",int(failure_startTime));
+	  }
+	    
+	  return 0;
+	}
+	
+	
+	
+	double UniformDistribution(double min, double max)
+	{
+	  return (double) (max-min)*((double) (rand()%RAND_MAX+1))/RAND_MAX+min;
+	}
+	
+	double NormalDistribution(double mu,double sigma)
+	{
+	  double u1=UniformDistribution(0,1);
+	  double u2=UniformDistribution(0,1);
+	  double y=(double) sqrt(-2*log(u1))*sin(2*pi*u2);
+	  return mu+sigma*y;
+	}
+	
+	double LogNormalDistribution(double mu,double sigma)
+	{
+	  double y=NormalDistribution(mu,sigma);
+	  return (double)exp(y);
+"2	LINE	0
+	#include<math.h>
+	#include<stdlib.h>
+	#include<stdio.h>
+	#include <time.h>
+	#define pi 3.1415926535
+	
+	double UniformDistribution(double min, double max);
+	double NormalDistribution(double mu,double sigma);
+	double LogNormalDistribution(double mu,double sigma);
+	
+	int main(int argc, char **argv)
+	{
+		if(argc!=2)
+		{
+			printf("usage: concurrent_failure_numbers, failure_lastTime_mu, \
+				failure_lastTime_sigma, failure_startTime_mu, failure_startTime_sigma, \
+				switchPortNumber, switchLayer, totalTime, ifF2Tree");
+			exit(0);
+		}
+		int concurrent_failure_numbers=atoi(argv[1]);
+		double failure_lastTime_mu,failure_lastTime_sigma, failure_startTime_mu, failure_startTime_sigma;
+		failure_lastTime_mu=strtod(argv[2],NULL);
+		failure_lastTime_sigma=strtod(argv[3],NULL);
+		failure_startTime_mu=strtod(argv[4],NULL);
+		failure_startTime_sigma=strtod(argv[5],NULL);
+		int switchPortNumber=atoi(argv[6]);
+		int switchLayer=atoi(argv[7]);
+		double totalTime;
+		totalTime=strtod(argv[8],NULL);
+		int ifF2Tree=atoi(argv[9]);
+	
+		int totalLinkNumber=0;
+		if(ifF2Tree==0)
+		{
+			int serverNumber =(int) pow(switchPortNumber,switchLayer)/pow(2,switchLayer-1);
+			int nonTopSwitchNumber=(int) (serverNumber/(switchPortNumber/2));
+			int topSwitchNumber=(int) nonTopSwitchNumber/2;
+			totalLinkNumber=(serverNumber+(nonTopSwitchNumber*(switchLayer-1)+topSwitchNumber)*switchPortNumber)/2-serverNumber;
+		}
+		else
+		{	
+			int serverNumber = (int) pow(switchPortNumber,3)/4-pow(switchPortNumber,2)+switchPortNumber;
+			int L0SwitchNumber=(int) (serverNumber/(switchPortNumber/2));
+			int L1SwitchNumber=(int) (L0SwitchNumber*(switchPortNumber/2)/(switchPortNumber/2-1));
+			int L2SwitchNumber=(int) L1SwitchNumber/2;
+			totalLinkNumber=2*serverNumber+L1SwitchNumber+L2SwitchNumber;
+		}
+	
+		srand((unsigned) time(NULL));
+		double currentTime=200;
 
 # File marks:
-'0  4  0  /var/log/Primus.log
-'1  109  58  /etc/screenrc
-'2  1  0  ~/tcp-throughput/pre.sh
-'3  1  0  ~/tcp-throughput/pre,sh
-'4  2  7  ~/test.sh
-'5  2  20  ~/test.sh
-'6  2  16  ~/test.sh
-'7  2  37  ~/test.sh
-'8  1  0  /etc/apt/sources.list
-'9  1  0  /etc/network/interfaces
+'0  1  0  ~/tool/test.log
+'1  1  0  ~/tool/logNormalGenerator.cc
+'2  52  0  ~/tool/logNormalGenerator.cc
+'3  4  0  /var/log/Primus.log
+'4  109  58  /etc/screenrc
+'5  1  0  ~/tcp-throughput/pre.sh
+'6  1  0  ~/tcp-throughput/pre,sh
+'7  2  7  ~/test.sh
+'8  2  20  ~/test.sh
+'9  2  16  ~/test.sh
 
 # Jumplist (newest first):
+-'  1  0  ~/tool/test.log
+-'  1  0  ~/tool/logNormalGenerator.cc
+-'  52  0  ~/tool/logNormalGenerator.cc
 -'  4  0  /var/log/Primus.log
 -'  1  0  /var/log/Primus.log
 -'  109  58  /etc/screenrc
@@ -130,12 +235,21 @@
 -'  1  0  /etc/network/interfaces
 -'  1  0  /etc/network/interfaces
 -'  1  0  /etc/apt/sources.list
--'  1  0  /etc/network/interfaces
--'  1  0  /etc/network/interfaces
--'  1  0  /etc/network/interfaces
--'  1  0  /etc/network/interfaces
 
 # History of marks within files (newest to oldest):
+
+> ~/tool/test.log
+	"	1	0
+
+> ~/tool/logNormalGenerator.cc
+	"	1	0
+	^	52	0
+	.	51	1
+	+	1	1
+	+	1	10
+	+	1	16
+	+	1	16
+	+	51	1
 
 > /var/log/Primus.log
 	"	4	0

@@ -485,3 +485,47 @@ exit
 screen -rd
 sudo su
 screen -rd
+sudo su
+screen -rd
+sudo su
+screen 
+screen -rd
+sudo su
+screen -rd
+ls
+cd tool/
+ls
+vi logNormalGenerator.cc
+ls
+gcc logNormalGenerator.cc -o logNormalGenerator.out
+g++ logNormalGenerator.cc -o logNormalGenerator.out
+ls
+./logNormalGenerator.out 
+vi logNormalGenerator.cc
+g++ logNormalGenerator.cc -o logNormalGenerator.out
+vi logNormalGenerator.cc
+./logNormalGenerator.out 
+./logNormalGenerator.out 0 0.25 1000
+./logNormalGenerator.out 0 0.25 1000 > test.log
+vi test.log 
+sz test.log
+sudo apt-get install sz
+sudo apt-get install lrzsz
+sz test.log
+cd /home/guolab/
+ls
+cd tool/
+cat /var/log/Primus-0.0.log 
+screen -rd
+sudo su
+screen
+screen 
+cat /var/log/Primus-0.0.log 
+screen -rd
+cat /var/log/Primus-0.0.log 、
+cat /var/log/Primus-0.0.log 
+cat /var/log/MasterLinkTable-0.0.txt q
+cat /var/log/MasterLinkTable-0.0.txt 
+cat /var/log/MasterLinkTable-0.0.txt q
+cat /var/log/Primus-0.0.log 
+screen -rd

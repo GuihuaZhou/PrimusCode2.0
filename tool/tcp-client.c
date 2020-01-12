@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
 	struct timespec start,end,lastPacketStamp;
 	clock_gettime(CLOCK_MONOTONIC,&start);
 
+	int counter=0;
 	while (1)
 	{
 		if ((len=recv(server_sockfd,bufSent,MAXPACKETSIZE,0))<0)
@@ -99,8 +100,9 @@ int main(int argc, char *argv[])
 			break;
 		}
 		fseek(fp,0L,SEEK_END);
-		fprintf(fp,"recv request.\n");
+		fprintf(fp,"%d recv request.\n",counter+1);
 		fflush(fp);
+		counter++;
 		bytesSent=0;
 		while (bytesSent<flow_size)
 		{

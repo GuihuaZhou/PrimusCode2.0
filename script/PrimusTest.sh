@@ -276,3 +276,61 @@ echo "终止进程" >> /home/guolab/PrimusTest.log
 # pssh -i -H "root@10.0.8.98" -t 0 "killall -9 iperf3;"
 # pssh -i -H "root@10.0.8.87" -t 0 "killall -9 iperf3;"
 # pssh -i -H "root@10.0.8.89" -t 0 "killall -9 iperf3;"
+
+# screen 
+
+# sudo su
+# 123.com
+
+# screen -rd
+
+# vi /etc/sysctl.conf
+
+# sysctl -p
+
+# # spine
+# net.ipv4.conf.eth1.rp_filter=0
+# net.ipv4.conf.eth2.rp_filter=0
+# net.ipv4.conf.lo.rp_filter=0
+# net.ipv4.conf.all.rp_filter=0
+# net.ipv4.conf.default.rp_filter=0
+
+# # leaf
+# net.ipv4.conf.eth1.rp_filter=0
+# net.ipv4.conf.eth2.rp_filter=0
+# net.ipv4.conf.eth3.rp_filter=0
+# net.ipv4.conf.eth4.rp_filter=0
+# net.ipv4.conf.eth5.rp_filter=0
+# net.ipv4.conf.all.rp_filter=0
+# net.ipv4.conf.default.rp_filter=0
+
+# # tor
+# net.ipv4.conf.eth1.rp_filter=0
+# net.ipv4.conf.eth2.rp_filter=0
+# net.ipv4.conf.eth3.rp_filter=0
+# net.ipv4.conf.all.rp_filter=0
+# net.ipv4.conf.default.rp_filter=0
+
+# # server/client
+# net.ipv4.conf.eth1.rp_filter=0
+# net.ipv4.conf.all.rp_filter=0
+# net.ipv4.conf.default.rp_filter=0
+
+# # Spine
+# ssh root@10.0.80.30 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+# ssh root@10.0.80.31 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+# ssh root@10.0.80.32 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+# ssh root@10.0.80.33 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+# ssh root@10.0.80.34 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+# ssh root@10.0.80.35 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+# ssh root@10.0.80.36 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+# ssh root@10.0.80.37 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+# # # Leaf
+# ssh root@10.0.80.20 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;ifconfig eth3 up;ifconfig eth4 up;ifconfig eth5 up;"
+# ssh root@10.0.80.21 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;ifconfig eth3 up;ifconfig eth4 up;ifconfig eth5 up;"
+# ssh root@10.0.80.22 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;ifconfig eth3 up;ifconfig eth4 up;ifconfig eth5 up;"
+# ssh root@10.0.80.23 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;ifconfig eth3 up;ifconfig eth4 up;ifconfig eth5 up;"
+# # # ToR
+# ssh root@10.0.80.10 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+# ssh root@10.0.80.12 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+

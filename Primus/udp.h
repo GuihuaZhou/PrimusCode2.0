@@ -17,6 +17,10 @@ using namespace std;
 class Ipv4GlobalRouting;
 class UDPServer{
 public:
+	struct threadparamA
+	{
+		UDPServer *tempUDPServer;
+	};
 	//Set base information
 	UDPServer();
 	~UDPServer();
@@ -26,6 +30,7 @@ public:
 private:
 	static void* HandleReadND(void* object);
 	static void* HandleReadPathTable(void* object);
+	static void* HandleReadLinkInfo(void* tempThreadParam);
 	static Ipv4GlobalRouting* m_globalRouting;
 	ident myIdent;
 };
@@ -42,6 +47,7 @@ public:
 	UDPClient();
 	~UDPClient();
   void SetGlobalRouting(Ipv4GlobalRouting *tempGlobalRouting);
+  void SendLinkInfo(struct sockaddr_in localAddr,string remoteAddr,struct MNinfo tempMNInfo);
   void SendNDTo(struct sockaddr_in localAddr,struct sockaddr_in remoteAddr,struct NDinfo tempNDInfo);
   void SendPathInfoTo(struct sockaddr_in localAddr,struct sockaddr_in remoteAddr,struct pathinfo *tempPathInfo);
 

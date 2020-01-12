@@ -6,10 +6,12 @@
 #define MAX_PATH_LEN 5// 路径最大长度
 #define MAX_ADDR_NUM 48// 一条路径能达到的服务器最大数
 #define MAX_INDIR_NUM 2// Master间接连接node的最大数量，管理员设定阈值，超过即询问其他master是否状态更好
+#define MAX_TF_NODE_NUM 4// 随机选择多个node通过udp转发linkinfo
 
-#define MN_PORT 6666
-#define ND_PORT 2225
-#define PT_PORT 8848//传递路径信息
+#define MN_PORT 8848
+#define ND_PORT 8849
+#define PT_PORT 8850//传递路径信息
+#define UDP_TF_PORT 8851// udp转发linkinfo
 
 #define NIC_CHECK_INTERVAL 10000// us
 #define SEND_PATH_INTERVAL 100000// us
@@ -31,12 +33,16 @@ struct ident
 
 struct NICinfo
 {
+	int eventId;// 事件id，链路状态变化的唯一标识
   string NICName;// 网口名称  
   // 该网口连接的邻居的角色
-  bool isMaster;
   bool isServer;
   bool isSwitch;
-  bool isNeedJudge;// 判断是否需要检测该网口的状态，直连链路故障后，邻居信息不会删除，但是以后的故障检测就可以跳过该条目
+  // ND完成共有两步：发出ND收到回复；收到邻居发来的ND并回复
+  bool sendND;
+  bool recvND;
+  bool judge;
+  bool sleep;// 判断是否需要检测该网口的状态，直连链路故障后，邻居信息不会删除，但是以后的故障检测就可以跳过该条目
   bool flag;// 网卡状态
   ident neighborIdent;// 邻居的ident
   struct sockaddr_in localAddr;// 网口的IP地址
@@ -46,12 +52,13 @@ struct NICinfo
 
 struct MNinfo// Master-Node通信的信息格式
 {
-	struct sockaddr_in addr;// 
+	struct sockaddr_in addr;// 应该有两个地址，一个记录目的地址，一个记录本地地址
 	ident destIdent;// 接收该Message的ident
 	ident forwardIdent;
 	ident srcIdent;// 发送该Message的ident
 	// 如果是链路信息，则pathNodeIdent[0]和pathNodeIdent[1]表示一条链路
 	ident pathNodeIdent[MAX_PATH_LEN];
+	int eventId;// -1表示不是链路信息
 	bool clusterMaster;// master内部信息格式
 	bool chiefMaster;// 
 	bool reachable;// 若转发node发现目的地址不可达，则会原路返回该message，并将此标志位标为false
@@ -136,6 +143,7 @@ struct masterinfo// master用来存储其他master信息
 struct nodemaptosock// master和node通用，node也可能作转发，用来存储与其建立了tcp连接的Node的信息
 {
   ident nodeIdent;// Node的ident
+  string nodeAddress;
   int nodeSock;// 该连接的套接字
   bool direct;// 是否为直连
   int keepAliveFaildNum;// 未接收到的keep alive数量
@@ -163,4 +171,10 @@ struct clustermasterinfo// chiefmaster和common master用，用来存储master�
 	struct sockaddr_in masterAddr;// Master的地址
   ident masterIdent;// 
   int inDirNodeNum;// 此master的间接连接数量，如果是chiefmaster宕机，common master就会通过自己存储的这些信息来选举chief，其他情况更换chief必须优chief主导
+};
+
+struct masteraddressset
+{
+	ident masterIdent;
+	vector<string> masterAddress;
 };

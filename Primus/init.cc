@@ -16,7 +16,7 @@ typedef void (*signalHandler)(int);
 #define MAX_ROUTE 1000
 using namespace std;
 
-vector<string> masterAddress;
+vector<struct masteraddressset> masterAddressSet;
 int level=2;
 int position=1;
 
@@ -29,7 +29,7 @@ int AllNodes=26;//节点总数
 int Links=832;//链路总数
 int nMaster=1;
 int pod=0;
-int defaultLinkTimer=100000;//us
+int defaultLinkTimer=1000000;//us
 int defaultKeepaliveTimer=6;
 
 Ipv4GlobalRouting *m_globalRouting;
@@ -324,20 +324,20 @@ pid_t getDaemon(pid_t primusPid, uint32_t intervalSeconds)
 
 int main(int argc,char *argv[])
 {
-  struct sockaddr_in sockaddr;
-  vector<struct DestNetmaskProtoNum> destNetmaskProtoNum_vector;//把每一条路由的协议号、网络号和掩码存储在destNetmaskProtoNum_vector向量里
-  vector<struct DestNetmaskProtoNum> * p_destNetmaskProtoNum_vector=&destNetmaskProtoNum_vector;
+  // struct sockaddr_in sockaddr;
+  // vector<struct DestNetmaskProtoNum> destNetmaskProtoNum_vector;//把每一条路由的协议号、网络号和掩码存储在destNetmaskProtoNum_vector向量里
+  // vector<struct DestNetmaskProtoNum> * p_destNetmaskProtoNum_vector=&destNetmaskProtoNum_vector;
     
-  get_destNetmaskProtoNum_info_all(p_destNetmaskProtoNum_vector);
-  for(int i=0;i<(*p_destNetmaskProtoNum_vector).size(); i++)
-  {
-      if ((*p_destNetmaskProtoNum_vector)[i].protocolNum == RTPROT_ZEBRA)
-      {
-          sockaddr.sin_family = AF_INET;
-          sockaddr.sin_addr.s_addr = (*p_destNetmaskProtoNum_vector)[i].des;
-          DelRoute( sockaddr, (*p_destNetmaskProtoNum_vector)[i].netmask);    //网络字节序IP
-      }
-  }
+  // get_destNetmaskProtoNum_info_all(p_destNetmaskProtoNum_vector);
+  // for(int i=0;i<(*p_destNetmaskProtoNum_vector).size(); i++)
+  // {
+  //     if ((*p_destNetmaskProtoNum_vector)[i].protocolNum == RTPROT_ZEBRA)
+  //     {
+  //         sockaddr.sin_family = AF_INET;
+  //         sockaddr.sin_addr.s_addr = (*p_destNetmaskProtoNum_vector)[i].des;
+  //         DelRoute( sockaddr, (*p_destNetmaskProtoNum_vector)[i].netmask);    //网络字节序IP
+  //     }
+  // }
   
   ifstream fin("/usr/local/etc/Primus.conf",ios::in);
   string config;
@@ -358,9 +358,31 @@ int main(int argc,char *argv[])
     begin=++i;
   }
 
-  masterAddress.push_back("172.16.80.1");
-  masterAddress.push_back("172.16.80.2");
-  masterAddress.push_back("172.16.80.3");
+  struct masteraddressset tempMasterAddressSet;
+
+  tempMasterAddressSet.masterIdent.level=0;
+  tempMasterAddressSet.masterIdent.position=0;
+
+  tempMasterAddressSet.masterAddress.push_back("172.16.80.1");
+  tempMasterAddressSet.masterAddress.push_back("172.16.80.2");
+  tempMasterAddressSet.masterAddress.push_back("172.16.80.3");
+  masterAddressSet.push_back(tempMasterAddressSet);
+  tempMasterAddressSet.masterAddress.clear();
+
+  tempMasterAddressSet.masterIdent.position=1;
+  tempMasterAddressSet.masterAddress.push_back("172.16.80.4");
+  tempMasterAddressSet.masterAddress.push_back("172.16.80.5");
+  tempMasterAddressSet.masterAddress.push_back("172.16.80.6");
+  masterAddressSet.push_back(tempMasterAddressSet);
+  tempMasterAddressSet.masterAddress.clear();
+
+  tempMasterAddressSet.masterIdent.position=2;
+  tempMasterAddressSet.masterAddress.push_back("172.16.80.7");
+  tempMasterAddressSet.masterAddress.push_back("172.16.80.8");
+  tempMasterAddressSet.masterAddress.push_back("172.16.80.9");
+  masterAddressSet.push_back(tempMasterAddressSet);
+
+  // cout << "masterAddressSet size:" << masterAddressSet.size() << endl;
 
   config="";
   getline(fin,config);
@@ -407,8 +429,8 @@ int main(int argc,char *argv[])
   else if (level==2) pod=position/LeafNodes+1;
   else if (level==1) pod=position/ToRNodes+1;
   m_globalRouting=new Ipv4GlobalRouting(level,position,ToRNodes,LeafNodes,SpineNodes,nPods,pod,nMaster,Links,defaultLinkTimer,defaultKeepaliveTimer,true,true);
-  // pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
-  m_globalRouting->Start(masterAddress);
+  pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
+  m_globalRouting->Start(masterAddressSet);
   pthread_exit(NULL);
   return 0;
 }

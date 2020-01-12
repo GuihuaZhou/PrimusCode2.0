@@ -39,6 +39,7 @@ public:
     // 对链路两端的ident重新进行排序，level大的为high，若level相等，则position大的为high
     ident high;
     ident low;
+    int eventId;
     bool linkFlag;// 当前链路的状态
     bool lastLinkFlag;// 链路震荡时最新的链路状态
     double lastUpdateTime;// 记录该条链路上一次更新的时间戳
@@ -81,6 +82,13 @@ public:
     ident masterIdent;
   };
 
+  struct threadparamD
+  {
+    Ipv4GlobalRouting *tempGlobalRouting;
+    struct linktableentry *tempLinkTableEntry;
+    ident srcIdent;
+  };
+
   // sonic test
   bool isListenNIC(string ifName);
   vector<string> GetListenNIC();
@@ -103,21 +111,23 @@ public:
   bool SameNode(ident nodeA,ident nodeB);//判断两个Node是否相同
   bool IsLegalPathInfo(ident tempPathNodeIdent[],ident neighborIdent);
   void CloseSock(int sock);
+  void UpdateResponseRecord(int eventId);
+  void HandleMessage(struct MNinfo tempMNInfo);
   void GetLocalAddrByRemoteAddr(struct sockaddr_in *localAddr,struct sockaddr_in remoteAddr);
-  void GetLocalAddrByNeighborIdent(struct sockaddr_in *localAddr,ident neighborIdent);
+  struct sockaddr_in *GetLocalAddrByNeighborIdent(ident neighborIdent);
   struct sockaddr_in *GetAddrByNICName(string NICName);// 通过rtnetlink获取网口的地址
   string GetNICNameByRemoteAddr(struct sockaddr_in addr);
   ident GetNeighborIdentByRemoteAddr(struct sockaddr_in addr);
   ident GetChiefMasterIdent();
+  ident GetForwardIdent(ident masterIdent);
   unsigned long Convert(struct sockaddr_in destAddr,unsigned int prefixLen);//获得网络号
   unsigned int NetmaskToPrefixlen(struct sockaddr_in destMask);//掩码到前缀长度
   // node ND
   static void* ListenNICThread(void* tempThreadParam);
-  void Start(vector<string> tempMasterAddress);
+  void Start(vector<struct masteraddressset> tempMasterAddressSet);
   bool IsNewNeighbor(string NICName);
   bool IsNewNIC(struct ifaddrs *ifa);
   void ListenNIC();
-  void HandleMessage(ident nodeA,ident nodeB,bool linkFlag);
   void NDRecvND(struct NDinfo tempNDInfo);
   void NDRecvACK(struct NDinfo tempNDInfo);
   void FreshNeighboorList(struct NICinfo tempNICInfo);
@@ -132,6 +142,8 @@ public:
   void AddSingleRoute(struct sockaddr_in destAddr,unsigned int prefixLen,struct nexthopandweight tempNextHopAndWeight);
   void DelRoute(struct sockaddr_in destAddr,unsigned int prefixLen);
   // node 对路径表的操作
+  void PrintNodeLinkTable();
+  void PrintNeighborInfo();
   void PrintPathEntryTable();//打印路径表
   void PrintPathEntry(struct pathtableentry *tempPathTableEntry);
   void PrintMappingTable();//打印映射表
@@ -139,8 +151,8 @@ public:
   void PrintNodeInDirPathTable();//打印备用路径
   void PrintMasterMapToSock();//记录node和master的连接情况
 
-  struct pathtableentry *InformUnreachableNode(ident destIdent,ident srcIdent);
-  void GetHeadPathTableEntry(struct pathtableentry **tempPathTableEntry);//获得路径表的第一条路径
+  void TransferTo(struct MNinfo tempMNInfo);
+  void SendLinkInfoToMaster(ident identA,ident identB,bool linkFlag);
   void UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int nodeCounter,vector<struct addrset> addrSet);
   void UpdateMappingTableEntry(struct pathtableentry *newPathTableEntry);//更新映射表
   void GetMappingTableEntry(ident pathNodeIdentA,ident pathNodeIdentB,vector<struct mappingtableentry> *tempMappingTable);//根据两个节点(link)获取映射表项，也有可能是根据一个节点来获取所有相关的映射表项
@@ -154,12 +166,16 @@ public:
   void CheckMasterMapToSock();// 更新完路径表中的链路或者直连标志后都要检查和master的连接的间接路径是否受到影响
   void UpdateNodeInDirPathTable();// 修改路径表或者直连标志位后，需要检查间接路径表是否需要更新
   void UpdateMasterMapToSock(struct mastermaptosock tempMasterMapToSock,int cmd);//node连接的Master的一些信息
-  struct pathtableentry *GetNodePathToMaster(struct pathtableentry *lastPath);// 获得一条通往master的路径，可能是直连，可能是间接连接
+  struct pathtableentry *GetPathToMaster(struct pathtableentry *lastPath);// 获得一条通往master的路径，可能是直连，可能是间接连接
+  struct pathtableentry *GetPathToNode(ident destIdent);// 获得一条通往destIdent的路径，必须是直连
+  struct pathtableentry *InformUnreachableNode(ident destIdent,ident srcIdent);
   vector<struct mastermaptosock> GetMasterMapToSock();// 获得node和master的连接信息
   vector<struct nodemaptosock> GetNodeMapToSock();
   int GetMappingTableEntryIndex(ident high);// 获取映射表的索引，返回值就是索引的位置
   int UpdateKeepAlive(int masterSock,ident masterIdent,bool recvKeepAlive);// keepAliveFlag为真，则表示master回复了keep alive；为假，则表示node发出了keep alive
   // 返回值为1表示正常，为2表示keepalive未接收次数超过3次，为3表示套接字不存在
+  int GetLocalLinkEventId(ident neighborIdent);
+  bool UpdateNodeLinkTable(ident high,ident low,int eventId,bool linkFlag,int cmd);// 更新node维护的链路表
 
   double Test(bool isMaster);//Master查找和修改链路表的时间测试，测试Node查找映射表、查找和修改路径表的时间
 
@@ -175,14 +191,15 @@ public:
   int GetSockByIdent(ident nodeIdent);// 通过ident获得套接字
   int GetInDirNodeNum();// 获得间接连接的Node数量
   bool IsUnreachableInDirNode(ident tempNode,vector<ident> effectInDirNode,struct MNinfo tempMNInfo);// 判断Node是否为不可达的间接node
-  bool UpdateMasterLinkTable(ident high,ident low,bool linkFlag);
+  bool UpdateMasterLinkTable(ident high,ident low,ident srcIdent,int eventId,bool linkFlag);
   void UpdateInDirPath(ident nodeIdent,ident pathNodeIdent[MAX_PATH_LEN],int nodeSock);
-  void UpdateNodeMapToSock(ident nodeIdent,int sock,bool direct);
+  void UpdateNodeMapToSock(ident nodeIdent,string nodeAddress,int sock,bool direct);
   void UpdateKeepAliveFaildNum(ident nodeIdent);
   void UpdateClusterMasterInfo(struct clustermasterinfo tempClusterMasterMapToSock,int cmd);
   void SendInDirNodeNumToCommon(struct clustermasterinfo tempClusterMasterMapToSock);// master向其他master转发indirnodenum
-  void GetEffectNode(vector<ident> effectInDirNode,vector<ident> tempNode,ident noNeedToNotice,string type,vector<ident> *tempEffectNode,struct MNinfo tempMNInfo);// 求出nodeIdent的上行或者下行链路的另一端结点的ident
-  void SendMessageToNode(ident high,ident low,bool linkFlag);
+  void AssistSendTo(struct MNinfo tempMNInfo);// 通过udp来协助下发
+  void GetEffectNode(vector<ident> effectInDirNode,vector<ident> tempNode,ident srcIdent,string type,vector<ident> *tempEffectNode,struct MNinfo tempMNInfo);// 求出nodeIdent的上行或者下行链路的另一端结点的ident
+  void SendMessageToNode(ident high,ident low,ident srcIdent,int eventId,bool linkFlag);
   void NewChiefMasterElection(ident chiefMasterIdent);
   void ChooseNodeToInformInDirNode(ident destIdent,ident lastNode,struct MNinfo tempMNInfo);// 随机选择一个直连node来通知某个间接连接且需要重连的destIdent
 
@@ -218,13 +235,16 @@ private:
   vector<struct pathtableentry *> nodeInDirPathTable;//node自己选的和master间接连接的路径
   vector<struct clustermasterinfo> clusterMasterInfo;// master内部记录的连接信息
   vector<struct indirpathtableentry> masterInDirPathTable;// master会记录所有间接连接node所用的路径
+  // 下面两个数组重复，后来修改为一个Master会有多个网卡
   vector<string> masterAddress;
+  vector<struct masteraddressset> masterAddressSet;
   
   struct mappingtableentry *headMappingTableEntry=(struct mappingtableentry *)malloc(sizeof(struct mappingtableentry));// 映射表的头节点
   // 映射表数量很多，所以还得给映射表加个索引表
   vector<struct mappingtableentry *> mappingTableEntryIndex;
 
-  struct linktableentry *headLinkTableEntry=(struct linktableentry *)malloc(sizeof(struct linktableentry));//master链路表的头节点
+  struct linktableentry *headMasterLinkTableEntry=(struct linktableentry *)malloc(sizeof(struct linktableentry));//master链路表的头节点
+  struct linktableentry *headNodeLinkTableEntry=(struct linktableentry *)malloc(sizeof(struct linktableentry));// node的链路表不维护直连链路
   struct pathtableentry *headPathTableEntry=(struct pathtableentry *)malloc(sizeof(struct pathtableentry));//头节点中的counter用作链表长度计数器
   
   pthread_t masterLink_thread;

@@ -154,9 +154,9 @@ int main(int argc, char *argv[])
 		recordParam.finishClient=0;
 		clock_gettime(CLOCK_MONOTONIC,&(recordParam.startTime));
 
-		fseek(fp,0L,SEEK_END);
-		fprintf(fp,"第 %d 次请求.\t",counter+1);
-		fflush(fp);
+		// fseek(fp,0L,SEEK_END);
+		// fprintf(fp,"第 %d 次请求.\t",counter+1);
+		// fflush(fp);
 
 		for (i=0;i<client_num;i++)
 		{
