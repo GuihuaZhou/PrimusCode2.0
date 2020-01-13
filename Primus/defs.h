@@ -13,6 +13,7 @@
 #define PT_PORT 8850//传递路径信息
 #define UDP_TF_PORT 8851// udp转发linkinfo
 
+#define RESP_CHECK_INTERVAL 100000// us
 #define NIC_CHECK_INTERVAL 10000// us
 #define SEND_PATH_INTERVAL 100000// us
 
@@ -177,4 +178,13 @@ struct masteraddressset
 {
 	ident masterIdent;
 	vector<string> masterAddress;
+};
+
+struct stampinfo
+{
+	ident identA;
+	ident identB;
+	bool linkFlag;
+	string note;
+	double stamp;
 };

@@ -166,10 +166,11 @@ ssh root@10.0.80.10 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 ssh root@10.0.80.12 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 
 # # 删除一些日志文件
-pssh -i -h /home/guolab/host/ATChost.txt "rm /var/log/Primus*.log;rm /var/log/PathEntryTable*.txt;rm /var/log/MappingTable*.txt;rm /var/log/NodeMapToSock*.txt;rm /var/log/NodeInDirPathTable*.txt;rm /var/log/MasterMapToSock*.txt;rm /var/log/NodeLinkTable*.txt;"
+pssh -i -h /home/guolab/host/ATChost.txt "rm /home/guolab/output/primusStamp.txt;rm /var/log/Primus*.log;rm /var/log/PathEntryTable*.txt;rm /var/log/MappingTable*.txt;rm /var/log/NodeMapToSock*.txt;rm /var/log/NodeInDirPathTable*.txt;rm /var/log/MasterMapToSock*.txt;rm /var/log/NodeLinkTable*.txt;"
 
-pssh -i -h /home/guolab/host/master.txt "rm /var/log/Primus*.log;rm /var/log/PathEntryTable*.txt;rm /var/log/MappingTable*.txt;rm /var/log/NodeMapToSock*.txt;rm /var/log/MasterLinkTable*.txt;rm /var/log/ClusterMasterInfo*.txt;rm /var/log/MasterInDirPathTable*.txt;rm /var/log/MasterMapToSock*.txt;"
+pssh -i -h /home/guolab/host/master.txt "rm /home/guolab/output/primusStamp.txt;rm /var/log/Primus*.log;rm /var/log/PathEntryTable*.txt;rm /var/log/MappingTable*.txt;rm /var/log/NodeMapToSock*.txt;rm /var/log/MasterLinkTable*.txt;rm /var/log/ClusterMasterInfo*.txt;rm /var/log/MasterInDirPathTable*.txt;rm /var/log/MasterMapToSock*.txt;"
 
+rm /home/guolab/output/primusStamp.txt
 rm /var/log/Primus*.log
 rm /var/log/PathEntryTable*.txt
 rm /var/log/MappingTable*.txt
@@ -193,7 +194,7 @@ echo ""
 echo "start master."
 /home/guolab/Primus/Primus &
 sleep 3
-pssh -i -h /home/guolab/host/master.txt -t 0 "/home/guolab/Primus/Primus;" &
+pssh -i -h /home/guolab/host/master.txt "/home/guolab/Primus/Primus;" &
 
 # /home/guolab/Primus/Primus &
 # sleep 3
@@ -202,8 +203,24 @@ sleep 5
 echo ""
 echo "start node."
 echo ""
-pssh -i -h /home/guolab/host/ATChost.txt -t 0 "/home/guolab/Primus/Primus;" & # 运行Node上的可执行文件
+pssh -i -h /home/guolab/host/ATChost.txt "/home/guolab/Primus/Primus;" & # 运行Node上的可执行文件
 
+sleep 30
+rm /home/guolab/output/primusStamp.txt
+touch /home/guolab/output/primusStamp.txt
+chmod 777 -R /home/guolab/output/*
+pssh -i -h /home/guolab/host/master.txt "rm /home/guolab/output/primusStamp.txt;touch /home/guolab/output/primusStamp.txt;chmod 777 -R /home/guolab/output/*;"
+pssh -i -h /home/guolab/host/ATChost.txt "rm /home/guolab/output/primusStamp.txt;touch /home/guolab/output/primusStamp.txt;chmod 777 -R /home/guolab/output/*;"
+
+
+sleep 5
+for ((i=0;i<500;i++))
+do
+	ssh root@10.0.80.10 "ifconfig eth1 down"
+	sleep 2
+	ssh root@10.0.80.10 "ifconfig eth1 up"
+	sleep 2
+done
 ########################## ##########################
 # pssh -i -h /home/guolab/host/ATChost.txt "echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf;sudo sysctl -p;"
 # pssh -i -h /home/guolab/host/ATChost.txt "apt install traceroute -y;"

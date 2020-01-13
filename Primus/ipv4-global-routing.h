@@ -34,6 +34,10 @@ using namespace std;
 class Ipv4GlobalRouting
 {
 public:
+  // test
+  vector<struct stampinfo> stampInfo;
+  struct stampinfo tempStampInfo,tempStampInfoA,tempStampInfoB;
+  // end
   struct linktableentry// master链路表条目
   {
     // 对链路两端的ident重新进行排序，level大的为high，若level相等，则position大的为high
@@ -46,6 +50,12 @@ public:
     double linkUpdateTimer;// 定时器，即抑制时间，在这个时间内，同一条链路的其他更新信息不会被Master处理
     bool isStartTimer;// 是否已经开启定时器
     struct linktableentry *next;
+  };
+
+  struct linkinforesponse
+  {
+    int unRecvNum;
+    struct MNinfo tempMNInfo;
   };
 
   struct pathtableentryaddress
@@ -89,6 +99,12 @@ public:
     ident srcIdent;
   };
 
+  struct threadparamE
+  {
+    Ipv4GlobalRouting *tempGlobalRouting;
+    struct MNinfo tempMNInfo;
+  };
+
   // sonic test
   bool isListenNIC(string ifName);
   vector<string> GetListenNIC();
@@ -98,6 +114,8 @@ public:
   ~Ipv4GlobalRouting();
 
   // 通用
+  static void* PrintStampThread(void* tempThreadParam);
+  static void* CheckResponseThread(void* tempThreadParam);
   static void* KeepAliveThread(void* tempThreadParam);
   ident GetMyIdent();
   int GetSockByAddress(string tempAddress);
@@ -111,8 +129,8 @@ public:
   bool SameNode(ident nodeA,ident nodeB);//判断两个Node是否相同
   bool IsLegalPathInfo(ident tempPathNodeIdent[],ident neighborIdent);
   void CloseSock(int sock);
-  void UpdateResponseRecord(int eventId);
-  void HandleMessage(struct MNinfo tempMNInfo);
+  void UpdateResponseRecord(int eventId,ident identA,ident identB,int cmd);
+  void HandleMessage(struct MNinfo tempMNInfo,string type);
   void GetLocalAddrByRemoteAddr(struct sockaddr_in *localAddr,struct sockaddr_in remoteAddr);
   struct sockaddr_in *GetLocalAddrByNeighborIdent(ident neighborIdent);
   struct sockaddr_in *GetAddrByNICName(string NICName);// 通过rtnetlink获取网口的地址
@@ -152,7 +170,6 @@ public:
   void PrintMasterMapToSock();//记录node和master的连接情况
 
   void TransferTo(struct MNinfo tempMNInfo);
-  void SendLinkInfoToMaster(ident identA,ident identB,bool linkFlag);
   void UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int nodeCounter,vector<struct addrset> addrSet);
   void UpdateMappingTableEntry(struct pathtableentry *newPathTableEntry);//更新映射表
   void GetMappingTableEntry(ident pathNodeIdentA,ident pathNodeIdentB,vector<struct mappingtableentry> *tempMappingTable);//根据两个节点(link)获取映射表项，也有可能是根据一个节点来获取所有相关的映射表项
@@ -175,6 +192,7 @@ public:
   int UpdateKeepAlive(int masterSock,ident masterIdent,bool recvKeepAlive);// keepAliveFlag为真，则表示master回复了keep alive；为假，则表示node发出了keep alive
   // 返回值为1表示正常，为2表示keepalive未接收次数超过3次，为3表示套接字不存在
   int GetLocalLinkEventId(ident neighborIdent);
+  int SendLinkInfoToMaster(ident identA,ident identB,bool linkFlag);
   bool UpdateNodeLinkTable(ident high,ident low,int eventId,bool linkFlag,int cmd);// 更新node维护的链路表
 
   double Test(bool isMaster);//Master查找和修改链路表的时间测试，测试Node查找映射表、查找和修改路径表的时间
@@ -238,6 +256,10 @@ private:
   // 下面两个数组重复，后来修改为一个Master会有多个网卡
   vector<string> masterAddress;
   vector<struct masteraddressset> masterAddressSet;
+
+  vector<struct linkinforesponse> linkInfoResponse;
+
+  vector<struct MNinfo> delayMNInfo;// 由于与Master的连接失效滞留的链路信息
   
   struct mappingtableentry *headMappingTableEntry=(struct mappingtableentry *)malloc(sizeof(struct mappingtableentry));// 映射表的头节点
   // 映射表数量很多，所以还得给映射表加个索引表
@@ -252,4 +274,6 @@ private:
   pthread_t oldChiefFindNewOne_thread;// 判断是否为最优的master或者重新选举master
   pthread_t listenNIC_thread;
   pthread_t listenKeepAlive_thread;
+  pthread_t checkResponse_thread;
+  pthread_t printStamp_thread;
 };

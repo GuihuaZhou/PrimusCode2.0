@@ -41,10 +41,10 @@ TCPRoute::GetNow()
 int
 TCPRoute::SendMessageTo(int sock,struct MNinfo tempMNInfo)// Master和Node都可以调用
 {
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   char sendBuf[MNINFO_BUF_SIZE];
   memcpy(sendBuf,&tempMNInfo,sizeof(struct MNinfo));
@@ -52,9 +52,9 @@ TCPRoute::SendMessageTo(int sock,struct MNinfo tempMNInfo)// Master和Node都可
   
   if((value=send(sock,sendBuf,sizeof(struct MNinfo),0))<=0)
   {
-    Logfout << GetNow() << "Send message error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
+    // Logfout << GetNow() << "Send message error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
   }
-  Logfout.close();
+  // Logfout.close();
   return value;
 }
 
@@ -89,9 +89,9 @@ TCPRoute::ServerThread(void* tempThreadParam)
 
     if (tempMNInfo.bye==true)
     {
-      Logfout << GetNow() << "Recv bye from " << inet_ntoa(tempAddr.sin_addr) << "." << endl;
+      // Logfout << GetNow() << "Recv bye from " << inet_ntoa(tempAddr.sin_addr) << "." << endl;
       shutdown(sock,SHUT_RDWR);
-      Logfout << GetNow() << "Sock(" << sock << ") recv error:" << strerror(errno) << "(errno:" << errno << "),";
+      // Logfout << GetNow() << "Sock(" << sock << ") recv error:" << strerror(errno) << "(errno:" << errno << "),";
       break;
     }
 
@@ -108,13 +108,13 @@ TCPRoute::ServerThread(void* tempThreadParam)
           tempClusterMasterInfo.masterAddr=tempMNInfo.addr;// master的地址
           tempClusterMasterInfo.masterIdent=tempMNInfo.pathNodeIdent[0];// master的ident
           tempClusterMasterInfo.inDirNodeNum=tempMNInfo.pathNodeIdent[1].level;
-          Logfout << GetNow() << "Recv master " << tempClusterMasterInfo.masterIdent.level << "." << tempClusterMasterInfo.masterIdent.position << "'s inDirNodeNum:" <<  tempClusterMasterInfo.inDirNodeNum << "[value:" << value << "][sock:" << sock << "]." << endl;
+          // Logfout << GetNow() << "Recv master " << tempClusterMasterInfo.masterIdent.level << "." << tempClusterMasterInfo.masterIdent.position << "'s inDirNodeNum:" <<  tempClusterMasterInfo.inDirNodeNum << "[value:" << value << "][sock:" << sock << "]." << endl;
 
           m_globalRouting->UpdateClusterMasterInfo(tempClusterMasterInfo,1);
         }
         else if (tempMNInfo.pathNodeIdent[0].level==-1)// common 收到信息，说明正在进行新的chiefmaster选举
         {
-          Logfout << GetNow() << "Recv cluster master message from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[sock:" << sock << "]." << endl;
+          // Logfout << GetNow() << "Recv cluster master message from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[sock:" << sock << "]." << endl;
           m_globalRouting->NewChiefMasterElection(tempMNInfo.srcIdent);
         }
       }
@@ -186,10 +186,10 @@ TCPRoute::ServerThread(void* tempThreadParam)
       {
         if (tempMNInfo.ACK==false)// 不是hello的ack
         {
-          Logfout << GetNow() << "Recv hello from ";
-          if (tempMNInfo.srcIdent.level==0) Logfout << "master ";
-          else Logfout << "node ";
-          Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
+          // Logfout << GetNow() << "Recv hello from ";
+          // if (tempMNInfo.srcIdent.level==0) Logfout << "master ";
+          // else Logfout << "node ";
+          // Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
 
           if (tempTCPRoute->myIdent.level==0 || m_globalRouting->SameNode(tempTCPRoute->myIdent,tempMNInfo.destIdent))// master收到hello
           {
@@ -200,19 +200,19 @@ TCPRoute::ServerThread(void* tempThreadParam)
             if (tempMNInfo.srcIdent.level==tempMNInfo.pathNodeIdent[1].level && tempMNInfo.srcIdent.position==tempMNInfo.pathNodeIdent[1].position) 
             {
               direct=true; 
-              Logfout << "(direct)";
+              // Logfout << "(direct)";
             }
             // 间接连接，间接连接时会上报间接路径
             else 
             {
               direct=false;
-              Logfout << "(inDirect)";
+              // Logfout << "(inDirect)";
               // master需要记录间接路径
               m_globalRouting->UpdateInDirPath(tempMNInfo.srcIdent,tempMNInfo.pathNodeIdent,sock);
             }
-            Logfout << "[value:" << value << "][sock:" << sock << "]." << endl;
+            // Logfout << "[value:" << value << "][sock:" << sock << "]." << endl;
 
-            if (tempTCPRoute->myIdent.level!=0) Logfout << GetNow() << "I should connect with master by another indirpath[sock:" << sock << "]." << endl;
+            if (tempTCPRoute->myIdent.level!=0) //Logfout << GetNow() << "I should connect with master by another indirpath[sock:" << sock << "]." << endl;
 
             if (tempTCPRoute->myIdent.level==0) tempMNInfo.addr=*(m_globalRouting->GetAddrByNICName(MGMT_INTERFACE));// 此处有问题，应该是那个网口连接的，就返回那个网口的地址，但是做不到
             tempMNInfo.destIdent=tempMNInfo.srcIdent;
@@ -226,17 +226,17 @@ TCPRoute::ServerThread(void* tempThreadParam)
             tempMNInfo.ACK=true;
 
             value=tempTCPRoute->SendMessageTo(sock,tempMNInfo);
-            Logfout << GetNow() << "Send ACK to ";
-            if (tempMNInfo.destIdent.level==0) Logfout << "master ";
-            else Logfout << "node ";
-            Logfout << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+            // Logfout << GetNow() << "Send ACK to ";
+            // if (tempMNInfo.destIdent.level==0) Logfout << "master ";
+            // else Logfout << "node ";
+            // Logfout << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
 
             m_globalRouting->UpdateNodeMapToSock(tempMNInfo.destIdent,inet_ntoa(tempAddr.sin_addr),sock,direct);
           }
           else //node也有可能收到hello，因为它为其他节点转发
           {
             // 目的ident不是本node，作转发
-            Logfout << "(forward)" << "[value:" << value << "][sock:" << sock << "]." << endl;
+            // Logfout << "(forward)" << "[value:" << value << "][sock:" << sock << "]." << endl;
             bool isFind=false;
             // 获得本node和master的连接信息
             vector<struct mastermaptosock> tempMasterMapToSock=m_globalRouting->GetMasterMapToSock();//查找本node连接了哪些master
@@ -247,7 +247,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
                 // 此时不需要判断目的ident，全部转发即可
                 tempMNInfo.destIdent=tempMasterMapToSock[i].masterIdent;
                 value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
-                Logfout << GetNow() << "Forward Hello to master " << tempMasterMapToSock[i].masterIdent.level << "." << tempMasterMapToSock[i].masterIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+                // Logfout << GetNow() << "Forward Hello to master " << tempMasterMapToSock[i].masterIdent.level << "." << tempMasterMapToSock[i].masterIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
                 m_globalRouting->UpdateNodeMapToSock(tempMNInfo.srcIdent,inet_ntoa(tempAddr.sin_addr),sock,true);// 此处必定是直连 
                 isFind=true;
                 break;
@@ -255,7 +255,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
             }
             if (isFind==false)
             {
-              Logfout << GetNow() << "I try to forward a hello message from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to master[" << inet_ntoa(tempMNInfo.addr.sin_addr) << "],but there is not a sock to master in my masterMapToSock table." << endl;
+              // Logfout << GetNow() << "I try to forward a hello message from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to master[" << inet_ntoa(tempMNInfo.addr.sin_addr) << "],but there is not a sock to master in my masterMapToSock table." << endl;
             }
           }
         }
@@ -265,7 +265,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
           // Logfout << GetNow() << "Recv ACK from " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[value:" << value << "]." << endl;
           if (tempMNInfo.destIdent.level==tempTCPRoute->myIdent.level && tempMNInfo.destIdent.position==tempTCPRoute->myIdent.position)
           {
-            Logfout << GetNow() << "Recv ACK from Master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+            // Logfout << GetNow() << "Recv ACK from Master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
             // node收到ACK后需要判断
             // 如果是直连ACK或者chief master重新选举的ACK，不需要继续发送
             struct mastermaptosock tempMasterMapToSock;
@@ -307,7 +307,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
               if (tempNodeMapToSock[i].nodeIdent.level==tempMNInfo.destIdent.level && tempNodeMapToSock[i].nodeIdent.position==tempMNInfo.destIdent.position)
               {
                 value=tempTCPRoute->SendMessageTo(tempNodeMapToSock[i].nodeSock,tempMNInfo);
-                Logfout << GetNow() << "Forward ACK from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+                // Logfout << GetNow() << "Forward ACK from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
                 break;
               }
             }
@@ -335,7 +335,17 @@ TCPRoute::ServerThread(void* tempThreadParam)
             Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " by tcp [value:" << value << "][eventId:" << tempMNInfo.eventId << "][sock:" << sock << "].";
             Logfout << endl;
 
-            m_globalRouting->HandleMessage(tempMNInfo);
+            // struct stampinfo tempStampInfo;
+            // tempStampInfo.identA=tempMNInfo.pathNodeIdent[0];
+            // tempStampInfo.identB=tempMNInfo.pathNodeIdent[1];
+            // tempStampInfo.linkFlag=tempMNInfo.linkFlag;
+            // tempStampInfo.note="(tcp) recv info";
+            // struct timespec tv;
+            // clock_gettime(CLOCK_MONOTONIC,&tv);
+            // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+            // m_globalRouting->stampInfo.push_back(tempStampInfo);
+
+            m_globalRouting->HandleMessage(tempMNInfo,"tcp");
           }
           else if (tempMNInfo.ACK==true)
           {
@@ -343,7 +353,8 @@ TCPRoute::ServerThread(void* tempThreadParam)
             if (tempMNInfo.srcIdent.level==0) Logfout << " Master ";
             else Logfout << " Node ";
             Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " [eventId:" << tempMNInfo.eventId << "]." << endl;
-            m_globalRouting->UpdateResponseRecord(tempMNInfo.eventId);// 
+            
+            m_globalRouting->UpdateResponseRecord(tempMNInfo.eventId,tempMNInfo.pathNodeIdent[0],tempMNInfo.pathNodeIdent[1],-1);// 
           }
         }
         else// 只有node才能转发
@@ -359,7 +370,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
                 if (tempMasterMapToSock[i].masterIdent.level!=-1 && tempMasterMapToSock[i].direct==true)// 首先本node和该master的连接必须有效
                 {
                   value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
-                  Logfout << GetNow() << "Forward linkInfo from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.destIdent.position << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+                  // Logfout << GetNow() << "Forward linkInfo from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.destIdent.position << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
                 }
               }
               // 没找到？
@@ -372,7 +383,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
                 if (tempMasterMapToSock[i].masterIdent.level!=-1 && tempMasterMapToSock[i].direct==true && m_globalRouting->SameNode(tempMasterMapToSock[i].masterIdent,tempMNInfo.destIdent))// 首先本node和该master的连接必须有效
                 {
                   value=tempTCPRoute->SendMessageTo(tempMasterMapToSock[i].masterSock,tempMNInfo);
-                  Logfout << GetNow() << "Forward linkInfo from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.destIdent.position << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+                  // Logfout << GetNow() << "Forward linkInfo from node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.destIdent.position << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
                   break;
                 }
               }
@@ -386,7 +397,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
                 if (m_globalRouting->SameNode(tempNodeMapToSock[i].nodeIdent,tempMNInfo.destIdent))
                 {
                   value=tempTCPRoute->SendMessageTo(tempNodeMapToSock[i].nodeSock,tempMNInfo);
-                  Logfout << GetNow() << "Forward linkInfo from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
+                  // Logfout << GetNow() << "Forward linkInfo from master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[value:" << value << "][sock:" << sock << "]." << endl;
                   isFind=true;
                   break;
                 }
@@ -407,13 +418,13 @@ TCPRoute::ServerThread(void* tempThreadParam)
                       tempMNInfo.bye=true;// 关闭这个连接
                       if ((value=tempTCPRoute->SendMessageTo(tempSock,tempMNInfo))>0)
                       {
-                        Logfout << GetNow() << "Yes! I can inform node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[sock:" << sock << "]." << endl;
+                        // Logfout << GetNow() << "Yes! I can inform node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[sock:" << sock << "]." << endl;
                         continue;
                       }
                     }
                   }
                 }
-                Logfout << GetNow() << "Sorry! I can not inform node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[sock:" << sock << "]." << endl;
+                // Logfout << GetNow() << "Sorry! I can not inform node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[sock:" << sock << "]." << endl;
                 // 应该返回给master
                 ident tempIdent;
                 tempIdent=tempMNInfo.srcIdent;
@@ -424,7 +435,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
               }
               else
               {
-                Logfout << GetNow() << "Other message(1) " << "[value:" << value << "][sock:" << sock << "]." << endl;
+                // Logfout << GetNow() << "Other message(1) " << "[value:" << value << "][sock:" << sock << "]." << endl;
               }
             }
           }
@@ -432,7 +443,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
       }
       else
       {
-        Logfout << GetNow() << "Other message(2) " << "[value:" << value << "][sock:" << sock << "]." << endl;
+        // Logfout << GetNow() << "Other message(2) " << "[value:" << value << "][sock:" << sock << "]." << endl;
         // 应该处理一下非法信息
       }
     }
@@ -452,10 +463,10 @@ TCPRoute::ServerThread(void* tempThreadParam)
       }
       else if (tempMNInfo.chiefMaster==false && tempMNInfo.keepAlive==false && tempMNInfo.hello==false && tempMNInfo.ACK==false && tempMNInfo.clusterMaster==false)// 不可达的链路变化信息
       {
-        Logfout << GetNow() << "Recv message from node " << tempMNInfo.forwardIdent.level << "." << tempMNInfo.forwardIdent.position << " that I need to inform ";
-        if (tempMNInfo.srcIdent.level==0) Logfout << "master ";
-        else Logfout << "node ";
-        Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " again[sock:" << sock << "]." << endl;
+        // Logfout << GetNow() << "Recv message from node " << tempMNInfo.forwardIdent.level << "." << tempMNInfo.forwardIdent.position << " that I need to inform ";
+        // if (tempMNInfo.srcIdent.level==0) Logfout << "master ";
+        // else Logfout << "node ";
+        // Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " again[sock:" << sock << "]." << endl;
         ident tempIdent;
         tempIdent=tempMNInfo.srcIdent;
         tempMNInfo.srcIdent=tempMNInfo.destIdent;
@@ -466,7 +477,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
     }
   }
 
-  m_globalRouting->CloseSock(sock);
+  // m_globalRouting->CloseSock(sock);
   Logfout << "TCPServerThread[sock:" << sock << "] thread down[value:" << value << "]." << endl;
   Logfout.close();
   // pthread_exit(0);

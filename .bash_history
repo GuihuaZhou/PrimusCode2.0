@@ -529,3 +529,6 @@ cat /var/log/MasterLinkTable-0.0.txt
 cat /var/log/MasterLinkTable-0.0.txt q
 cat /var/log/Primus-0.0.log 
 screen -rd
+sudo su
+cat /var/log/Primus-0.0.log 
+screen 

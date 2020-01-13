@@ -171,30 +171,30 @@ UDPServer::HandleReadLinkInfo(void* tempThreadParam)// node转发linkinfo至mast
 
 	if ((server_sockfd=socket(PF_INET,SOCK_DGRAM,0))<0)
 	{  
-		Logfout << GetNow() << "HandleReadLinkInfo socket failed" << endl;
+		// Logfout << GetNow() << "HandleReadLinkInfo socket failed" << endl;
 		exit(1);
 	}
 
 	int value=1;
   if (setsockopt(server_sockfd,SOL_SOCKET,SO_REUSEPORT,&value,sizeof(value))<0)
   {
-    Logfout << GetNow() << "HandleReadLinkInfo set SO_REUSEPORT error" << endl;
+    // Logfout << GetNow() << "HandleReadLinkInfo set SO_REUSEPORT error" << endl;
     exit(0);
   }
 
   if (setsockopt(server_sockfd,SOL_SOCKET,SO_REUSEADDR,&value,sizeof(value))<0)
   {
-    Logfout << GetNow() << "HandleReadLinkInfo set SO_REUSEADDR error" << endl;
+    // Logfout << GetNow() << "HandleReadLinkInfo set SO_REUSEADDR error" << endl;
     exit(0);
   }
 	
 	if (bind(server_sockfd,(struct sockaddr *)&my_addr,sizeof(my_addr))<0)
 	{
-		Logfout << GetNow() << "HandleReadLinkInfo bind failed" << endl;
+		// Logfout << GetNow() << "HandleReadLinkInfo bind failed" << endl;
 		exit(1);
 	}
 	
-	Logfout << GetNow() << "Local NIC is waiting for linkInfo......" << endl;
+	// Logfout << GetNow() << "Local NIC is waiting for linkInfo......" << endl;
 	value=0;
 	while (1)
 	{
@@ -202,7 +202,7 @@ UDPServer::HandleReadLinkInfo(void* tempThreadParam)// node转发linkinfo至mast
 
 		if((value=recvfrom(server_sockfd,recvBuf,MNINFO_BUF_SIZE,0,(struct sockaddr *)&remote_addr,(socklen_t*)&remote_len))<0)
 		{
-			Logfout << "HandleReadLinkInfo recvfrom failed" << endl;
+			// Logfout << "HandleReadLinkInfo recvfrom failed" << endl;
 			continue;
 		} 
 		
@@ -223,16 +223,26 @@ UDPServer::HandleReadLinkInfo(void* tempThreadParam)// node转发linkinfo至mast
       else Logfout << "Node ";
       Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " by udp [forwardNode:" << tempMNInfo.forwardIdent.level << "." << tempMNInfo.forwardIdent.position << "][value:" << value << "][eventId:" << tempMNInfo.eventId << "][sock:" << server_sockfd << "]." << endl;
 
-      m_globalRouting->HandleMessage(tempMNInfo);
+    	// struct stampinfo tempStampInfo;
+    	// tempStampInfo.identA=tempMNInfo.pathNodeIdent[0];
+     //  tempStampInfo.identB=tempMNInfo.pathNodeIdent[1];
+     //  tempStampInfo.linkFlag=tempMNInfo.linkFlag;
+     //  tempStampInfo.note="(udp) recv info";
+     //  struct timespec tv;
+     //  clock_gettime(CLOCK_MONOTONIC,&tv);
+     //  tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+     //  m_globalRouting->stampInfo.push_back(tempStampInfo);
+
+      m_globalRouting->HandleMessage(tempMNInfo,"udp");
     }
     else if (m_globalRouting->SameNode(tempUDPServer->myIdent,tempMNInfo.forwardIdent))// 作为转发node转发upd message至leader master
     {
     	m_globalRouting->TransferTo(tempMNInfo);// 转发至chief或者目的node
     }
 	}
+	Logfout << GetNow() << "Local NIC receive linkInfo thread down!!!!!!" << endl;
 	Logfout.close();
-	Logfout << GetNow() << "LocalNIC(" << inet_ntoa(my_addr.sin_addr) << ") receive pathInfo thread down!!!!!!" << endl;
-	// pthread_exit(0);
+	pthread_exit(0);
 }
 
 void*
@@ -643,10 +653,10 @@ UDPClient::SendPathInfoTo(struct sockaddr_in localAddr,struct sockaddr_in remote
 void 
 UDPClient::SendLinkInfo(struct sockaddr_in localAddr,string remoteAddress,struct MNinfo tempMNInfo)
 {
-	stringstream logFoutPath;
-	logFoutPath.str("");
-	logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-	ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+	// stringstream logFoutPath;
+	// logFoutPath.str("");
+	// logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+	// ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
 	int client_sockfd;
 	struct sockaddr_in remote_addr; 
@@ -657,26 +667,26 @@ UDPClient::SendLinkInfo(struct sockaddr_in localAddr,string remoteAddress,struct
 
 	if ((client_sockfd=socket(PF_INET,SOCK_DGRAM,0))<0)
 	{
-		Logfout << GetNow() << "SendLinkInfo sock failed" << endl;
+		// Logfout << GetNow() << "SendLinkInfo sock failed" << endl;
 		exit(1);
 	}
 
 	int value=1;
   if (setsockopt(client_sockfd,SOL_SOCKET,SO_REUSEPORT,&value,sizeof(value))<0)
   {
-    Logfout << GetNow() << "SendLinkInfo set SO_REUSEPORT error" << endl;
+    // Logfout << GetNow() << "SendLinkInfo set SO_REUSEPORT error" << endl;
     exit(0);
   }
 
   if (setsockopt(client_sockfd,SOL_SOCKET,SO_REUSEADDR,&value,sizeof(value))<0)
   {
-    Logfout << GetNow() << "SendLinkInfo set SO_REUSEADDR error" << endl;
+    // Logfout << GetNow() << "SendLinkInfo set SO_REUSEADDR error" << endl;
     exit(0);
   }
 
 	if ((bind(client_sockfd,(struct sockaddr*)&(localAddr),sizeof(localAddr))<0))
 	{
-		Logfout << GetNow() << "SendLinkInfo bind failed"<<std::endl;
+		// Logfout << GetNow() << "SendLinkInfo bind failed"<<std::endl;
     exit(0);
 	}
 	char sendBuf[MNINFO_BUF_SIZE];
@@ -684,8 +694,8 @@ UDPClient::SendLinkInfo(struct sockaddr_in localAddr,string remoteAddress,struct
 
 	if (sendto(client_sockfd,sendBuf,sizeof(tempMNInfo),0,(struct sockaddr *)&remote_addr,sizeof(remote_addr))<0)
   {
-  	Logfout << GetNow() << "SendLinkInfo error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
+  	// Logfout << GetNow() << "SendLinkInfo error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
   	exit(0);
   }
-  Logfout.close();
+  // Logfout.close();
 }

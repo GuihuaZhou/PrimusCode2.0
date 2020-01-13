@@ -369,18 +369,18 @@ int main(int argc,char *argv[])
   masterAddressSet.push_back(tempMasterAddressSet);
   tempMasterAddressSet.masterAddress.clear();
 
-  tempMasterAddressSet.masterIdent.position=1;
-  tempMasterAddressSet.masterAddress.push_back("172.16.80.4");
-  tempMasterAddressSet.masterAddress.push_back("172.16.80.5");
-  tempMasterAddressSet.masterAddress.push_back("172.16.80.6");
-  masterAddressSet.push_back(tempMasterAddressSet);
-  tempMasterAddressSet.masterAddress.clear();
+  // tempMasterAddressSet.masterIdent.position=1;
+  // tempMasterAddressSet.masterAddress.push_back("172.16.80.4");
+  // tempMasterAddressSet.masterAddress.push_back("172.16.80.5");
+  // tempMasterAddressSet.masterAddress.push_back("172.16.80.6");
+  // masterAddressSet.push_back(tempMasterAddressSet);
+  // tempMasterAddressSet.masterAddress.clear();
 
-  tempMasterAddressSet.masterIdent.position=2;
-  tempMasterAddressSet.masterAddress.push_back("172.16.80.7");
-  tempMasterAddressSet.masterAddress.push_back("172.16.80.8");
-  tempMasterAddressSet.masterAddress.push_back("172.16.80.9");
-  masterAddressSet.push_back(tempMasterAddressSet);
+  // tempMasterAddressSet.masterIdent.position=2;
+  // tempMasterAddressSet.masterAddress.push_back("172.16.80.7");
+  // tempMasterAddressSet.masterAddress.push_back("172.16.80.8");
+  // tempMasterAddressSet.masterAddress.push_back("172.16.80.9");
+  // masterAddressSet.push_back(tempMasterAddressSet);
 
   // cout << "masterAddressSet size:" << masterAddressSet.size() << endl;
 
