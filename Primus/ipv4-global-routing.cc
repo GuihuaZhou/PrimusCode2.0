@@ -2072,6 +2072,7 @@ Ipv4GlobalRouting::PrintPathEntry(struct pathtableentry *tempPathTableEntry)
   {
     Logfout << tempPathTableEntry->pathNodeIdent[i].level << "." << tempPathTableEntry->pathNodeIdent[i].position << "\t";
   }
+  Logfout << inet_ntoa(tempPathTableEntry->nextHopAddr.addr.sin_addr); 
   Logfout << endl;
   Logfout.close();
 }
@@ -2142,6 +2143,9 @@ Ipv4GlobalRouting::PrintPathEntryTable()
   {
     for (int i=0;i<(*iter).nodeCounter;i++) Logfout << (*iter).pathNodeIdent[i].level << "." << (*iter).pathNodeIdent[i].position << "\t";
     for (int i=(*iter).nodeCounter;i<MAX_PATH_LEN;i++) Logfout << "\t";
+    
+    Logfout << "nextHop[" << inet_ntoa((*iter).nextHopAddr.addr.sin_addr) << "]\t";
+
     // // 节点地址
     if (strcmp(inet_ntoa((*iter).nodeAddr.addr.sin_addr),"255.255.255.255"))
     {
@@ -2443,9 +2447,9 @@ Ipv4GlobalRouting::AddSingleRoute(struct sockaddr_in destAddr,unsigned int prefi
   // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
-  // test
-  // Logfout << "AddSingleRoute:" << inet_ntoa(destAddr.sin_addr) << "/" << prefixLen << ",NICName:" << tempNextHopAndWeight.NICName << endl;
-  // endl
+  // // test
+  // Logfout << "AddSingleRoute:" << inet_ntoa(destAddr.sin_addr) << "/" << prefixLen << ",NICName:" << tempNextHopAndWeight.NICName << " nextHop gateway:" << inet_ntoa(tempNextHopAndWeight.gateAddr.sin_addr) << endl;
+  // // endl
   struct {
     struct nlmsghdr n;
     struct rtmsg r;
@@ -2491,13 +2495,13 @@ Ipv4GlobalRouting::AddMultiRoute(struct sockaddr_in destAddr,unsigned int prefix
   // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
-  // test
+  // // test
   // Logfout << "AddMultiRoute:" << inet_ntoa(destAddr.sin_addr) << "/" << prefixLen << endl;
   // for (int i=0;i<nextHopAndWeight.size();i++)
   // {
   //   Logfout << "NICName:" << nextHopAndWeight[i].NICName << " weight:" << nextHopAndWeight[i].weight << endl;
   // }
-  // end
+  // // end
 
   struct {
     struct nlmsghdr n;
@@ -2657,6 +2661,7 @@ Ipv4GlobalRouting::UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int n
     for (int i=0;i<tempMappingTable.size();i++)
     {
       tempPathTableEntry=tempMappingTable[i].address;
+      
       while (1)
       {
         bool isFindNextHopAndWeight=false;
@@ -2693,6 +2698,7 @@ Ipv4GlobalRouting::UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int n
               tempNextHopAndWeight.gateAddr=tempPathTableEntry->nextHopAddr.addr;
               tempNextHopAndWeight.weight=1;
               nextHopAndWeight.push_back(tempNextHopAndWeight);
+              // PrintPathEntry(tempPathTableEntry);
             }
           }
           if (tempPathTableEntry->next==NULL) break;
@@ -2706,7 +2712,7 @@ Ipv4GlobalRouting::UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int n
   // Logfout << "------------------" << endl << "addrSet:";
   // for (int i=0;i<addrSet.size();i++) Logfout << inet_ntoa(addrSet[i].addr.sin_addr) << "\t";
   // Logfout << endl << "weight:" << endl;
-  // for (int i=0;i<nextHopAndWeight.size();i++) Logfout << nextHopAndWeight[i].NICName << "--" << nextHopAndWeight[i].weight << "\t";
+  // for (int i=0;i<nextHopAndWeight.size();i++) Logfout << nextHopAndWeight[i].NICName << "--" << nextHopAndWeight[i].weight << "--" << inet_ntoa(nextHopAndWeight[i].gateAddr.sin_addr) << "\t";
   // Logfout << endl;
   // Logfout << "------------------" << endl;
 
@@ -4248,6 +4254,114 @@ Ipv4GlobalRouting::UpdateNodeLinkTable(ident high,ident low,int eventId,bool lin
     // pthread_mutex_unlock(&mutexA);
     return false;
   }
+}
+
+void 
+Ipv4GlobalRouting::FakeGenerateSpinePath(ident tempIdent,int tempSpineNodes,int tempLeafNodes,int tempToRNodes,int tempPods)
+{
+  struct pathinfo *tempPathInfo=(struct pathinfo *)malloc(sizeof(struct pathinfo));
+    
+  ident tempNode;
+  tempNode.level=-1;
+  tempNode.position=-1;
+
+  // 此处可能出问题
+  struct sockaddr_in tempAddr;
+  tempAddr.sin_family=AF_INET;
+  inet_aton("255.255.255.255",&(tempAddr.sin_addr));
+  tempAddr.sin_port=htons(0);
+
+  for (int j=0;j<MAX_PATH_LEN;j++) tempPathInfo->pathNodeIdent[j]=tempNode;
+
+  for (int j=0;j<MAX_ADDR_NUM;j++) 
+  {
+    tempPathInfo->addrSet[j].addr=tempAddr;
+    tempPathInfo->addrSet[j].prefixLen=32;
+  }
+
+  tempPathInfo->nodeAddr.addr=tempAddr;
+  tempPathInfo->nodeAddr.prefixLen=32;
+
+  tempPathInfo->nextHopAddr.addr=tempAddr;
+  tempPathInfo->nextHopAddr.prefixLen=32;
+
+  tempPathInfo->nodeCounter=0;
+  if (masterMapToSock.size())// 简单办法，nodeConMasterSock里记录了所有和master相连的套接字
+  {
+    tempPathInfo->dirConFlag=true;
+  }
+  else 
+  {
+    tempPathInfo->dirConFlag=false;
+  }
+
+  // tempPathInfo->pathNodeIdent[0]=tempIdent;
+  int index=tempIdent.position/(tempSpineNodes/tempLeafNodes);
+  // 生成第二层的下一跳
+
+  printf("AddNewPathTableEntry start ...\n");
+  for (int i=0;i<tempPods;i++)
+  {
+    tempPathInfo->pathNodeIdent[0].level=2;
+    tempPathInfo->pathNodeIdent[0].position=tempLeafNodes*i+index;
+    int DestIP1=i+1;
+    int DestIP2=2;
+    string IP="32.1."+to_string(DestIP1)+"."+to_string(DestIP2);
+    printf("DestIP %s\n",IP.c_str());
+    inet_aton(IP.c_str(),&(tempAddr.sin_addr));
+    tempPathInfo->nodeAddr.addr=tempAddr;
+    tempPathInfo->nodeAddr.prefixLen=24;
+    tempPathInfo->nextHopAddr.addr=tempAddr;
+    tempPathInfo->nextHopAddr.prefixLen=24;
+    tempPathInfo->nodeCounter=2;
+    tempPathInfo->pathNodeIdent[1]=tempIdent;
+
+    // sockaddr_in nextHopIP;
+    // nextHopIP=tempPathInfo->nextHopAddr.addr;
+    
+    printf("AddNewPathTableEntry doing 3-2\n");
+    for (int k=0;k<MAX_PATH_LEN;k++)
+    {
+      printf("%d.%d->",tempPathInfo->pathNodeIdent[k].level,tempPathInfo->pathNodeIdent[k].position);
+    }
+    printf("\n");
+
+    AddNewPathTableEntry(*tempPathInfo);//Node调用此函数添加新的路径
+
+    // 继续生成第三跳
+    tempPathInfo->pathNodeIdent[2].level=1;
+    for (int j=0;j<tempToRNodes;j++)
+    {
+      tempPathInfo->pathNodeIdent[0].level=1;
+      tempPathInfo->pathNodeIdent[0].position=i*tempToRNodes+j;
+      tempPathInfo->pathNodeIdent[1].level=2;
+      tempPathInfo->pathNodeIdent[1].position=i*tempLeafNodes+index;
+      tempPathInfo->pathNodeIdent[2]=tempIdent;
+      int DestIP0=tempPathInfo->pathNodeIdent[0].position+1;
+      int DestIP1=j+1;
+      int DestIP2=2;
+      string IP="21."+to_string(DestIP0)+"."+to_string(DestIP1)+"."+to_string(DestIP2);
+      printf("DestIP %s\n",IP.c_str());
+      inet_aton(IP.c_str(),&(tempAddr.sin_addr));
+      tempPathInfo->nodeAddr.addr=tempAddr;
+      tempPathInfo->nodeAddr.prefixLen=24;
+
+      // tempPathInfo->nextHopAddr.addr=nextHopIP;
+      // tempPathInfo->nextHopAddr.prefixLen=24;
+      tempPathInfo->nodeCounter=3;
+      printf("AddNewPathTableEntry doing 2-1\n");
+      for (int k=0;k<MAX_PATH_LEN;k++)
+      {
+        printf("%d.%d->",tempPathInfo->pathNodeIdent[k].level,tempPathInfo->pathNodeIdent[k].position);
+      }
+      printf("\n");
+      AddNewPathTableEntry(*tempPathInfo);//Node调用此函数添加新的路径
+    }
+  }
+  printf("AddNewPathTableEntry done!\n");
+  PrintPathEntryTable();
+  PrintMappingTable();
+  PrintNodeLinkTable();
 }
 
 void 

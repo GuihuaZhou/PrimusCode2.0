@@ -324,20 +324,20 @@ pid_t getDaemon(pid_t primusPid, uint32_t intervalSeconds)
 
 int main(int argc,char *argv[])
 {
-  // struct sockaddr_in sockaddr;
-  // vector<struct DestNetmaskProtoNum> destNetmaskProtoNum_vector;//把每一条路由的协议号、网络号和掩码存储在destNetmaskProtoNum_vector向量里
-  // vector<struct DestNetmaskProtoNum> * p_destNetmaskProtoNum_vector=&destNetmaskProtoNum_vector;
+  struct sockaddr_in sockaddr;
+  vector<struct DestNetmaskProtoNum> destNetmaskProtoNum_vector;//把每一条路由的协议号、网络号和掩码存储在destNetmaskProtoNum_vector向量里
+  vector<struct DestNetmaskProtoNum> * p_destNetmaskProtoNum_vector=&destNetmaskProtoNum_vector;
     
-  // get_destNetmaskProtoNum_info_all(p_destNetmaskProtoNum_vector);
-  // for(int i=0;i<(*p_destNetmaskProtoNum_vector).size(); i++)
-  // {
-  //     if ((*p_destNetmaskProtoNum_vector)[i].protocolNum == RTPROT_ZEBRA)
-  //     {
-  //         sockaddr.sin_family = AF_INET;
-  //         sockaddr.sin_addr.s_addr = (*p_destNetmaskProtoNum_vector)[i].des;
-  //         DelRoute( sockaddr, (*p_destNetmaskProtoNum_vector)[i].netmask);    //网络字节序IP
-  //     }
-  // }
+  get_destNetmaskProtoNum_info_all(p_destNetmaskProtoNum_vector);
+  for(int i=0;i<(*p_destNetmaskProtoNum_vector).size(); i++)
+  {
+      if ((*p_destNetmaskProtoNum_vector)[i].protocolNum == RTPROT_ZEBRA)
+      {
+          sockaddr.sin_family = AF_INET;
+          sockaddr.sin_addr.s_addr = (*p_destNetmaskProtoNum_vector)[i].des;
+          DelRoute( sockaddr, (*p_destNetmaskProtoNum_vector)[i].netmask);    //网络字节序IP
+      }
+  }
   
   ifstream fin("/usr/local/etc/Primus.conf",ios::in);
   string config;
@@ -424,13 +424,18 @@ int main(int argc,char *argv[])
   begin=config.find(':',0)+1;
   nPods=atoi(config.substr(begin,config.length()-begin).c_str());
 
+  //For debug
+  level=3;
+  position=0;
+  //For debug
+
   int Links=(SpineNodes+LeafNodes*ToRNodes)*nPods;
   if (level==3 || level==0) pod=0;
   else if (level==2) pod=position/LeafNodes+1;
   else if (level==1) pod=position/ToRNodes+1;
   m_globalRouting=new Ipv4GlobalRouting(level,position,ToRNodes,LeafNodes,SpineNodes,nPods,pod,nMaster,Links,defaultLinkTimer,defaultKeepaliveTimer,true,true);
-  pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
-  m_globalRouting->Start(masterAddressSet);
+  // pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
+  // m_globalRouting->Start(masterAddressSet);
   // ATC test
   // m_globalRouting->FakeGenerateLink(atoi(argv[1]),atoi(argv[2]),atoi(argv[3]),atoi(argv[4]));
 
@@ -451,6 +456,41 @@ int main(int argc,char *argv[])
   // clock_gettime(CLOCK_MONOTONIC,&tvB);
 
   // double stamp=tvB.tv_sec+tvB.tv_nsec*0.000000001-tvA.tv_sec-tvA.tv_nsec*0.000000001;
+  // end
+
+  // test
+  ident tempIdent;
+  tempIdent.level=3;
+  tempIdent.position=0;
+
+  stringstream logFoutPath;
+  logFoutPath.str("");
+  logFoutPath << "/var/log/Primus-" << tempIdent.level << "." << tempIdent.position << ".log";
+  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+
+  m_globalRouting->FakeGenerateSpinePath(tempIdent,8,2,1,2);// 生成路径的spineNode的ident，spinenode数，leafNode数，Tor数，pod数
+  ident high,low;
+  high.level=2;
+  high.position=0;
+  low.level=1;
+  low.position=0;
+  bool state=0;
+  // for (int i=0;i<10000;i++)
+  // {
+  //   if(i%1000==0)
+  //     printf("Doing %d round ...\n",i);
+  //   struct timespec tvA,tvB;
+  //   clock_gettime(CLOCK_MONOTONIC,&tvA);
+
+  //   m_globalRouting->ModifyPathEntryTable(high, low, state);
+    
+  //   clock_gettime(CLOCK_MONOTONIC,&tvB);
+  //   double stamp=tvB.tv_sec+tvB.tv_nsec*0.000000001-tvA.tv_sec-tvA.tv_nsec*0.000000001;
+  //   stamp*=10E6;
+  //   Logfout << int(stamp) << endl;
+
+  //   state=~state;
+  // }
   // end
   pthread_exit(NULL);
   return 0;

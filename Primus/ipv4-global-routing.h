@@ -108,6 +108,7 @@ public:
 
   // ATC test
   void FakeGenerateLink(int tempSpineNodes,int tempLeafNodes,int tempToRNodes,int tempPods);
+  void FakeGenerateSpinePath(ident tempIdent,int tempSpineNodes,int tempLeafNodes,int tempToRNodes,int tempPods);
   // end
 
   // sonic test
