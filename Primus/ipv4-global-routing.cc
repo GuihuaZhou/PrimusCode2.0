@@ -4586,7 +4586,7 @@ Ipv4GlobalRouting::UpdateMasterLinkTable(ident high,ident low,ident srcIdent,int
     effectNodeRange.push_back(tempEffectNode);
 
     GenerateLinkEffectRange();
-    // PrintMasterLinkTable();
+    PrintMasterLinkTable();
     return false;
   }
 }
@@ -5545,10 +5545,13 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,ident srcIdent,int eve
       {
         if (effectNodeRange[i].effectNode[j].level!=-1)
         {
-          tempMNInfo->destIdent=effectNodeRange[i].effectNode[j];
-          UpdateResponseRecord(tempMNInfo->eventId,high,low,1);
-          // AssistSendTo(tempMNInfo);
-          // m_tcpRoute->SendMessageTo(GetSockByIdent(tempMNInfo->destIdent),tempMNInfo);
+          if(linkFlag==false && !SameNode(effectNodeRange[i].effectNode[j],srcIdent))
+          {
+            tempMNInfo->destIdent=effectNodeRange[i].effectNode[j];
+            UpdateResponseRecord(tempMNInfo->eventId,high,low,1);
+            AssistSendTo(*tempMNInfo);
+            m_tcpRoute->SendMessageTo(GetSockByIdent(tempMNInfo->destIdent),*tempMNInfo);
+          }
         }
       }
       break;
@@ -5803,14 +5806,14 @@ Ipv4GlobalRouting::PrintLinkEffectRange()
 void
 Ipv4GlobalRouting::AddEffectRange(ident high,ident low,vector<ident> tempNode)
 {
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/LinkEffectRange-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/LinkEffectRange-" << myIdent.level << "." << myIdent.position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
-  Logfout << "AddEffectRange "<< high.level <<"."<< high.position << "-->" << low.level <<"."<< low.position<< endl;
-  Logfout.close();
-  PrintLinkEffectRange();
+  // Logfout << "AddEffectRange "<< high.level <<"."<< high.position << "-->" << low.level <<"."<< low.position<< endl;
+  // Logfout.close();
+  // PrintLinkEffectRange();
   for (int i=0;i<effectNodeRange.size();i++)
   {
     if (SameNode(effectNodeRange[i].high,high) && SameNode(effectNodeRange[i].low,low))
@@ -5829,10 +5832,10 @@ Ipv4GlobalRouting::AddEffectRange(ident high,ident low,vector<ident> tempNode)
     }
   }
 
-  Logfout.open(logFoutPath.str().c_str(),ios::app);
-  Logfout << "AddEffectRange done" << endl;
-  Logfout.close();
-  PrintLinkEffectRange();
+  // Logfout.open(logFoutPath.str().c_str(),ios::app);
+  // Logfout << "AddEffectRange done" << endl;
+  // Logfout.close();
+  // PrintLinkEffectRange();
 }
 
 void
@@ -5936,7 +5939,7 @@ Ipv4GlobalRouting::GetLinkEffectNode(ident high,ident low,vector<ident> tempNode
 void
 Ipv4GlobalRouting::GenerateLinkEffectRange()
 {
-  pthread_mutex_lock(&mutexA);
+  // pthread_mutex_lock(&mutexA);
   // printf("GenerateLinkEffectRange\n");
   ident tempIdent;
   tempIdent.level=-1;
@@ -5963,7 +5966,7 @@ Ipv4GlobalRouting::GenerateLinkEffectRange()
       fprintf(stderr,"effectNodeRange[%d].high.level=%d\n",i,effectNodeRange[i].high.level);
   }
   PrintLinkEffectRange();
-  pthread_mutex_unlock(&mutexA);
+  // pthread_mutex_unlock(&mutexA);
 }
 
 /**************************Master**************************/

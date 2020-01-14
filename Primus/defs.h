@@ -6,7 +6,7 @@
 #define MAX_PATH_LEN 5// 路径最大长度
 #define MAX_ADDR_NUM 48// 一条路径能达到的服务器最大数
 #define MAX_INDIR_NUM 2// Master间接连接node的最大数量，管理员设定阈值，超过即询问其他master是否状态更好
-#define MAX_TF_NODE_NUM 4// 随机选择多个node通过udp转发linkinfo
+#define MAX_TF_NODE_NUM 2// 随机选择多个node通过udp转发linkinfo
 #define MAX_EFFECT_NODE 100// 最大影响范围
 
 #define MN_PORT 8848
