@@ -212,11 +212,11 @@ Ipv4GlobalRouting::Start(vector<struct masteraddressset> tempMasterAddressSet)
   threadParam->tempGlobalRouting=this;
   threadParam->tempLinkTableEntry=NULL;
 
-  // if (pthread_create(&printStamp_thread,NULL,PrintStampThread,(void *)threadParam)<0)
-  // {
-  //   Logfout << GetNow() << "Create PrintStampThread failed." << endl;
-  //   exit(0);
-  // }
+  if (pthread_create(&printStamp_thread,NULL,PrintStampThread,(void *)threadParam)<0)
+  {
+    Logfout << GetNow() << "Create PrintStampThread failed." << endl;
+    exit(0);
+  }
 
   m_udpServer.StartApplication();
 
@@ -848,7 +848,7 @@ Ipv4GlobalRouting::UpdateResponseRecord(int eventId,ident identA,ident identB,in
 
   int value=0;
   
-  for (auto iter=linkInfoResponse.begin();i!=linkInfoResponse.end();)
+  for (auto iter=linkInfoResponse.begin();iter!=linkInfoResponse.end();)
   {
     if (eventId==iter->tempMNInfo.eventId && ((SameNode(iter->tempMNInfo.pathNodeIdent[0],identA) && SameNode(iter->tempMNInfo.pathNodeIdent[1],identB)) || (SameNode(iter->tempMNInfo.pathNodeIdent[0],identB) && SameNode(iter->tempMNInfo.pathNodeIdent[1],identA)))) 
     {
@@ -859,9 +859,9 @@ Ipv4GlobalRouting::UpdateResponseRecord(int eventId,ident identA,ident identB,in
         {
           struct timespec tv;
           clock_gettime(CLOCK_MONOTONIC,&tv);
-          tempStampInfo.identA=linkInfoResponse[i].tempMNInfo.pathNodeIdent[0];
-          tempStampInfo.identB=linkInfoResponse[i].tempMNInfo.pathNodeIdent[1];
-          tempStampInfo.linkFlag=linkInfoResponse[i].tempMNInfo.linkFlag;
+          tempStampInfo.identA=iter->tempMNInfo.pathNodeIdent[0];
+          tempStampInfo.identB=iter->tempMNInfo.pathNodeIdent[1];
+          tempStampInfo.linkFlag=iter->tempMNInfo.linkFlag;
           tempStampInfo.note="Recv all response";
           tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
           stampInfo.push_back(tempStampInfo);
@@ -877,13 +877,13 @@ Ipv4GlobalRouting::UpdateResponseRecord(int eventId,ident identA,ident identB,in
           iter->tempMNInfo.srcIdent=tempIdent;
           iter->tempMNInfo.ACK=true;
 
-          value=m_tcpRoute->SendMessageTo(GetSockByIdent(linkInfoResponse[i].tempMNInfo.destIdent),linkInfoResponse[i].tempMNInfo);
+          value=m_tcpRoute->SendMessageTo(GetSockByIdent(iter->tempMNInfo.destIdent),iter->tempMNInfo);
 
           struct timespec tv;
           clock_gettime(CLOCK_MONOTONIC,&tv);
-          tempStampInfo.identA=linkInfoResponse[i].tempMNInfo.pathNodeIdent[0];
-          tempStampInfo.identB=linkInfoResponse[i].tempMNInfo.pathNodeIdent[1];
-          tempStampInfo.linkFlag=linkInfoResponse[i].tempMNInfo.linkFlag;
+          tempStampInfo.identA=iter->tempMNInfo.pathNodeIdent[0];
+          tempStampInfo.identB=iter->tempMNInfo.pathNodeIdent[1];
+          tempStampInfo.linkFlag=iter->tempMNInfo.linkFlag;
           tempStampInfo.note="Send response to srcIdent";
           tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
           stampInfo.push_back(tempStampInfo);
@@ -894,6 +894,8 @@ Ipv4GlobalRouting::UpdateResponseRecord(int eventId,ident identA,ident identB,in
         break;
       }
     }
+    if(iter!=linkInfoResponse.end())
+      iter++;
   }
   Logfout.close();
 }
@@ -945,10 +947,10 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
 {
   pthread_mutex_lock(&mutexA);
 
-  // stringstream logFoutPath;
-  // logFoutPath.str("");
-  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  stringstream logFoutPath;
+  logFoutPath.str("");
+  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   int value=0;
   ident high,low;
@@ -982,6 +984,8 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
 
     // 同时判断链路信息是否需要下发Node，因为链路信息可能已经处理了
     bool isNeedToNotice=UpdateMasterLinkTable(high,low,tempMNInfo.srcIdent,tempMNInfo.eventId,tempMNInfo.linkFlag);
+    Logfout << GetNow() << "isNeedToNotice: " << isNeedToNotice <<" [eventId:" << tempMNInfo.eventId << "]." << endl;
+
 
     // 如果是选举出来的处理信息的master
     if (chiefMaster && isNeedToNotice)
@@ -1012,7 +1016,7 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
       if (pthread_create(&checkResponse_thread,0,CheckResponseThread,(void*)tempThreadParam)!=0)
       {
         printf("Create checkResponse_thread failed.\n");
-        // Logfout << GetNow() << "Create CheckResponseThread Failed[eventId:" << tempMNInfo.eventId << "]." << endl;
+        Logfout << GetNow() << "Create CheckResponseThread Failed[eventId:" << tempMNInfo.eventId << "]." << endl;
         exit(1);
       }
 
@@ -2000,17 +2004,17 @@ Ipv4GlobalRouting::ListenNICThread(void* tempThreadParam)
               low=(*iter).neighborIdent;
             }
 
-            tempGlobalRouting->tempStampInfo.note="(tcp)HandleMessage start";
-            clock_gettime(CLOCK_MONOTONIC,&tv);
-            tempGlobalRouting->tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-            tempGlobalRouting->stampInfo.push_back(tempGlobalRouting->tempStampInfo);
+            // tempGlobalRouting->tempStampInfo.note="(tcp)HandleMessage start";
+            // clock_gettime(CLOCK_MONOTONIC,&tv);
+            // tempGlobalRouting->tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+            // tempGlobalRouting->stampInfo.push_back(tempGlobalRouting->tempStampInfo);
 
             tempGlobalRouting->ModifyPathEntryTable(high,low,false);
 
-            clock_gettime(CLOCK_MONOTONIC,&tv);
-            tempGlobalRouting->tempStampInfo.note="(tcp)HandleMessage over";
-            tempGlobalRouting->tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-            tempGlobalRouting->stampInfo.push_back(tempGlobalRouting->tempStampInfo);
+            // clock_gettime(CLOCK_MONOTONIC,&tv);
+            // tempGlobalRouting->tempStampInfo.note="(tcp)HandleMessage over";
+            // tempGlobalRouting->tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+            // tempGlobalRouting->stampInfo.push_back(tempGlobalRouting->tempStampInfo);
           } 
         }
         
@@ -5459,10 +5463,10 @@ Ipv4GlobalRouting::ChooseNodeToInformInDirNode(ident destIdent,ident lastNode,st
 void
 Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,ident srcIdent,int eventId,bool linkFlag)
 {
-  // stringstream logFoutPath;
-  // logFoutPath.str("");
-  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  stringstream logFoutPath;
+  logFoutPath.str("");
+  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   // 确定影响范围，这代码写得太垃圾了
   struct MNinfo *tempMNInfo=(struct MNinfo *)malloc(sizeof(struct MNinfo));
@@ -5489,55 +5493,7 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,ident srcIdent,int eve
   tempMNInfo->ACK=false;
   tempMNInfo->bye=false;
 
-  // 某些间接连接的Node可能会因为这次链路变化而导致master的信息无法传达，所以需要记录
-  // vector<ident> effectInDirNode;
-  // ident lastNode;
-  // lastNode.level=-1;
-  // lastNode.position=-1;
-
-  // if (linkFlag==false)// 链路故障，避免将信息发给发送信息的源节点
-  // {
-  //   if (low.level==0)// 直连链路故障
-  //   {
-  //     for (int i=0;i<masterInDirPathTable.size();i++)
-  //     {
-  //       if (SameNode(high,masterInDirPathTable[i].pathNodeIdent[0])) continue;// 不需要通知，直连失联的Node会自动重连
-  //       for (int j=MAX_PATH_LEN-1;j>=0;j--)
-  //       {
-  //         if (masterInDirPathTable[i].pathNodeIdent[j].level!=-1) // 间接路径是通过该masterInDirPathTable[i].pathNodeIdent[j]的直接连接与Master通信
-  //         {
-  //           if (SameNode(high,masterInDirPathTable[i].pathNodeIdent[j]))
-  //           {
-  //             effectInDirNode.push_back(masterInDirPathTable[i].pathNodeIdent[0]);
-  //           }
-  //           break;
-  //         }
-  //       }
-  //     }
-  //   }
-  //   else// 拓扑中的某条链路故障
-  //   {
-  //     for (int i=0;i<masterInDirPathTable.size();i++)
-  //     {
-  //       for (int j=0;j<MAX_PATH_LEN-1;j++)
-  //       {
-  //         if ((SameNode(high,masterInDirPathTable[i].pathNodeIdent[j]) && SameNode(low,masterInDirPathTable[i].pathNodeIdent[j+1])) || (SameNode(low,masterInDirPathTable[i].pathNodeIdent[j]) && SameNode(high,masterInDirPathTable[i].pathNodeIdent[j+1])))
-  //         {
-  //           effectInDirNode.push_back(masterInDirPathTable[i].pathNodeIdent[0]);
-  //           break;
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  // else // 链路恢复
-  // {
-  //   if (low.level!=0)// 数据平面链路恢复，需要将信息下发给上报结点
-  //   {
-  //     srcIdent.level=-1;
-  //     srcIdent.position=-1;
-  //   }
-  // }
+  Logfout << GetNow() << "Master start to send message:" << endl;
 
   for (int i=0;i<effectNodeRange.size();i++)
   {
@@ -5547,12 +5503,18 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,ident srcIdent,int eve
       {
         if (effectNodeRange[i].effectNode[j].level!=-1)
         {
-          if(linkFlag==false && !SameNode(effectNodeRange[i].effectNode[j],srcIdent))
+          if(linkFlag==true || (linkFlag==false && !SameNode(effectNodeRange[i].effectNode[j],srcIdent)))
           {
             tempMNInfo->destIdent=effectNodeRange[i].effectNode[j];
             UpdateResponseRecord(tempMNInfo->eventId,high,low,1);
             AssistSendTo(*tempMNInfo);
             m_tcpRoute->SendMessageTo(GetSockByIdent(tempMNInfo->destIdent),*tempMNInfo);
+         
+            Logfout << GetNow() << "Send " << tempMNInfo->pathNodeIdent[0].level << "." << tempMNInfo->pathNodeIdent[0].position << "--" << tempMNInfo->pathNodeIdent[1].level << "." << tempMNInfo->pathNodeIdent[1].position << " ";
+            if (tempMNInfo->linkFlag==true) Logfout << "up";
+            else Logfout << "down";
+            Logfout << " to node " << effectNodeRange[i].effectNode[j].level << "." << effectNodeRange[i].effectNode[j].position << " by TCP & UDP." << endl;
+            // fprintf(stderr, "GetEffectNode succeed Send %d.%d\n", (*tempEffectNode)[i].level, (*tempEffectNode)[i].position);
           }
         }
       }
@@ -5560,7 +5522,7 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,ident srcIdent,int eve
     }
   }
 
-  // Logfout << GetNow() << "Master start to send message:" << endl;
+  
 
   // vector<ident> tempNode,tempEffectNode;
   // tempNode.push_back(high);
