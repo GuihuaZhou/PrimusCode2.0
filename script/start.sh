@@ -193,8 +193,9 @@ pscp -h /home/guolab/host/master.txt -l root /home/guolab/Primus/Primus /home/gu
 echo ""
 echo "start master."
 /home/guolab/Primus/Primus &
-sleep 3
-pssh -i -h /home/guolab/host/master.txt "/home/guolab/Primus/Primus;" &
+#1>/home/guolab/Primus/master.stdout 2>/home/guolab/Primus/master.stderr &
+# sleep 3
+# pssh -i -h /home/guolab/host/master.txt "/home/guolab/Primus/Primus;" &
 
 # /home/guolab/Primus/Primus &
 # sleep 3
@@ -203,24 +204,24 @@ sleep 5
 echo ""
 echo "start node."
 echo ""
-pssh -i -h /home/guolab/host/ATChost.txt "/home/guolab/Primus/Primus;" & # 运行Node上的可执行文件
+pssh -i -h /home/guolab/host/ATChost.txt "/home/guolab/Primus/Primus 1>/home/guolab/Primus/switch.stdout 2>/home/guolab/Primus/switch.stderr;" & # 运行Node上的可执行文件
 
-sleep 30
-rm /home/guolab/output/primusStamp.txt
-touch /home/guolab/output/primusStamp.txt
-chmod 777 -R /home/guolab/output/*
-pssh -i -h /home/guolab/host/master.txt "rm /home/guolab/output/primusStamp.txt;touch /home/guolab/output/primusStamp.txt;chmod 777 -R /home/guolab/output/*;"
-pssh -i -h /home/guolab/host/ATChost.txt "rm /home/guolab/output/primusStamp.txt;touch /home/guolab/output/primusStamp.txt;chmod 777 -R /home/guolab/output/*;"
+# sleep 30
+# rm /home/guolab/output/primusStamp.txt
+# touch /home/guolab/output/primusStamp.txt
+# chmod 777 -R /home/guolab/output/*
+# pssh -i -h /home/guolab/host/master.txt "rm /home/guolab/output/primusStamp.txt;touch /home/guolab/output/primusStamp.txt;chmod 777 -R /home/guolab/output/*;"
+# pssh -i -h /home/guolab/host/ATChost.txt "rm /home/guolab/output/primusStamp.txt;touch /home/guolab/output/primusStamp.txt;chmod 777 -R /home/guolab/output/*;"
 
 
-sleep 5
-for ((i=0;i<500;i++))
-do
-	ssh root@10.0.80.10 "ifconfig eth1 down"
-	sleep 2
-	ssh root@10.0.80.10 "ifconfig eth1 up"
-	sleep 2
-done
+# sleep 5
+# for ((i=0;i<500;i++))
+# do
+# 	ssh root@10.0.80.10 "ifconfig eth1 down"
+# 	sleep 2
+# 	ssh root@10.0.80.10 "ifconfig eth1 up"
+# 	sleep 2
+# done
 ########################## ##########################
 # pssh -i -h /home/guolab/host/ATChost.txt "echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf;sudo sysctl -p;"
 # pssh -i -h /home/guolab/host/ATChost.txt "apt install traceroute -y;"
@@ -242,6 +243,19 @@ done
 # pssh -i -h /home/guolab/host/ATCClienthost.txt "rm -rf /home/guolab/tcp-client;"
 # g++ tcp-client.c -o tcp-client
 # pscp -h /home/guolab/host/ATCClienthost.txt -l root /home/guolab/tool/tcp-client /home/guolab/
+
+
+# rm /home/guolab/tool/udp-server
+# pssh -i -h /home/guolab/host/ATCServerhost.txt "rm -rf /home/guolab/udp-server;"
+# g++ udp-server.c -o udp-server -lpthread
+# pscp -h /home/guolab/host/ATCServerhost.txt -l root /home/guolab/tool/udp-server /home/guolab/
+
+# rm /home/guolab/tool/udp-client
+# pssh -i -h /home/guolab/host/ATCClienthost.txt "rm -rf /home/guolab/udp-client;"
+# g++ udp-client.c -o udp-client
+# pscp -h /home/guolab/host/ATCClienthost.txt -l root /home/guolab/tool/udp-client /home/guolab/
+
+# /home/guolab/script/ATCTest2.sh
 
 # rm /home/guolab/ATCOutput/*
 # killall -9 tcp-server 

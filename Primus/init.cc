@@ -431,6 +431,27 @@ int main(int argc,char *argv[])
   m_globalRouting=new Ipv4GlobalRouting(level,position,ToRNodes,LeafNodes,SpineNodes,nPods,pod,nMaster,Links,defaultLinkTimer,defaultKeepaliveTimer,true,true);
   pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
   m_globalRouting->Start(masterAddressSet);
+  // ATC test
+  // m_globalRouting->FakeGenerateLink(atoi(argv[1]),atoi(argv[2]),atoi(argv[3]),atoi(argv[4]));
+
+  // high.level=2;
+  // high.position=0;
+  // low.level=1;
+  // low.position=0;
+  // int times=atoi(argv[5]);
+
+  // struct timespec tvA,tvB;
+  // clock_gettime(CLOCK_MONOTONIC,&tvA);
+
+  // for (int i=1;i<=times;i++)
+  // {
+  //   m_globalRouting->SendMessageToNode(high,low,low,i,true);
+  // }
+  
+  // clock_gettime(CLOCK_MONOTONIC,&tvB);
+
+  // double stamp=tvB.tv_sec+tvB.tv_nsec*0.000000001-tvA.tv_sec-tvA.tv_nsec*0.000000001;
+  // end
   pthread_exit(NULL);
   return 0;
 }

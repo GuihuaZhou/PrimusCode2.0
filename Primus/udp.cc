@@ -146,10 +146,10 @@ void*
 UDPServer::HandleReadLinkInfo(void* tempThreadParam)// node转发linkinfo至master
 {
 	// pthread_detach(pthread_self());
-	stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << m_globalRouting->GetMyIdent().level << "." << m_globalRouting->GetMyIdent().position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+	// stringstream logFoutPath;
+ //  logFoutPath.str("");
+ //  logFoutPath << "/var/log/Primus-" << m_globalRouting->GetMyIdent().level << "." << m_globalRouting->GetMyIdent().position << ".log";
+ //  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   UDPServer *tempUDPServer=((struct threadparamA *)tempThreadParam)->tempUDPServer;
 
@@ -211,17 +211,17 @@ UDPServer::HandleReadLinkInfo(void* tempThreadParam)// node转发linkinfo至mast
 
     if (m_globalRouting->SameNode(tempUDPServer->myIdent,tempMNInfo.destIdent))// 目的地是本地
     {
-    	Logfout << GetNow();
-    	if (tempUDPServer->myIdent.level==0) Logfout << "Master ";
-    	else Logfout << "Node ";
-    	Logfout << tempUDPServer->myIdent.level << "." << tempUDPServer->myIdent.position << " recv ";
-      Logfout << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
-      if (tempMNInfo.linkFlag==true) Logfout << " up ";
-      else if (tempMNInfo.linkFlag==false) Logfout << " down ";
-      Logfout << "from ";
-      if (tempMNInfo.srcIdent.level==0) Logfout << "Master ";
-      else Logfout << "Node ";
-      Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " by udp [forwardNode:" << tempMNInfo.forwardIdent.level << "." << tempMNInfo.forwardIdent.position << "][value:" << value << "][eventId:" << tempMNInfo.eventId << "][sock:" << server_sockfd << "]." << endl;
+    	// Logfout << GetNow();
+    	// if (tempUDPServer->myIdent.level==0) Logfout << "Master ";
+    	// else Logfout << "Node ";
+    	// Logfout << tempUDPServer->myIdent.level << "." << tempUDPServer->myIdent.position << " recv ";
+     //  Logfout << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
+     //  if (tempMNInfo.linkFlag==true) Logfout << " up ";
+     //  else if (tempMNInfo.linkFlag==false) Logfout << " down ";
+     //  Logfout << "from ";
+     //  if (tempMNInfo.srcIdent.level==0) Logfout << "Master ";
+     //  else Logfout << "Node ";
+     //  Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " by udp [forwardNode:" << tempMNInfo.forwardIdent.level << "." << tempMNInfo.forwardIdent.position << "][value:" << value << "][eventId:" << tempMNInfo.eventId << "][sock:" << server_sockfd << "]." << endl;
 
     	// struct stampinfo tempStampInfo;
     	// tempStampInfo.identA=tempMNInfo.pathNodeIdent[0];
@@ -240,8 +240,8 @@ UDPServer::HandleReadLinkInfo(void* tempThreadParam)// node转发linkinfo至mast
     	m_globalRouting->TransferTo(tempMNInfo);// 转发至chief或者目的node
     }
 	}
-	Logfout << GetNow() << "Local NIC receive linkInfo thread down!!!!!!" << endl;
-	Logfout.close();
+	// Logfout << GetNow() << "Local NIC receive linkInfo thread down!!!!!!" << endl;
+	// Logfout.close();
 	pthread_exit(0);
 }
 
@@ -646,6 +646,7 @@ UDPClient::SendPathInfoTo(struct sockaddr_in localAddr,struct sockaddr_in remote
   	Logfout << GetNow() << "SendPathInfoTo error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
   	exit(0);
   }
+  close(client_sockfd);
   // Logfout << GetNow() << "SendPathInfoTo over and size is " << sizeof(*tempPathInfo) << endl;
   Logfout.close();
 }
@@ -665,6 +666,7 @@ UDPClient::SendLinkInfo(struct sockaddr_in localAddr,string remoteAddress,struct
 	remote_addr.sin_addr.s_addr=inet_addr(remoteAddress.c_str());
 	remote_addr.sin_port=htons(UDP_TF_PORT);
 
+  // fprintf(stderr, "try SendLinkInfo %s-->%s\n",inet_ntoa(localAddr.sin_addr),remoteAddress.c_str());
 	if ((client_sockfd=socket(PF_INET,SOCK_DGRAM,0))<0)
 	{
 		// Logfout << GetNow() << "SendLinkInfo sock failed" << endl;
@@ -697,5 +699,7 @@ UDPClient::SendLinkInfo(struct sockaddr_in localAddr,string remoteAddress,struct
   	// Logfout << GetNow() << "SendLinkInfo error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
   	exit(0);
   }
+
+  close(client_sockfd);
   // Logfout.close();
 }

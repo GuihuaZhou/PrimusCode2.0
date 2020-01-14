@@ -28,6 +28,7 @@
 #include <linux/rtnetlink.h>
 #include <sys/socket.h>
 #include "/usr/include/net/if_arp.h"
+#include <stdio.h>
 
 using namespace std;
 
@@ -104,6 +105,10 @@ public:
     Ipv4GlobalRouting *tempGlobalRouting;
     struct MNinfo tempMNInfo;
   };
+
+  // ATC test
+  void FakeGenerateLink(int tempSpineNodes,int tempLeafNodes,int tempToRNodes,int tempPods);
+  // end
 
   // sonic test
   bool isListenNIC(string ifName);
