@@ -651,10 +651,10 @@ Ipv4GlobalRouting::UpdateMasterMapToSock(struct mastermaptosock tempMasterMapToS
 string 
 Ipv4GlobalRouting::GetNICNameByRemoteAddr(struct sockaddr_in addr)
 {
-  string remoteAddr=inet_ntoa(addr.sin_addr);
+  // string remoteAddr=inet_ntoa(addr.sin_addr);
   for (int i=0;i<NICInfo.size();i++)
   {
-    if (!strcmp(inet_ntoa(NICInfo[i].neighborAddr.sin_addr),remoteAddr.c_str()))
+    if (NICInfo[i].neighborAddr.sin_addr.s_addr==addr.sin_addr.s_addr)
     {
       return NICInfo[i].NICName;
     }
@@ -672,6 +672,7 @@ Ipv4GlobalRouting::GetNICNameByRemoteAddr(struct sockaddr_in addr)
   {
     if (ifa->ifa_flags==69699 && ifa->ifa_name!=NULL && ifa->ifa_addr!=NULL && ifa->ifa_netmask!=NULL && (*ifa).ifa_ifu.ifu_dstaddr!=NULL && ifa->ifa_name && ifa->ifa_name[0]=='e')
     {
+      string remoteAddr;
       remoteAddr=inet_ntoa(((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr);
       remoteAddr[remoteAddr.size()-1]=(remoteAddr[remoteAddr.size()-1]=='1')?'2':'1';
       if (!strcmp(inet_ntoa(addr.sin_addr),remoteAddr.c_str()))
@@ -688,11 +689,11 @@ Ipv4GlobalRouting::GetNICNameByRemoteAddr(struct sockaddr_in addr)
 ident 
 Ipv4GlobalRouting::GetNeighborIdentByRemoteAddr(struct sockaddr_in addr)
 {
-  string remoteAddr=inet_ntoa(addr.sin_addr);
+  // string remoteAddr=inet_ntoa(addr.sin_addr);
   for (int i=0;i<NICInfo.size();i++)
   {
-    string NICRemoteAddr=inet_ntoa(NICInfo[i].neighborAddr.sin_addr);
-    if (!strcmp(NICRemoteAddr.c_str(),remoteAddr.c_str())) return NICInfo[i].neighborIdent;
+    // string NICRemoteAddr=inet_ntoa(NICInfo[i].neighborAddr.sin_addr);
+    if (NICInfo[i].neighborAddr.sin_addr.s_addr==addr.sin_addr.s_addr) return NICInfo[i].neighborIdent;
   } 
 }
 
@@ -737,11 +738,11 @@ Ipv4GlobalRouting::GetLocalAddrByNeighborIdent(ident neighborIdent)
 void 
 Ipv4GlobalRouting::GetLocalAddrByRemoteAddr(struct sockaddr_in *localAddr,struct sockaddr_in addr)
 {
-  string remoteAddr=inet_ntoa(addr.sin_addr);
+  // string remoteAddr=inet_ntoa(addr.sin_addr);
   for (int i=0;i<NICInfo.size();i++)
   {
-    string NICRemoteAddr=inet_ntoa(NICInfo[i].neighborAddr.sin_addr);
-    if (!strcmp(NICRemoteAddr.c_str(),remoteAddr.c_str())) 
+    // string NICRemoteAddr=inet_ntoa(NICInfo[i].neighborAddr.sin_addr);
+    if (NICInfo[i].neighborAddr.sin_addr.s_addr==addr.sin_addr.s_addr) 
     {
       *localAddr=NICInfo[i].localAddr;
       break;
@@ -2447,9 +2448,10 @@ Ipv4GlobalRouting::AddSingleRoute(struct sockaddr_in destAddr,unsigned int prefi
   // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
-  // // test
-  // Logfout << "AddSingleRoute:" << inet_ntoa(destAddr.sin_addr) << "/" << prefixLen << ",NICName:" << tempNextHopAndWeight.NICName << " nextHop gateway:" << inet_ntoa(tempNextHopAndWeight.gateAddr.sin_addr) << endl;
-  // // endl
+
+  // Logfout << "AddSingleRoute:" << inet_ntoa(destAddr.sin_addr) << "/" << prefixLen << ",NICName:" << tempNextHopAndWeight.NICName << " nextHop gateway:"; 
+  // Logfout << inet_ntoa(tempNextHopAndWeight.gateAddr.sin_addr) << endl;
+
   struct {
     struct nlmsghdr n;
     struct rtmsg r;
@@ -2466,23 +2468,29 @@ Ipv4GlobalRouting::AddSingleRoute(struct sockaddr_in destAddr,unsigned int prefi
   req.r.rtm_family=AF_INET;//
   req.r.rtm_table=RT_TABLE_MAIN;//
   req.r.rtm_protocol=RTPROT_ZEBRA;//
-  string gateAddr=inet_ntoa(tempNextHopAndWeight.gateAddr.sin_addr);
-  if (gateAddr==inet_ntoa(destAddr.sin_addr)) req.r.rtm_scope=RT_SCOPE_LINK;//
+  if (tempNextHopAndWeight.gateAddr.sin_addr.s_addr==destAddr.sin_addr.s_addr) req.r.rtm_scope=RT_SCOPE_LINK;//
   else req.r.rtm_scope=RT_SCOPE_UNIVERSE;//
   req.r.rtm_type=RTN_UNICAST;//
   req.r.rtm_dst_len=prefixLen;//
   
   // mtu没设置
   int bytelen=(req.r.rtm_family==AF_INET)?4:16;
+  unsigned long nextgw_addr=tempNextHopAndWeight.gateAddr.sin_addr.s_addr;
+  unsigned long srcgw_addr=tempNextHopAndWeight.srcAddr.sin_addr.s_addr;
+
+  // Logfout << "Before addattr_l: " << nextgw_addr <<" " << destAddr.sin_addr.s_addr <<" " << srcgw_addr << endl;
 
   destAddr.sin_addr.s_addr=Convert(destAddr,prefixLen);
   addattr_l(&req.n,sizeof(req),RTA_DST,&(destAddr.sin_addr.s_addr),bytelen);//目的地址
   addattr32(&req.n,sizeof(req),RTA_PRIORITY,NL_DEFAULT_ROUTE_METRIC);//metric
-  addattr_l(&req.n,sizeof(req),RTA_GATEWAY,&(tempNextHopAndWeight.gateAddr.sin_addr.s_addr),bytelen);//网关，单路径好像不要加上网关
-  addattr_l(&req.n,sizeof(req),RTA_PREFSRC,&(tempNextHopAndWeight.srcAddr.sin_addr.s_addr),bytelen);//src
+  addattr_l(&req.n,sizeof(req),RTA_GATEWAY,&nextgw_addr,bytelen);//网关，单路径好像不要加上网关
+  // addattr_l(&req.n,sizeof(req),RTA_PREFSRC,&srcgw_addr,bytelen);//src
   addattr_l(&req.n,sizeof(req),RTA_OIF,&if_index,bytelen);//该路由项的输出网络设备索引
-     
+  
+  // Logfout << "After addattr_l: " << nextgw_addr <<" " << destAddr.sin_addr.s_addr <<" " << srcgw_addr << endl;
+
   int status=send(rt_sock,&req,req.n.nlmsg_len,0);
+  // fprintf(stderr,"send return %d\n",status);
   close(rt_sock);
   // Logfout.close();
 }
@@ -2620,16 +2628,16 @@ Ipv4GlobalRouting::UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int n
           // 且linkCounter为0，0表示故障链路数为0
           if (tempPathTableEntry->linkCounter==0)
           {
-            while (1)
-            {
-              NICName=GetNICNameByRemoteAddr(tempPathTableEntry->nextHopAddr.addr);
-              if (NICName=="")// 还没有探测到这个邻居
-              {
-                // Logfout << GetNow() << "!!!!!!!!!!!!!!" << endl;
-                usleep(100000);//休眠100ms
-              }
-              else break;//否则继续进行
-            }
+            // while (1)
+            // {
+            //   NICName=GetNICNameByRemoteAddr(tempPathTableEntry->nextHopAddr.addr);
+            //   if (NICName=="")// 还没有探测到这个邻居
+            //   {
+            //     // Logfout << GetNow() << "!!!!!!!!!!!!!!" << endl;
+            //     usleep(100000);//休眠100ms
+            //   }
+            //   else break;//否则继续进行
+            // }
             for (int j=0;j<nextHopAndWeight.size();j++)// 此结构体用来存储下一跳和相应的权重信息，先遍历，没有找到再添加
             {
               if (nextHopAndWeight[j].NICName==NICName)// 找了，权重+1
@@ -2671,16 +2679,16 @@ Ipv4GlobalRouting::UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int n
           // 且linkCounter为0，0表示故障链路数为0
           if (tempPathTableEntry->linkCounter==0)
           {
-            while (1)
-            {
-              NICName=GetNICNameByRemoteAddr(tempPathTableEntry->nextHopAddr.addr);
-              if (NICName=="")// 还没有探测到这个邻居
-              {
-                // Logfout << GetNow() << "!!!!!!!!!!!!!!" << endl;
-                usleep(100000);//休眠100ms
-              }
-              else break;//否则继续进行
-            }
+            // while (1)
+            // {
+            //   NICName=GetNICNameByRemoteAddr(tempPathTableEntry->nextHopAddr.addr);
+            //   if (NICName=="")// 还没有探测到这个邻居
+            //   {
+            //     // Logfout << GetNow() << "!!!!!!!!!!!!!!" << endl;
+            //     usleep(100000);//休眠100ms
+            //   }
+            //   else break;//否则继续进行
+            // }
             for (int j=0;j<nextHopAndWeight.size();j++)
             {
               if (nextHopAndWeight[j].NICName==NICName)//
@@ -4307,7 +4315,7 @@ Ipv4GlobalRouting::FakeGenerateSpinePath(ident tempIdent,int tempSpineNodes,int 
     int DestIP1=i+1;
     int DestIP2=2;
     string IP="32.1."+to_string(DestIP1)+"."+to_string(DestIP2);
-    printf("DestIP %s\n",IP.c_str());
+    // printf("DestIP %s\n",IP.c_str());
     inet_aton(IP.c_str(),&(tempAddr.sin_addr));
     tempPathInfo->nodeAddr.addr=tempAddr;
     tempPathInfo->nodeAddr.prefixLen=24;
@@ -4341,7 +4349,7 @@ Ipv4GlobalRouting::FakeGenerateSpinePath(ident tempIdent,int tempSpineNodes,int 
       int DestIP1=j+1;
       int DestIP2=2;
       string IP="21."+to_string(DestIP0)+"."+to_string(DestIP1)+"."+to_string(DestIP2);
-      printf("DestIP %s\n",IP.c_str());
+      // printf("DestIP %s\n",IP.c_str());
       inet_aton(IP.c_str(),&(tempAddr.sin_addr));
       tempPathInfo->nodeAddr.addr=tempAddr;
       tempPathInfo->nodeAddr.prefixLen=24;
@@ -4375,7 +4383,7 @@ Ipv4GlobalRouting::FakeGenerateLink(int tempSpineNodes,int tempLeafNodes,int tem
     high.position=i;
     for (int j=0;j<tempPods;j++)
     {
-      low.position=j*tempLeafNodes+i%(tempSpineNodes/tempLeafNodes);
+      low.position=j*tempLeafNodes+i/(tempSpineNodes/tempLeafNodes);
       UpdateMasterLinkTable(high,low,high,1,true);
     }
   }
@@ -4390,6 +4398,7 @@ Ipv4GlobalRouting::FakeGenerateLink(int tempSpineNodes,int tempLeafNodes,int tem
       UpdateMasterLinkTable(high,low,high,1,true);
     }
   }
+  PrintMasterLinkTable();
 }
 
 bool 
@@ -4562,6 +4571,21 @@ Ipv4GlobalRouting::UpdateMasterLinkTable(ident high,ident low,ident srcIdent,int
       }
     }while(nextLinkTableEntry!=NULL);
     headMasterLinkTableEntry->lastUpdateTime++;//用来统计链路数量
+
+    ident tempIdent;
+    tempIdent.level=-1;
+    tempIdent.position=-1;
+
+    struct effectnode tempEffectNode;
+    tempEffectNode.high=high;
+    tempEffectNode.low=low;
+    for (int i=0;i<MAX_EFFECT_NODE;i++)
+    {
+      tempEffectNode.effectNode[i]=tempIdent;
+    }
+    effectNodeRange.push_back(tempEffectNode);
+
+    GenerateLinkEffectRange();
     // PrintMasterLinkTable();
     return false;
   }
@@ -5464,6 +5488,122 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,ident srcIdent,int eve
   tempMNInfo->bye=false;
 
   // 某些间接连接的Node可能会因为这次链路变化而导致master的信息无法传达，所以需要记录
+  // vector<ident> effectInDirNode;
+  // ident lastNode;
+  // lastNode.level=-1;
+  // lastNode.position=-1;
+
+  // if (linkFlag==false)// 链路故障，避免将信息发给发送信息的源节点
+  // {
+  //   if (low.level==0)// 直连链路故障
+  //   {
+  //     for (int i=0;i<masterInDirPathTable.size();i++)
+  //     {
+  //       if (SameNode(high,masterInDirPathTable[i].pathNodeIdent[0])) continue;// 不需要通知，直连失联的Node会自动重连
+  //       for (int j=MAX_PATH_LEN-1;j>=0;j--)
+  //       {
+  //         if (masterInDirPathTable[i].pathNodeIdent[j].level!=-1) // 间接路径是通过该masterInDirPathTable[i].pathNodeIdent[j]的直接连接与Master通信
+  //         {
+  //           if (SameNode(high,masterInDirPathTable[i].pathNodeIdent[j]))
+  //           {
+  //             effectInDirNode.push_back(masterInDirPathTable[i].pathNodeIdent[0]);
+  //           }
+  //           break;
+  //         }
+  //       }
+  //     }
+  //   }
+  //   else// 拓扑中的某条链路故障
+  //   {
+  //     for (int i=0;i<masterInDirPathTable.size();i++)
+  //     {
+  //       for (int j=0;j<MAX_PATH_LEN-1;j++)
+  //       {
+  //         if ((SameNode(high,masterInDirPathTable[i].pathNodeIdent[j]) && SameNode(low,masterInDirPathTable[i].pathNodeIdent[j+1])) || (SameNode(low,masterInDirPathTable[i].pathNodeIdent[j]) && SameNode(high,masterInDirPathTable[i].pathNodeIdent[j+1])))
+  //         {
+  //           effectInDirNode.push_back(masterInDirPathTable[i].pathNodeIdent[0]);
+  //           break;
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // else // 链路恢复
+  // {
+  //   if (low.level!=0)// 数据平面链路恢复，需要将信息下发给上报结点
+  //   {
+  //     srcIdent.level=-1;
+  //     srcIdent.position=-1;
+  //   }
+  // }
+
+  for (int i=0;i<effectNodeRange.size();i++)
+  {
+    if (SameNode(effectNodeRange[i].high,high) && SameNode(effectNodeRange[i].low,low))// 找到影响范围
+    {
+      for (int j=0;j<MAX_EFFECT_NODE;j++)
+      {
+        if (effectNodeRange[i].effectNode[j].level!=-1)
+        {
+          tempMNInfo->destIdent=effectNodeRange[i].effectNode[j];
+          UpdateResponseRecord(tempMNInfo->eventId,high,low,1);
+          // AssistSendTo(tempMNInfo);
+          // m_tcpRoute->SendMessageTo(GetSockByIdent(tempMNInfo->destIdent),tempMNInfo);
+        }
+      }
+      break;
+    }
+  }
+
+  // Logfout << GetNow() << "Master start to send message:" << endl;
+
+  // vector<ident> tempNode,tempEffectNode;
+  // tempNode.push_back(high);
+
+  // if (high.level==1) GetEffectNode(effectInDirNode,tempNode,srcIdent,"UP",&tempEffectNode,*tempMNInfo);
+  // else if (high.level==2) GetEffectNode(effectInDirNode,tempNode,srcIdent,"UP",&tempEffectNode,*tempMNInfo);
+  // else if (high.level==3) GetEffectNode(effectInDirNode,tempNode,srcIdent,"DOWN",&tempEffectNode,*tempMNInfo);
+
+  // for (int i=0;i<effectInDirNode.size();i++) 
+  // {
+  //   ChooseNodeToInformInDirNode(effectInDirNode[i],lastNode,*tempMNInfo);
+  // }
+}
+
+void
+Ipv4GlobalRouting::SendMessageToNode1(ident high,ident low,ident srcIdent,int eventId,bool linkFlag)
+{
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+
+  // 确定影响范围，这代码写得太垃圾了
+  struct MNinfo *tempMNInfo=(struct MNinfo *)malloc(sizeof(struct MNinfo));
+  tempMNInfo->addr.sin_family=AF_INET;// addr此时无实际意义
+  inet_aton("255.255.255.255",&(tempMNInfo->addr.sin_addr));
+  tempMNInfo->addr.sin_port=htons(0);
+  tempMNInfo->destIdent=high;// 不可省略，未初始化不能使用
+  tempMNInfo->forwardIdent=high;
+  tempMNInfo->srcIdent=myIdent;
+  tempMNInfo->pathNodeIdent[0]=high;
+  tempMNInfo->pathNodeIdent[1]=low;
+  for (int i=2;i<MAX_PATH_LEN;i++)
+  {
+    tempMNInfo->pathNodeIdent[i].level=-1;
+    tempMNInfo->pathNodeIdent[i].position=-1;
+  }
+  tempMNInfo->eventId=eventId;
+  tempMNInfo->clusterMaster=false;
+  tempMNInfo->chiefMaster=false;
+  tempMNInfo->reachable=true;
+  tempMNInfo->keepAlive=false;
+  tempMNInfo->linkFlag=linkFlag;
+  tempMNInfo->hello=false;
+  tempMNInfo->ACK=false;
+  tempMNInfo->bye=false;
+
+  // 某些间接连接的Node可能会因为这次链路变化而导致master的信息无法传达，所以需要记录
   vector<ident> effectInDirNode;
   ident lastNode;
   lastNode.level=-1;
@@ -5526,6 +5666,304 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,ident srcIdent,int eve
   {
     ChooseNodeToInformInDirNode(effectInDirNode[i],lastNode,*tempMNInfo);
   }
+}
+
+void
+Ipv4GlobalRouting::PrintLinkEffectRange()
+{
+  stringstream logFoutPath;
+  logFoutPath.str("");
+  logFoutPath << "/var/log/LinkEffectRange-" << myIdent.level << "." << myIdent.position << ".log";
+  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+
+  Logfout << "Link\tEffectNode" << endl;
+  for (int i=0;i<effectNodeRange.size();i++)
+  {
+    Logfout << effectNodeRange[i].high.level << "." << effectNodeRange[i].high.position << "--" << effectNodeRange[i].low.level << "." << effectNodeRange[i].low.position << "\t";
+    for (int j=0;j<MAX_EFFECT_NODE;j++)
+    {
+      if (effectNodeRange[i].effectNode[j].level==-1) break;
+      Logfout << effectNodeRange[i].effectNode[j].level << "." << effectNodeRange[i].effectNode[j].position << "\t";
+    }
+    Logfout << endl;
+  }
+
+  Logfout.close();
+}
+
+// void
+// Ipv4GlobalRouting::GetLinkEffectNode(ident* effectNode,vector<ident> tempNode,string type)
+// {
+//   vector<ident> tempEffectNode;
+//   tempEffectNode.clear();
+//   for (int i=0;i<tempNode.size();i++)
+//   {
+//     struct linktableentry *nextLinkTableEntry=headMasterLinkTableEntry;
+//     if (type=="UP")// 求上行链路
+//     {
+//       do
+//       {
+//         bool isFindSameNode=false;
+//         nextLinkTableEntry=nextLinkTableEntry->next;
+//         if (nextLinkTableEntry!=NULL)// 终止条件还可以进行判断
+//         {
+//           if (SameNode(tempNode[i],nextLinkTableEntry->low)) 
+//           {
+//             for (int j=0;j<MAX_EFFECT_NODE;j++)
+//             {
+//               if (SameNode(effectNode[j],nextLinkTableEntry->high))// 存在相同的则不再添加，这些地方都必须优化
+//               {
+//                 isFindSameNode=true;
+//                 break;
+//               }
+//             }
+//             if (!isFindSameNode) 
+//             {
+//               tempEffectNode.push_back(nextLinkTableEntry->high);
+//             }
+//           }
+//         }
+//         else break;
+//       }while(nextLinkTableEntry!=NULL);
+//     }
+//     else if (type=="DOWN")// 求下行链路
+//     {
+//       do
+//       {
+//         bool isFindSameNode=false;
+//         nextLinkTableEntry=nextLinkTableEntry->next;
+//         if (nextLinkTableEntry!=NULL)// 终止条件还可以进行判断
+//         {
+//           if (SameNode(tempNode[i],nextLinkTableEntry->high)) 
+//           {
+//             for (int j=0;j<MAX_EFFECT_NODE;j++)
+//             {
+//               if (SameNode(effectNode[j],nextLinkTableEntry->low))// 存在相同的则不再添加，这些地方都必须优化
+//               {
+//                 isFindSameNode=true;
+//                 break;
+//               }
+//             }
+//             if (!isFindSameNode) 
+//             {
+//               tempEffectNode.push_back(nextLinkTableEntry->low);
+//             }
+//           }
+//         }
+//       }while(nextLinkTableEntry!=NULL);
+//     }
+//   }
+  
+
+//   if (type=="DOWN" || tempEffectNode.size()==0)//
+//   {
+//     for (int i=0;i<tempNode.size();i++)// 先给一部分Node下发
+//     {
+//       for (int j=0;j<MAX_EFFECT_NODE;j++)
+//       {
+//         if (!SameNode(effectNode[j],tempNode[i]) && effectNode[j].level==-1) effectNode[j]=tempNode[i];
+//       }
+//     }
+//   }
+
+//   if (tempEffectNode.size()==0) return;// 不存在相关的下一跳节点了，直接退出
+
+//   tempNode.clear();
+//   // 继续求下一跳
+//   for (int i=0;i<tempEffectNode.size();i++) tempNode.push_back(tempEffectNode[i]);
+
+//   tempEffectNode.clear();
+
+//   if (type=="UP" && tempNode[0].level!=3)// 还未到Spine
+//   {
+//     GetLinkEffectNode(effectNode,tempNode,"UP");
+//   }
+//   else if (type=="UP" && tempNode[0].level==3)// 到SpineNode后可以开始求下行
+//   {
+//     GetLinkEffectNode(effectNode,tempNode,"DOWN");
+//   }
+//   else if (type=="DOWN" && tempNode[0].level!=1)// 还未到最底层，继续求下行
+//   {
+//     GetLinkEffectNode(effectNode,tempNode,"DOWN");
+//   }
+//   else if (type=="DOWN" && tempNode[0].level==1)// 此处需要考虑，如果是100个leaf，求10000个tor，
+//   {
+//     for (int i=0;i<tempEffectNode.size();i++)// 先给一部分Node下发
+//     {
+//       for (int j=0;j<MAX_EFFECT_NODE;j++)
+//       {
+//         if (!SameNode(effectNode[j],tempNode[i]) && effectNode[j].level==-1) effectNode[j]=tempEffectNode[i];
+//       }
+//     }
+//     return;
+//   }
+//   // return;
+// }
+
+void
+Ipv4GlobalRouting::AddEffectRange(ident high,ident low,vector<ident> tempNode)
+{
+  stringstream logFoutPath;
+  logFoutPath.str("");
+  logFoutPath << "/var/log/LinkEffectRange-" << myIdent.level << "." << myIdent.position << ".log";
+  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+
+  Logfout << "AddEffectRange "<< high.level <<"."<< high.position << "-->" << low.level <<"."<< low.position<< endl;
+  Logfout.close();
+  PrintLinkEffectRange();
+  for (int i=0;i<effectNodeRange.size();i++)
+  {
+    if (SameNode(effectNodeRange[i].high,high) && SameNode(effectNodeRange[i].low,low))
+    {
+      for (int k=0;k<tempNode.size();k++)
+      {
+        for (int j=0;j<MAX_EFFECT_NODE;j++)
+        {
+          if (!SameNode(effectNodeRange[i].effectNode[j],tempNode[k]) && effectNodeRange[i].effectNode[j].level==-1) 
+          {
+            effectNodeRange[i].effectNode[j]=tempNode[k];
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  Logfout.open(logFoutPath.str().c_str(),ios::app);
+  Logfout << "AddEffectRange done" << endl;
+  Logfout.close();
+  PrintLinkEffectRange();
+}
+
+void
+Ipv4GlobalRouting::GetLinkEffectNode(ident high,ident low,vector<ident> tempNode,vector<ident> *tempEffectNode,string type)
+{
+  for (int i=0;i<tempNode.size();i++)
+  {
+    // fprintf(stderr, "GetEffectNode Calculate %d.%d\n", tempNode[i].level, tempNode[i].position);
+    struct linktableentry *nextLinkTableEntry=headMasterLinkTableEntry;
+    if (type=="UP")// 求上行链路
+    {
+      do
+      {
+        bool isFindSameNode=false;
+        nextLinkTableEntry=nextLinkTableEntry->next;
+        if (nextLinkTableEntry!=NULL)// 终止条件还可以进行判断
+        {
+          if (SameNode(tempNode[i],nextLinkTableEntry->low)) 
+          {
+            for (int i=0;i<tempEffectNode->size();i++)
+            {
+              if (SameNode((*tempEffectNode)[i],nextLinkTableEntry->high))// 存在相同的则不再添加，这些地方都必须优化
+              {
+                isFindSameNode=true;
+                break;
+              }
+            }
+            if (!isFindSameNode) tempEffectNode->push_back(nextLinkTableEntry->high);
+          }
+        }
+        else break;
+      }while(nextLinkTableEntry!=NULL);
+    }
+    else if (type=="DOWN")// 求下行链路
+    {
+      do
+      {
+        bool isFindSameNode=false;
+        nextLinkTableEntry=nextLinkTableEntry->next;
+        if (nextLinkTableEntry!=NULL)// 终止条件还可以进行判断
+        {
+          if (SameNode(tempNode[i],nextLinkTableEntry->high)) 
+          {
+            for (int i=0;i<tempEffectNode->size();i++)
+            {
+              if (SameNode((*tempEffectNode)[i],nextLinkTableEntry->low))// 存在相同的则不再添加，这些地方都必须优化
+              {
+                isFindSameNode=true;
+                break;
+              }
+            }
+            if (!isFindSameNode) tempEffectNode->push_back(nextLinkTableEntry->low);
+          }
+        }
+      }while(nextLinkTableEntry!=NULL);
+    }
+  }
+
+  // for (int i=0;i<tempNode.size();i++)// 先给一部分Node下发
+  // {
+  //   if (type=="DOWN" || tempEffectNode->size()==0)//
+  //   {
+  //     AddEffectRange(high,low,tempNode);
+  //   }
+  // }
+  if (type=="DOWN" || tempEffectNode->size()==0) AddEffectRange(high,low,tempNode);
+
+  if (tempEffectNode->size()==0) return;// 不存在相关的下一跳节点了，直接退出
+
+  tempNode.clear();// 清空
+  // 继续求下一跳
+  for (int i=0;i<tempEffectNode->size();i++) tempNode.push_back((*tempEffectNode)[i]);
+  
+  if (type=="UP" && tempNode[0].level!=3)// 还未到Spine
+  {
+    tempEffectNode->clear();
+    GetLinkEffectNode(high,low,tempNode,tempEffectNode,"UP");
+  }
+  else if (type=="UP" && tempNode[0].level==3)// 到SpineNode后可以开始求下行
+  {
+    tempEffectNode->clear();
+    GetLinkEffectNode(high,low,tempNode,tempEffectNode,"DOWN");
+  }
+  else if (type=="DOWN" && tempNode[0].level!=1)// 还未到最底层，继续求下行
+  {
+    tempEffectNode->clear();
+    GetLinkEffectNode(high,low,tempNode,tempEffectNode,"DOWN");
+  }
+  else if (type=="DOWN" && tempNode[0].level==1)// 此处需要考虑，如果是100个leaf，求10000个tor，
+  {
+    // for (int i=0;i<tempEffectNode->size();i++)
+    // {
+    //   AddEffectRange(high,low,(*tempEffectNode));
+    // }
+    AddEffectRange(high,low,(*tempEffectNode));
+    tempEffectNode->clear();
+    return;
+  }
+}
+
+void
+Ipv4GlobalRouting::GenerateLinkEffectRange()
+{
+  pthread_mutex_lock(&mutexA);
+  // printf("GenerateLinkEffectRange\n");
+  ident tempIdent;
+  tempIdent.level=-1;
+  tempIdent.position=-1;
+
+  for (int i=0;i<effectNodeRange.size();i++)
+  {
+    for (int j=0;j<MAX_EFFECT_NODE;j++)
+    {
+      effectNodeRange[i].effectNode[j]=tempIdent;//全部清空
+    }
+    // 重新计算影响范围
+    vector<ident> tempNode,tempEffectNode;
+    tempNode.clear();
+    tempNode.push_back(effectNodeRange[i].high);
+
+    if (effectNodeRange[i].high.level==1) {
+      fprintf(stderr,"ERROR: should not hit level==1!!!!\n");
+      GetLinkEffectNode(effectNodeRange[i].high,effectNodeRange[i].low,tempNode,&tempEffectNode,"UP");
+    }
+    else if (effectNodeRange[i].high.level==2) GetLinkEffectNode(effectNodeRange[i].high,effectNodeRange[i].low,tempNode,&tempEffectNode,"UP");
+    else if (effectNodeRange[i].high.level==3) GetLinkEffectNode(effectNodeRange[i].high,effectNodeRange[i].low,tempNode,&tempEffectNode,"DOWN");
+    else
+      fprintf(stderr,"effectNodeRange[%d].high.level=%d\n",i,effectNodeRange[i].high.level);
+  }
+  PrintLinkEffectRange();
+  pthread_mutex_unlock(&mutexA);
 }
 
 /**************************Master**************************/

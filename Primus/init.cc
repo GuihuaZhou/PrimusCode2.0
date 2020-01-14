@@ -425,8 +425,8 @@ int main(int argc,char *argv[])
   nPods=atoi(config.substr(begin,config.length()-begin).c_str());
 
   //For debug
-  level=3;
-  position=0;
+  // level=3;
+  // position=0;
   //For debug
 
   int Links=(SpineNodes+LeafNodes*ToRNodes)*nPods;
@@ -434,11 +434,21 @@ int main(int argc,char *argv[])
   else if (level==2) pod=position/LeafNodes+1;
   else if (level==1) pod=position/ToRNodes+1;
   m_globalRouting=new Ipv4GlobalRouting(level,position,ToRNodes,LeafNodes,SpineNodes,nPods,pod,nMaster,Links,defaultLinkTimer,defaultKeepaliveTimer,true,true);
-  // pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
-  // m_globalRouting->Start(masterAddressSet);
-  // ATC test
+  pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
+  m_globalRouting->Start(masterAddressSet);
+
+  
+  // // ATC test
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << level << "." << position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // Logfout.setf(ios::fixed,ios::floatfield);
+  // Logfout.precision(6);//设置保留的小数点位数
+  
   // m_globalRouting->FakeGenerateLink(atoi(argv[1]),atoi(argv[2]),atoi(argv[3]),atoi(argv[4]));
 
+  // ident high,low;
   // high.level=2;
   // high.position=0;
   // low.level=1;
@@ -448,33 +458,31 @@ int main(int argc,char *argv[])
   // struct timespec tvA,tvB;
   // clock_gettime(CLOCK_MONOTONIC,&tvA);
 
+  // bool linkFlag=true;
   // for (int i=1;i<=times;i++)
   // {
-  //   m_globalRouting->SendMessageToNode(high,low,low,i,true);
+  //   m_globalRouting->SendMessageToNode(high,low,low,i,linkFlag);
+  //   linkFlag=~linkFlag;
   // }
   
   // clock_gettime(CLOCK_MONOTONIC,&tvB);
 
   // double stamp=tvB.tv_sec+tvB.tv_nsec*0.000000001-tvA.tv_sec-tvA.tv_nsec*0.000000001;
-  // end
+  // Logfout << "nPods:" << atoi(argv[4]) << ",total time:" << stamp << "s,average time:" << stamp*1000/times << "ms." << endl;
+  // // end
 
   // test
-  ident tempIdent;
-  tempIdent.level=3;
-  tempIdent.position=0;
+  // ident tempIdent;
+  // tempIdent.level=3;
+  // tempIdent.position=0;
 
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << tempIdent.level << "." << tempIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
-
-  m_globalRouting->FakeGenerateSpinePath(tempIdent,8,2,1,2);// 生成路径的spineNode的ident，spinenode数，leafNode数，Tor数，pod数
-  ident high,low;
-  high.level=2;
-  high.position=0;
-  low.level=1;
-  low.position=0;
-  bool state=0;
+  // m_globalRouting->FakeGenerateSpinePath(tempIdent,8,2,1,2);// 生成路径的spineNode的ident，spinenode数，leafNode数，Tor数，pod数
+  // ident high,low;
+  // high.level=2;
+  // high.position=0;
+  // low.level=1;
+  // low.position=0;
+  // bool state=0;
   // for (int i=0;i<10000;i++)
   // {
   //   if(i%1000==0)

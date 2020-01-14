@@ -38,6 +38,12 @@ public:
   // test
   vector<struct stampinfo> stampInfo;
   struct stampinfo tempStampInfo,tempStampInfoA,tempStampInfoB;
+  struct effectnode
+  {
+    ident high;
+    ident low;
+    ident effectNode[MAX_EFFECT_NODE];
+  };
   // end
   struct linktableentry// master链路表条目
   {
@@ -109,6 +115,10 @@ public:
   // ATC test
   void FakeGenerateLink(int tempSpineNodes,int tempLeafNodes,int tempToRNodes,int tempPods);
   void FakeGenerateSpinePath(ident tempIdent,int tempSpineNodes,int tempLeafNodes,int tempToRNodes,int tempPods);
+  void PrintLinkEffectRange();
+  void GetLinkEffectNode(ident high,ident low,vector<ident> tempNode,vector<ident> *tempEffectNode,string type);
+  void GenerateLinkEffectRange();
+  void AddEffectRange(ident high,ident low,vector<ident> tempNode);
   // end
 
   // sonic test
@@ -223,7 +233,8 @@ public:
   void SendInDirNodeNumToCommon(struct clustermasterinfo tempClusterMasterMapToSock);// master向其他master转发indirnodenum
   void AssistSendTo(struct MNinfo tempMNInfo);// 通过udp来协助下发
   void GetEffectNode(vector<ident> effectInDirNode,vector<ident> tempNode,ident srcIdent,string type,vector<ident> *tempEffectNode,struct MNinfo tempMNInfo);// 求出nodeIdent的上行或者下行链路的另一端结点的ident
-  void SendMessageToNode(ident high,ident low,ident srcIdent,int eventId,bool linkFlag);
+  void SendMessageToNode1(ident high,ident low,ident srcIdent,int eventId,bool linkFlag);//Original top discovery
+  void SendMessageToNode(ident high,ident low,ident srcIdent,int eventId,bool linkFlag);//For ATC
   void NewChiefMasterElection(ident chiefMasterIdent);
   void ChooseNodeToInformInDirNode(ident destIdent,ident lastNode,struct MNinfo tempMNInfo);// 随机选择一个直连node来通知某个间接连接且需要重连的destIdent
 
@@ -266,6 +277,8 @@ private:
   vector<struct linkinforesponse> linkInfoResponse;
 
   vector<struct MNinfo> delayMNInfo;// 由于与Master的连接失效滞留的链路信息
+
+  vector<struct effectnode> effectNodeRange;
   
   struct mappingtableentry *headMappingTableEntry=(struct mappingtableentry *)malloc(sizeof(struct mappingtableentry));// 映射表的头节点
   // 映射表数量很多，所以还得给映射表加个索引表
