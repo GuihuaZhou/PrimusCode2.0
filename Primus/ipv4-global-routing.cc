@@ -1089,22 +1089,17 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
               if (tempMNInfo.linkFlag==true) NICInfo[i].sleep=true;
               else NICInfo[i].sleep=false;
 
-              // tempStampInfo.note="("+type+")ModifyPathEntryTable start";
-              // clock_gettime(CLOCK_MONOTONIC,&tv);
-              // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-              // stampInfo.push_back(tempStampInfo);
+              tempStampInfo.note="("+type+")ModifyPathEntryTable start";
+              clock_gettime(CLOCK_MONOTONIC,&tv);
+              tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+              stampInfo.push_back(tempStampInfo);
 
               ModifyPathEntryTable(high,low,tempMNInfo.linkFlag);
 
               clock_gettime(CLOCK_MONOTONIC,&tv);
-              tempStampInfo.note="("+type+")HandleMessage over";
+              tempStampInfo.note="("+type+")ModifyPathEntryTable over";
               tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
               stampInfo.push_back(tempStampInfo);
-
-              // clock_gettime(CLOCK_MONOTONIC,&tv);
-              // tempStampInfo.note="("+type+")ModifyPathEntryTable over";
-              // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-              // stampInfo.push_back(tempStampInfo);
               
               // 普通Node处理链路信息后立即回复
               ident tempIdent;
@@ -1119,10 +1114,10 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
               // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
               // stampInfo.push_back(tempStampInfo);
 
-              // clock_gettime(CLOCK_MONOTONIC,&tv);
-              // tempStampInfo.note="("+type+")HandleMessage over";
-              // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-              // stampInfo.push_back(tempStampInfo);
+              clock_gettime(CLOCK_MONOTONIC,&tv);
+              tempStampInfo.note="("+type+")HandleMessage over";
+              tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+              stampInfo.push_back(tempStampInfo);
               
               // Logfout << GetNow() << "Response linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--"
               // << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
@@ -1144,22 +1139,17 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
         {
           stampInfo.push_back(tempStampInfo);
 
-          // tempStampInfo.note="("+type+")ModifyPathEntryTable start";
-          // clock_gettime(CLOCK_MONOTONIC,&tv);
-          // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-          // stampInfo.push_back(tempStampInfo);
+          tempStampInfo.note="("+type+")ModifyPathEntryTable start";
+          clock_gettime(CLOCK_MONOTONIC,&tv);
+          tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+          stampInfo.push_back(tempStampInfo);
 
           ModifyPathEntryTable(high,low,tempMNInfo.linkFlag);
 
           clock_gettime(CLOCK_MONOTONIC,&tv);
-          tempStampInfo.note="("+type+")HandleMessage over";
+          tempStampInfo.note="("+type+")ModifyPathEntryTable over";
           tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
           stampInfo.push_back(tempStampInfo);
-
-          // clock_gettime(CLOCK_MONOTONIC,&tv);
-          // tempStampInfo.note="("+type+")ModifyPathEntryTable over";
-          // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-          // stampInfo.push_back(tempStampInfo);
            
           // 普通Node处理链路信息后立即回复
           ident tempIdent;
@@ -1174,10 +1164,10 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
           // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
           // stampInfo.push_back(tempStampInfo);
 
-          // clock_gettime(CLOCK_MONOTONIC,&tv);
-          // tempStampInfo.note="("+type+")HandleMessage over";
-          // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-          // stampInfo.push_back(tempStampInfo);
+          clock_gettime(CLOCK_MONOTONIC,&tv);
+          tempStampInfo.note="("+type+")HandleMessage over";
+          tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+          stampInfo.push_back(tempStampInfo);
           
           // Logfout << GetNow() << "Response linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--"
           // << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
@@ -2475,7 +2465,6 @@ Ipv4GlobalRouting::AddSingleRoute(struct sockaddr_in destAddr,unsigned int prefi
 
   // Logfout << "AddSingleRoute:" << inet_ntoa(destAddr.sin_addr) << "/" << prefixLen << ",NICName:" << tempNextHopAndWeight.NICName << " nextHop gateway:"; 
   // Logfout << inet_ntoa(tempNextHopAndWeight.gateAddr.sin_addr) << endl;
-
   struct {
     struct nlmsghdr n;
     struct rtmsg r;
@@ -2534,7 +2523,6 @@ Ipv4GlobalRouting::AddMultiRoute(struct sockaddr_in destAddr,unsigned int prefix
   //   Logfout << "NICName:" << nextHopAndWeight[i].NICName << " weight:" << nextHopAndWeight[i].weight << endl;
   // }
   // // end
-
   struct {
     struct nlmsghdr n;
     struct rtmsg r;
@@ -2594,7 +2582,6 @@ Ipv4GlobalRouting::DelRoute(struct sockaddr_in destAddr,unsigned int prefixLen)
   // logFoutPath.str("");
   // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
-
   struct {
     struct nlmsghdr n;
     struct rtmsg r;
@@ -2629,7 +2616,6 @@ Ipv4GlobalRouting::UpdateAddrSet(ident pathNodeIdentA,ident pathNodeIdentB,int n
   // logFoutPath.str("");
   // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
-
   vector<struct nexthopandweight> nextHopAndWeight;
   struct pathtableentry *tempPathTableEntry;
   string NICName;
@@ -3745,10 +3731,21 @@ Ipv4GlobalRouting::ModifyPathEntryTable(ident high,ident low,bool linkFlag)// �
   // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
   // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
+  tempStampInfo.note="GetMappingTableEntry start";
+  struct timespec tv;
+  clock_gettime(CLOCK_MONOTONIC,&tv);
+  tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+  stampInfo.push_back(tempStampInfo);
+
   vector<struct mappingtableentry> tempMappingTable;
   GetMappingTableEntry(high,low,&tempMappingTable);// 获取相关的映射表
   // Logfout << "---------------" << endl;
   // Logfout << "linkFlag:" << linkFlag << endl;
+
+  tempStampInfo.note="GetMappingTableEntry over";
+  clock_gettime(CLOCK_MONOTONIC,&tv);
+  tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+  stampInfo.push_back(tempStampInfo);
   
   int locA=0,locB=0;
   struct pathtableentry *tempPathTableEntry=(struct pathtableentry *)malloc(sizeof(struct pathtableentry));
@@ -3811,11 +3808,36 @@ Ipv4GlobalRouting::ModifyPathEntryTable(ident high,ident low,bool linkFlag)// �
           if (isNeedToUpdateRoute==true)
           {
             // 先更新服务器地址
-            if (tempAddrSet.size()>0) UpdateAddrSet(tempDestIdent,tempIdent,tempNodeCounter,tempAddrSet);
+            if (tempAddrSet.size()>0) 
+            {
+              tempStampInfo.note="UpdateAddrSet start";
+              struct timespec tv;
+              clock_gettime(CLOCK_MONOTONIC,&tv);
+              tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+              stampInfo.push_back(tempStampInfo);
+              
+              UpdateAddrSet(tempDestIdent,tempIdent,tempNodeCounter,tempAddrSet);
+
+              tempStampInfo.note="UpdateAddrSet over";
+              clock_gettime(CLOCK_MONOTONIC,&tv);
+              tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+              stampInfo.push_back(tempStampInfo);
+            }
             tempAddrSet.clear();
             // 再更新到节点的地址
             tempAddrSet.push_back(tempNodeAddr);
+            tempStampInfo.note="UpdateAddrSet start";
+            struct timespec tv;
+            clock_gettime(CLOCK_MONOTONIC,&tv);
+            tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+            stampInfo.push_back(tempStampInfo);
+
             UpdateAddrSet(tempDestIdent,tempNextIdent,tempNodeCounter,tempAddrSet);
+
+            tempStampInfo.note="UpdateAddrSet over";
+            clock_gettime(CLOCK_MONOTONIC,&tv);
+            tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+            stampInfo.push_back(tempStampInfo);
           }
 
           tempNodeCounter=tempPathTableEntry->nodeCounter;
@@ -3852,12 +3874,38 @@ Ipv4GlobalRouting::ModifyPathEntryTable(ident high,ident low,bool linkFlag)// �
     if (isNeedToUpdateRoute==true)// 终止循环时也要考虑修改路由
     {
       // 先更新服务器地址
-      if (tempAddrSet.size()>0) UpdateAddrSet(tempDestIdent,tempIdent,tempNodeCounter,tempAddrSet);
+      if (tempAddrSet.size()>0)
+      {
+        tempStampInfo.note="UpdateAddrSet start";
+        struct timespec tv;
+        clock_gettime(CLOCK_MONOTONIC,&tv);
+        tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+        stampInfo.push_back(tempStampInfo);
+
+        UpdateAddrSet(tempDestIdent,tempIdent,tempNodeCounter,tempAddrSet);
+
+        tempStampInfo.note="UpdateAddrSet over";
+        clock_gettime(CLOCK_MONOTONIC,&tv);
+        tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+        stampInfo.push_back(tempStampInfo);
+      }
       tempAddrSet.clear();
       // 再更新到节点的地址
       tempAddrSet.push_back(tempNodeAddr);
       // Logfout << GetNow() << "***************要更新的Node地址：" << inet_ntoa(tempAddrSet[0].addr.sin_addr) << endl;
+      
+      tempStampInfo.note="UpdateAddrSet start";
+      struct timespec tv;
+      clock_gettime(CLOCK_MONOTONIC,&tv);
+      tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+      stampInfo.push_back(tempStampInfo);
+
       UpdateAddrSet(tempDestIdent,tempNextIdent,tempNodeCounter,tempAddrSet);
+
+      tempStampInfo.note="UpdateAddrSet over";
+      clock_gettime(CLOCK_MONOTONIC,&tv);
+      tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+      stampInfo.push_back(tempStampInfo);
     }
   }
   // UpdateNodeInDirPathTable();
