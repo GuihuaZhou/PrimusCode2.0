@@ -1151,6 +1151,11 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
 
           ModifyPathEntryTable(high,low,tempMNInfo.linkFlag);
 
+          clock_gettime(CLOCK_MONOTONIC,&tv);
+          tempStampInfo.note="("+type+")HandleMessage over";
+          tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+          stampInfo.push_back(tempStampInfo);
+
           // clock_gettime(CLOCK_MONOTONIC,&tv);
           // tempStampInfo.note="("+type+")ModifyPathEntryTable over";
           // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
@@ -1169,10 +1174,10 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
           // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
           // stampInfo.push_back(tempStampInfo);
 
-          clock_gettime(CLOCK_MONOTONIC,&tv);
-          tempStampInfo.note="("+type+")HandleMessage over";
-          tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-          stampInfo.push_back(tempStampInfo);
+          // clock_gettime(CLOCK_MONOTONIC,&tv);
+          // tempStampInfo.note="("+type+")HandleMessage over";
+          // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+          // stampInfo.push_back(tempStampInfo);
           
           // Logfout << GetNow() << "Response linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--"
           // << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
@@ -4129,10 +4134,10 @@ Ipv4GlobalRouting::MasterLinkTimer(void* threadParam)
 bool 
 Ipv4GlobalRouting::UpdateNodeLinkTable(ident high,ident low,int eventId,bool linkFlag,int cmd)// cmd=1，插入新的链路；cmd=2，查询链路
 {
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   if (cmd==1)// 插入新的链路
   {
@@ -4146,7 +4151,7 @@ Ipv4GlobalRouting::UpdateNodeLinkTable(ident high,ident low,int eventId,bool lin
     {
       if (SameNode(high,tempLinkTableEntry->high) && SameNode(low,tempLinkTableEntry->low))// 存在这样的链路
       {
-        Logfout.close();
+        // Logfout.close();
         return false;
       }
       tempLinkTableEntry=tempLinkTableEntry->next;
@@ -4236,7 +4241,7 @@ Ipv4GlobalRouting::UpdateNodeLinkTable(ident high,ident low,int eventId,bool lin
     }while(nextLinkTableEntry!=NULL);
     headNodeLinkTableEntry->lastUpdateTime++;//用来统计链路数量
     PrintNodeLinkTable();
-    Logfout.close();
+    // Logfout.close();
     return true;
   }
   // 查询链路，node会通过udp和tcp 收到多个内容相同的信息，但node只处理一次，并记录eventid
@@ -4261,13 +4266,13 @@ Ipv4GlobalRouting::UpdateNodeLinkTable(ident high,ident low,int eventId,bool lin
           tempLinkTableEntry->lastLinkFlag=tempLinkTableEntry->linkFlag;
           tempLinkTableEntry->linkFlag=linkFlag;
 
-          Logfout.close();
+          // Logfout.close();
           // pthread_mutex_unlock(&mutexA);
           return true;
         }
         else // 收到一个old message，无需处理
         {
-          Logfout.close();
+          // Logfout.close();
           // pthread_mutex_unlock(&mutexA);
           return false;
         }
@@ -4277,7 +4282,7 @@ Ipv4GlobalRouting::UpdateNodeLinkTable(ident high,ident low,int eventId,bool lin
     // 找不到链路，不处理了
     // 有个风险，当前路径是由udp的拓扑发现生成的，如果过程中一条链路故障，但是node还没收到关于这条链路的路径，则会忽视
     // 收到路径后误认为路径是有效的，出现错误
-    Logfout.close();
+    // Logfout.close();
     // pthread_mutex_unlock(&mutexA);
     return false;
   }

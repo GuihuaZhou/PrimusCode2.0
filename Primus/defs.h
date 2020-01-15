@@ -3,6 +3,17 @@
 #define NL_PKT_BUF_SIZE 8192
 #define NL_DEFAULT_ROUTE_METRIC 20
 
+#define CHECK_FLAG(V,F)      ((V) & (F))
+#define SET_FLAG(V,F)        (V) |= (F)
+#define UNSET_FLAG(V,F)      (V) &= ~(F)
+#define RESET_FLAG(V)        (V) = 0
+
+#define NEXTHOP_FLAG_ACTIVE     (1 << 0) /* This nexthop is alive. */
+#define NEXTHOP_FLAG_FIB        (1 << 1) /* FIB nexthop. */
+#define NEXTHOP_FLAG_RECURSIVE  (1 << 2) /* Recursive nexthop. */
+#define NEXTHOP_FLAG_ONLINK     (1 << 3) /* Nexthop should be installed onlink. */
+#define NEXTHOP_FLAG_MATCHED    (1 << 4) /* Already matched vs a nexthop */
+
 #define MAX_PATH_LEN 5// 路径最大长度
 #define MAX_ADDR_NUM 48// 一条路径能达到的服务器最大数
 #define MAX_INDIR_NUM 2// Master间接连接node的最大数量，管理员设定阈值，超过即询问其他master是否状态更好

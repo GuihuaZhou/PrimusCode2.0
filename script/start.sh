@@ -215,7 +215,7 @@ pssh -i -h /home/guolab/host/master.txt "rm /home/guolab/output/primusStamp.txt;
 pssh -i -h /home/guolab/host/ATChost.txt "rm /home/guolab/output/primusStamp.txt;touch /home/guolab/output/primusStamp.txt;chmod 777 -R /home/guolab/output/*;"
 
 sleep 5
-for ((i=0;i<500;i++))
+for ((i=0;i<100;i++))
 do
 	ssh root@10.0.80.10 "ifconfig eth1 down"
 	sleep 2
