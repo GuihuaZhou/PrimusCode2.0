@@ -613,7 +613,7 @@ Ipv4GlobalRouting::UpdateMasterMapToSock(struct mastermaptosock tempMasterMapToS
             {
               Logfout << GetNow() << "Create KeepAliveThread for sock[" << tempMasterMapToSock.masterSock << "] failed." << endl;
             }
-            // PrintMasterMapToSock();
+            PrintMasterMapToSock();
           }
           isFind=true;
         }
@@ -1012,6 +1012,11 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
       // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
       // stampInfo.push_back(tempStampInfo);
 
+      clock_gettime(CLOCK_MONOTONIC,&tv);
+      tempStampInfo.note="("+type+")HandleMessage over";
+      tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+      stampInfo.push_back(tempStampInfo);
+
       SendMessageToNode(high,low,tempMNInfo.srcIdent,tempMNInfo.eventId,tempMNInfo.linkFlag);
 
       // clock_gettime(CLOCK_MONOTONIC,&tv);
@@ -1048,10 +1053,10 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
       //   }
       //   else break;
       // }
-      clock_gettime(CLOCK_MONOTONIC,&tv);
-      tempStampInfo.note="("+type+")HandleMessage over";
-      tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-      stampInfo.push_back(tempStampInfo);
+      // clock_gettime(CLOCK_MONOTONIC,&tv);
+      // tempStampInfo.note="("+type+")HandleMessage over";
+      // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+      // stampInfo.push_back(tempStampInfo);
     }
   }
   else // node处理从master收到的链路变化信息
@@ -1091,6 +1096,11 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
 
               ModifyPathEntryTable(high,low,tempMNInfo.linkFlag);
 
+              clock_gettime(CLOCK_MONOTONIC,&tv);
+              tempStampInfo.note="("+type+")HandleMessage over";
+              tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+              stampInfo.push_back(tempStampInfo);
+
               // clock_gettime(CLOCK_MONOTONIC,&tv);
               // tempStampInfo.note="("+type+")ModifyPathEntryTable over";
               // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
@@ -1109,10 +1119,10 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
               // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
               // stampInfo.push_back(tempStampInfo);
 
-              clock_gettime(CLOCK_MONOTONIC,&tv);
-              tempStampInfo.note="("+type+")HandleMessage over";
-              tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
-              stampInfo.push_back(tempStampInfo);
+              // clock_gettime(CLOCK_MONOTONIC,&tv);
+              // tempStampInfo.note="("+type+")HandleMessage over";
+              // tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+              // stampInfo.push_back(tempStampInfo);
               
               // Logfout << GetNow() << "Response linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--"
               // << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;

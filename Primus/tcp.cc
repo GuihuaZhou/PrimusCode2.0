@@ -52,6 +52,7 @@ TCPRoute::SendMessageTo(int sock,struct MNinfo tempMNInfo)// Master和Node都可
   
   if((value=send(sock,sendBuf,sizeof(struct MNinfo),0))<=0)
   {
+    fprintf(stderr, "Send message error: %s\n", strerror(errno));
     // Logfout << GetNow() << "Send message error:" << strerror(errno) << " (errno:" << errno <<  ")." << endl;
   }
   // Logfout.close();
