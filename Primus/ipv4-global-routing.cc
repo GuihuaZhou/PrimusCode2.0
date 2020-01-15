@@ -781,15 +781,33 @@ Ipv4GlobalRouting::GetPathToMaster(struct pathtableentry *lastPath)// 获得一�
 
   // 此处有个错误，如果有A，B两条路不通但linkCounter和dirConFlag正常
   // 假设第一次选择A，再次调用时lastPath为A，然后再选择B，再次调用时lastPath为B，这时就会再次选择A，循环往复
-  for (int i=0;i<nodeInDirPathTable.size();i++)
+  // for (int i=0;i<nodeInDirPathTable.size();i++)
+  // {
+  //   if (lastPath!=nodeInDirPathTable[i])// 不是上次选的路径
+  //   {
+  //     if (nodeInDirPathTable[i]->linkCounter==0 && nodeInDirPathTable[i]->dirConFlag==true)
+  //     {
+  //       // Logfout.close();
+  //       return nodeInDirPathTable[i];
+  //     }
+  //   }
+  // }
+  struct pathtableentry *tempPathTableEntry=(struct pathtableentry *)malloc(sizeof(struct pathtableentry));
+  if (lastPath==NULL)// 表示第一次来去取，则返回第一条符合要要的路径
   {
-    if (lastPath!=nodeInDirPathTable[i])// 不是上次选的路径
+    tempPathTableEntry=headPathTableEntry;
+  }
+  else 
+  {
+    tempPathTableEntry=lastPath;
+  }
+
+  while (tempPathTableEntry->next!=NULL)
+  {
+    tempPathTableEntry=tempPathTableEntry->next;
+    if (tempPathTableEntry->linkCounter==0 && tempPathTableEntry->dirConFlag==true)
     {
-      if (nodeInDirPathTable[i]->linkCounter==0 && nodeInDirPathTable[i]->dirConFlag==true)
-      {
-        // Logfout.close();
-        return nodeInDirPathTable[i];
-      }
+      return tempPathTableEntry;
     }
   }
   // Logfout.close();
@@ -799,10 +817,10 @@ Ipv4GlobalRouting::GetPathToMaster(struct pathtableentry *lastPath)// 获得一�
 struct pathtableentry *
 Ipv4GlobalRouting::GetPathToNode(ident destIdent)
 {
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   if (headPathTableEntry->next!=NULL)
   {
@@ -814,7 +832,7 @@ Ipv4GlobalRouting::GetPathToNode(ident destIdent)
       {
         if (tempPathTableEntry->linkCounter==0)// 可达
         {
-          Logfout.close();
+          // Logfout.close();
           return tempPathTableEntry;
         }
       }
@@ -822,7 +840,7 @@ Ipv4GlobalRouting::GetPathToNode(ident destIdent)
     }
   }
 
-  Logfout.close();
+  // Logfout.close();
   return NULL;
 }
 
@@ -947,10 +965,10 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
 {
   pthread_mutex_lock(&mutexA);
 
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   int value=0;
   ident high,low;
@@ -968,29 +986,21 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
   
   if (myIdent.level==0)
   {
-    // tempStampInfo.identA=high;
-    // tempStampInfo.identB=low;
-    // tempStampInfo.linkFlag=tempMNInfo.linkFlag;
-
-    tempStampInfoA.identA=high;
-    tempStampInfoA.identB=low;
-    tempStampInfoA.linkFlag=tempMNInfo.linkFlag;
-    tempStampInfoA.note="("+type+")HandleMessage start";
-
+    tempStampInfo.identA=high;
+    tempStampInfo.identB=low;
+    tempStampInfo.linkFlag=tempMNInfo.linkFlag;
+    tempStampInfo.note="("+type+")HandleMessage start";
     struct timespec tv;
-
     clock_gettime(CLOCK_MONOTONIC,&tv);
-    tempStampInfoA.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+    tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
 
     // 同时判断链路信息是否需要下发Node，因为链路信息可能已经处理了
     bool isNeedToNotice=UpdateMasterLinkTable(high,low,tempMNInfo.srcIdent,tempMNInfo.eventId,tempMNInfo.linkFlag);
-    Logfout << GetNow() << "isNeedToNotice: " << isNeedToNotice <<" [eventId:" << tempMNInfo.eventId << "]." << endl;
-
 
     // 如果是选举出来的处理信息的master
     if (chiefMaster && isNeedToNotice)
     {
-      stampInfo.push_back(tempStampInfoA);
+      stampInfo.push_back(tempStampInfo);
 
       struct linkinforesponse tempLinkInfoResponse;
       tempLinkInfoResponse.unRecvNum=0;
@@ -1015,8 +1025,8 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
 
       if (pthread_create(&checkResponse_thread,0,CheckResponseThread,(void*)tempThreadParam)!=0)
       {
-        printf("Create checkResponse_thread failed.\n");
-        Logfout << GetNow() << "Create CheckResponseThread Failed[eventId:" << tempMNInfo.eventId << "]." << endl;
+        // printf("Create checkResponse_thread failed.\n");
+        // Logfout << GetNow() << "Create CheckResponseThread Failed[eventId:" << tempMNInfo.eventId << "]." << endl;
         exit(1);
       }
 
@@ -1052,6 +1062,14 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
     }
     else
     {
+      tempStampInfo.identA=high;
+      tempStampInfo.identB=low;
+      tempStampInfo.linkFlag=tempMNInfo.linkFlag;
+      tempStampInfo.note="("+type+")HandleMessage start";
+      struct timespec tv;
+      clock_gettime(CLOCK_MONOTONIC,&tv);
+      tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
+
       if (SameNode(myIdent,high) || SameNode(myIdent,low))// 直连链路信息
       {
         for (int i=0;i<NICInfo.size();i++)
@@ -1060,15 +1078,7 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
           {
             if (NICInfo[i].eventId<=tempMNInfo.eventId)
             {
-              tempStampInfo.identA=high;
-              tempStampInfo.identB=low;
-              tempStampInfo.linkFlag=tempMNInfo.linkFlag;
-              tempStampInfo.note="("+type+")HandleMessage start";
-              struct timespec tv;
-              clock_gettime(CLOCK_MONOTONIC,&tv);
-              tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
               stampInfo.push_back(tempStampInfo);
-
               NICInfo[i].eventId=tempMNInfo.eventId+1;
               // 直连链路恢复
               if (tempMNInfo.linkFlag==true) NICInfo[i].sleep=true;
@@ -1120,13 +1130,6 @@ Ipv4GlobalRouting::HandleMessage(struct MNinfo tempMNInfo,string type)
       }
       else // 非直连链路则查看node维护的链路表
       {
-        tempStampInfo.identA=high;
-        tempStampInfo.identB=low;
-        tempStampInfo.linkFlag=tempMNInfo.linkFlag;
-        tempStampInfo.note="("+type+")HandleMessage start";
-        struct timespec tv;
-        clock_gettime(CLOCK_MONOTONIC,&tv);
-        tempStampInfo.stamp=tv.tv_sec+tv.tv_nsec*0.000000001;
         if (UpdateNodeLinkTable(high,low,tempMNInfo.eventId,tempMNInfo.linkFlag,2)==true)//
         {
           stampInfo.push_back(tempStampInfo);
@@ -1740,10 +1743,10 @@ Ipv4GlobalRouting::GetForwardIdent(ident masterIdent)
 int
 Ipv4GlobalRouting::SendLinkInfoToMaster(ident identA,ident identB,bool linkFlag)
 {
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   int value=0;
 
@@ -1791,10 +1794,10 @@ Ipv4GlobalRouting::SendLinkInfoToMaster(ident identA,ident identB,bool linkFlag)
           localAddr=GetLocalAddrByNeighborIdent(nodeInDirPathTable[j]->pathNodeIdent[1]);
           if (localAddr==NULL) break;
           m_udpClient.SendLinkInfo(*localAddr,inet_ntoa(nodeInDirPathTable[j]->nodeAddr.addr.sin_addr),tempMNInfo);
-          Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
-          if (linkFlag==true) Logfout << " up";
-          else Logfout << " down";
-          Logfout << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by udp [forwardNode:" << tempMNInfo.forwardIdent.level << "." << tempMNInfo.forwardIdent.position << "][eventId:" << tempMNInfo.eventId << "]." << endl;
+          // Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
+          // if (linkFlag==true) Logfout << " up";
+          // else Logfout << " down";
+          // Logfout << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by udp [forwardNode:" << tempMNInfo.forwardIdent.level << "." << tempMNInfo.forwardIdent.position << "][eventId:" << tempMNInfo.eventId << "]." << endl;
           k++;
         }
       }
@@ -1812,10 +1815,10 @@ Ipv4GlobalRouting::SendLinkInfoToMaster(ident identA,ident identB,bool linkFlag)
       linkInfoResponse.push_back(tempLinkInfoResponse);
 
       value=m_tcpRoute->SendMessageTo(masterMapToSock[i].masterSock,tempMNInfo);
-      Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
-      if (linkFlag==true) Logfout << " up";
-      else Logfout << " down";
-      Logfout << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by tcp [value:" << value << "][eventId:" << tempMNInfo.eventId << "][sock:" << masterMapToSock[i].masterSock << "]." << endl;
+      // Logfout << GetNow() << "Send " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
+      // if (linkFlag==true) Logfout << " up";
+      // else Logfout << " down";
+      // Logfout << " to master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by tcp [value:" << value << "][eventId:" << tempMNInfo.eventId << "][sock:" << masterMapToSock[i].masterSock << "]." << endl;
       
       if (value>0)// 发送成功
       {
@@ -1825,7 +1828,7 @@ Ipv4GlobalRouting::SendLinkInfoToMaster(ident identA,ident identB,bool linkFlag)
 
         if (pthread_create(&checkResponse_thread,0,CheckResponseThread,(void*)tempThreadParam)!=0)
         {
-          Logfout << GetNow() << "Create CheckResponseThread Failed[eventId:" << tempMNInfo.eventId << "]." << endl;
+          // Logfout << GetNow() << "Create CheckResponseThread Failed[eventId:" << tempMNInfo.eventId << "]." << endl;
           exit(1);
         }
       }
@@ -1871,7 +1874,7 @@ Ipv4GlobalRouting::SendLinkInfoToMaster(ident identA,ident identB,bool linkFlag)
   //   i++;
   // }
   // PrintNeighborInfo();
-  Logfout.close();
+  // Logfout.close();
   return value;
 }
 
@@ -1927,7 +1930,7 @@ Ipv4GlobalRouting::ListenNICThread(void* tempThreadParam)
           // else if (ifa->ifa_name[0]=='E')// sonic
           else
           {
-            Logfout << GetNow() << "NIC " << ifa->ifa_name << "(" << inet_ntoa(((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr) << ") UP." << endl;
+            // Logfout << GetNow() << "NIC " << ifa->ifa_name << "(" << inet_ntoa(((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr) << ") UP." << endl;
             if (tempGlobalRouting->IsNewNeighbor(ifa->ifa_name)) // 判断是否为新的邻居
             {
               struct sockaddr_in localAddr,remoteAddr;
@@ -1943,10 +1946,10 @@ Ipv4GlobalRouting::ListenNICThread(void* tempThreadParam)
               tempNDInfo.localAddr=localAddr;
               tempUdpClient->SendNDTo(localAddr,remoteAddr,tempNDInfo);
             }
-            else
-            {
-              Logfout << GetNow() << "Old neighbor." << endl;
-            }
+            // else
+            // {
+            //   // Logfout << GetNow() << "Old neighbor." << endl;
+            // }
             // for (int i=0;i<tempGlobalRouting->masterAddressSet.size();i++)
             // {
             //   if (!tempGlobalRouting->IsLegalMaster(tempGlobalRouting->masterAddressSet[i].masterAddress[0])) tempTCPRoute->SendHelloTo(tempIdent,tempGlobalRouting->masterAddressSet[i].masterAddress[0]);
@@ -2287,10 +2290,10 @@ Ipv4GlobalRouting::InformUnreachableNode(ident destIdent,ident srcIdent)
 void 
 Ipv4GlobalRouting::TransferTo(struct MNinfo tempMNInfo)// udp，转发至chief或者node
 {
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   if (myIdent.level!=0)
   {
@@ -2313,11 +2316,11 @@ Ipv4GlobalRouting::TransferTo(struct MNinfo tempMNInfo)// udp，转发至chief�
               for (int j=1;j<masterAddressSet[i].masterAddress.size();j++)
               {
                 m_udpClient.SendLinkInfo(*MGMTAddr,masterAddressSet[i].masterAddress[j],tempMNInfo);
-                Logfout << GetNow() << "Transfer linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
-                if (tempMNInfo.linkFlag==true) Logfout << " up";
-                else if (tempMNInfo.linkFlag==false) Logfout << " down";
-                Logfout << " from Node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
-                Logfout << " to Master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[" << masterAddressSet[i].masterAddress[j] << "] by udp." << endl;
+                // Logfout << GetNow() << "Transfer linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
+                // if (tempMNInfo.linkFlag==true) Logfout << " up";
+                // else if (tempMNInfo.linkFlag==false) Logfout << " down";
+                // Logfout << " from Node " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
+                // Logfout << " to Master " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << "[" << masterAddressSet[i].masterAddress[j] << "] by udp." << endl;
               }
               break;
             }
@@ -2332,11 +2335,11 @@ Ipv4GlobalRouting::TransferTo(struct MNinfo tempMNInfo)// udp，转发至chief�
       tempPathTableEntry=GetPathToNode(tempMNInfo.destIdent);
       if (tempPathTableEntry==NULL)
       {
-        Logfout << GetNow() << "Can't transfer linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
-        if (tempMNInfo.linkFlag==true) Logfout << " up";
-        else if (tempMNInfo.linkFlag==false) Logfout << " down";
-        Logfout << " from Master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
-        Logfout << " to Node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by udp." << endl;
+        // Logfout << GetNow() << "Can't transfer linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
+        // if (tempMNInfo.linkFlag==true) Logfout << " up";
+        // else if (tempMNInfo.linkFlag==false) Logfout << " down";
+        // Logfout << " from Master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
+        // Logfout << " to Node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by udp." << endl;
       }
       else 
       {
@@ -2344,39 +2347,39 @@ Ipv4GlobalRouting::TransferTo(struct MNinfo tempMNInfo)// udp，转发至chief�
         localAddr=GetLocalAddrByNeighborIdent(tempPathTableEntry->pathNodeIdent[1]);
         if (localAddr==NULL)
         {
-          Logfout << GetNow() << "Can't transfer linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
-          if (tempMNInfo.linkFlag==true) Logfout << " up";
-          else if (tempMNInfo.linkFlag==false) Logfout << " down";
-          Logfout << " from Master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
-          Logfout << " to Node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by udp." << endl;
+          // Logfout << GetNow() << "Can't transfer linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
+          // if (tempMNInfo.linkFlag==true) Logfout << " up";
+          // else if (tempMNInfo.linkFlag==false) Logfout << " down";
+          // Logfout << " from Master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
+          // Logfout << " to Node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by udp." << endl;
         }
         else
         {
           m_udpClient.SendLinkInfo(*localAddr,inet_ntoa(tempPathTableEntry->nodeAddr.addr.sin_addr),tempMNInfo);
-          Logfout << GetNow() << "Transfer linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
-          if (tempMNInfo.linkFlag==true) Logfout << " up";
-          else if (tempMNInfo.linkFlag==false) Logfout << " down";
-          Logfout << " from Master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
-          Logfout << " to Node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by udp." << endl;
+          // Logfout << GetNow() << "Transfer linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
+          // if (tempMNInfo.linkFlag==true) Logfout << " up";
+          // else if (tempMNInfo.linkFlag==false) Logfout << " down";
+          // Logfout << " from Master " << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position;
+          // Logfout << " to Node " << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by udp." << endl;
         }
       }
     }
   }
   else
   {
-    Logfout << GetNow() << "Master can't transfer linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
-    if (tempMNInfo.linkFlag==true) Logfout << " up";
-    else if (tempMNInfo.linkFlag==false) Logfout << " down";
-    Logfout << " from ";
-    if (tempMNInfo.srcIdent.level==0) Logfout << "Master ";
-    else Logfout << "Node ";
-    Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to ";
-    if (tempMNInfo.destIdent.level==0) Logfout << "Master ";
-    else Logfout << "Node ";
-    Logfout << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by udp." << endl;
+    // Logfout << GetNow() << "Master can't transfer linkInfo " << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
+    // if (tempMNInfo.linkFlag==true) Logfout << " up";
+    // else if (tempMNInfo.linkFlag==false) Logfout << " down";
+    // Logfout << " from ";
+    // if (tempMNInfo.srcIdent.level==0) Logfout << "Master ";
+    // else Logfout << "Node ";
+    // Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " to ";
+    // if (tempMNInfo.destIdent.level==0) Logfout << "Master ";
+    // else Logfout << "Node ";
+    // Logfout << tempMNInfo.destIdent.level << "." << tempMNInfo.destIdent.position << " by udp." << endl;
   }
   
-  Logfout.close();
+  // Logfout.close();
 }
 
 int 
@@ -2954,7 +2957,7 @@ Ipv4GlobalRouting::InsertPathTable(struct pathtableentry *currentPathTableEntry,
   currentPathTableEntry->next=newPathTableEntry;
   newPathTableEntry->next=nextPathTableEntry;
   headPathTableEntry->linkCounter++;
-  if (newPathTableEntry->nodeCounter!=1) InsertNodeInDirPathTable(newPathTableEntry);// 避免将自己添加进去
+  // if (newPathTableEntry->nodeCounter!=1) InsertNodeInDirPathTable(newPathTableEntry);// 避免将自己添加进去
 
   // 更新Node维护的链路表
   ident high,low;
@@ -3712,7 +3715,7 @@ Ipv4GlobalRouting::ModifyNodeDirConFlag(ident high,ident low,bool dirConFlag)// 
         tempPathTableEntry=tempPathTableEntry->next;
       }
     }
-    UpdateNodeInDirPathTable();
+    // UpdateNodeInDirPathTable();
     PrintPathEntryTable();
   }
   Logfout.close();
@@ -3842,7 +3845,7 @@ Ipv4GlobalRouting::ModifyPathEntryTable(ident high,ident low,bool linkFlag)// �
       UpdateAddrSet(tempDestIdent,tempNextIdent,tempNodeCounter,tempAddrSet);
     }
   }
-  UpdateNodeInDirPathTable();
+  // UpdateNodeInDirPathTable();
   // PrintPathEntryTable();
   // Logfout.close();
   // pthread_mutex_unlock(&mutexA);
@@ -5463,10 +5466,10 @@ Ipv4GlobalRouting::ChooseNodeToInformInDirNode(ident destIdent,ident lastNode,st
 void
 Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,ident srcIdent,int eventId,bool linkFlag)
 {
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << myIdent.level << "." << myIdent.position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
 
   // 确定影响范围，这代码写得太垃圾了
   struct MNinfo *tempMNInfo=(struct MNinfo *)malloc(sizeof(struct MNinfo));
@@ -5493,7 +5496,7 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,ident srcIdent,int eve
   tempMNInfo->ACK=false;
   tempMNInfo->bye=false;
 
-  Logfout << GetNow() << "Master start to send message:" << endl;
+  // Logfout << GetNow() << "Master start to send message:" << endl;
 
   for (int i=0;i<effectNodeRange.size();i++)
   {
@@ -5510,11 +5513,10 @@ Ipv4GlobalRouting::SendMessageToNode(ident high,ident low,ident srcIdent,int eve
             AssistSendTo(*tempMNInfo);
             m_tcpRoute->SendMessageTo(GetSockByIdent(tempMNInfo->destIdent),*tempMNInfo);
          
-            Logfout << GetNow() << "Send " << tempMNInfo->pathNodeIdent[0].level << "." << tempMNInfo->pathNodeIdent[0].position << "--" << tempMNInfo->pathNodeIdent[1].level << "." << tempMNInfo->pathNodeIdent[1].position << " ";
-            if (tempMNInfo->linkFlag==true) Logfout << "up";
-            else Logfout << "down";
-            Logfout << " to node " << effectNodeRange[i].effectNode[j].level << "." << effectNodeRange[i].effectNode[j].position << " by TCP & UDP." << endl;
-            // fprintf(stderr, "GetEffectNode succeed Send %d.%d\n", (*tempEffectNode)[i].level, (*tempEffectNode)[i].position);
+            // Logfout << GetNow() << "Send " << tempMNInfo->pathNodeIdent[0].level << "." << tempMNInfo->pathNodeIdent[0].position << "--" << tempMNInfo->pathNodeIdent[1].level << "." << tempMNInfo->pathNodeIdent[1].position << " ";
+            // if (tempMNInfo->linkFlag==true) Logfout << "up";
+            // else Logfout << "down";
+            // Logfout << " to node " << effectNodeRange[i].effectNode[j].level << "." << effectNodeRange[i].effectNode[j].position << " by TCP & UDP." << endl;
           }
         }
       }
@@ -5641,7 +5643,7 @@ Ipv4GlobalRouting::PrintLinkEffectRange()
   stringstream logFoutPath;
   logFoutPath.str("");
   logFoutPath << "/var/log/LinkEffectRange-" << myIdent.level << "." << myIdent.position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  ofstream Logfout(logFoutPath.str().c_str(),ios::trunc);
 
   Logfout << "Link\tEffectNode" << endl;
   for (int i=0;i<effectNodeRange.size();i++)

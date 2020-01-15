@@ -62,10 +62,10 @@ void*
 TCPRoute::ServerThread(void* tempThreadParam)
 {
   // pthread_detach(pthread_self());
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << "/var/log/Primus-" << m_globalRouting->GetMyIdent().level << "." << m_globalRouting->GetMyIdent().position << ".log";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  // stringstream logFoutPath;
+  // logFoutPath.str("");
+  // logFoutPath << "/var/log/Primus-" << m_globalRouting->GetMyIdent().level << "." << m_globalRouting->GetMyIdent().position << ".log";
+  // ofstream Logfout(logFoutPath.str().c_str(),ios::app);
   
   TCPRoute *tempTCPRoute=((struct threadparamA *)tempThreadParam)->tempTCPRoute;
   int sock=((struct threadparamA *)tempThreadParam)->tempSock;
@@ -79,7 +79,7 @@ TCPRoute::ServerThread(void* tempThreadParam)
     memset(recvBuf,'\0',sizeof(recvBuf));
     if((value=recv(sock,recvBuf,MNINFO_BUF_SIZE,0))<=0)
     {
-      Logfout << GetNow() << "Sock(" << sock << ") recv error:" << strerror(errno) << "(errno:" << errno << "),";
+      // Logfout << GetNow() << "Sock(" << sock << ") recv error:" << strerror(errno) << "(errno:" << errno << "),";
       break;
     }
     struct MNinfo tempMNInfo;
@@ -322,18 +322,18 @@ TCPRoute::ServerThread(void* tempThreadParam)
         {
           if (tempMNInfo.ACK==false)
           {
-            Logfout << GetNow();
-            if (tempTCPRoute->myIdent.level==0) Logfout << "Master ";
-            else Logfout << "Node ";
-            Logfout << tempTCPRoute->myIdent.level << "." << tempTCPRoute->myIdent.position << " recv ";
-            Logfout << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
-            if (tempMNInfo.linkFlag==true) Logfout << " up ";
-            else if (tempMNInfo.linkFlag==false) Logfout << " down ";
-            Logfout << "from ";
-            if (tempMNInfo.srcIdent.level==0) Logfout << "Master ";
-            else Logfout << "Node ";
-            Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " by tcp [value:" << value << "][eventId:" << tempMNInfo.eventId << "][sock:" << sock << "].";
-            Logfout << endl;
+            // Logfout << GetNow();
+            // if (tempTCPRoute->myIdent.level==0) Logfout << "Master ";
+            // else Logfout << "Node ";
+            // Logfout << tempTCPRoute->myIdent.level << "." << tempTCPRoute->myIdent.position << " recv ";
+            // Logfout << tempMNInfo.pathNodeIdent[0].level << "." << tempMNInfo.pathNodeIdent[0].position << "--" << tempMNInfo.pathNodeIdent[1].level << "." << tempMNInfo.pathNodeIdent[1].position;
+            // if (tempMNInfo.linkFlag==true) Logfout << " up ";
+            // else if (tempMNInfo.linkFlag==false) Logfout << " down ";
+            // Logfout << "from ";
+            // if (tempMNInfo.srcIdent.level==0) Logfout << "Master ";
+            // else Logfout << "Node ";
+            // Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " by tcp [value:" << value << "][eventId:" << tempMNInfo.eventId << "][sock:" << sock << "].";
+            // Logfout << endl;
 
             // struct stampinfo tempStampInfo;
             // tempStampInfo.identA=tempMNInfo.pathNodeIdent[0];
@@ -351,10 +351,10 @@ TCPRoute::ServerThread(void* tempThreadParam)
           }
           else if (tempMNInfo.ACK==true)
           {
-            Logfout << GetNow() << "Recv response from ";
-            if (tempMNInfo.srcIdent.level==0) Logfout << " Master ";
-            else Logfout << " Node ";
-            Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " [eventId:" << tempMNInfo.eventId << "]." << endl;
+            // Logfout << GetNow() << "Recv response from ";
+            // if (tempMNInfo.srcIdent.level==0) Logfout << " Master ";
+            // else Logfout << " Node ";
+            // Logfout << tempMNInfo.srcIdent.level << "." << tempMNInfo.srcIdent.position << " [eventId:" << tempMNInfo.eventId << "]." << endl;
             
             m_globalRouting->UpdateResponseRecord(tempMNInfo.eventId,tempMNInfo.pathNodeIdent[0],tempMNInfo.pathNodeIdent[1],-1);// 
           }
