@@ -2754,7 +2754,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               if (tempMessage.ack==true) cout << ":RS";
               else cout << ":RP";
               cout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
-              if (!tempPrimus->SameNode(tempMessage.fowIdent,tempIdent)) cout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
+              if (!tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) cout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
               cout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
 
               if (tempMessage.messageType==2)
