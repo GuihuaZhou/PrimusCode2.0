@@ -914,8 +914,7 @@ Primus::SendMessageByTCP(int sock,struct message tempMessage)
   memcpy(sendBuf,&tempMessage,sizeof(struct message));
   int ret=send(sock,sendBuf,sizeof(struct message),0);
 
-  // if (tempMessage.messageType!=3)
-  //   PrintMessage(tempMessage);
+  if (tempMessage.messageType!=3) PrintMessage(tempMessage);
   return ret;
 }
 
@@ -958,6 +957,7 @@ Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteA
 
   ret=sendto(nodeSock,sendBuf,sizeof(struct message),0,(struct sockaddr *)&remoteAddr,sizeof(remoteAddr));
   close(nodeSock);
+  if (tempMessage.messageType!=3) PrintMessage(tempMessage);
   return ret;
 }
 
@@ -2418,8 +2418,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
       struct message tempMessage;
       memcpy(&tempMessage,recvBuf,sizeof(struct message));
 
-      // if (tempMessage.messageType!=3)
-      //   tempPrimus->PrintMessage(tempMessage);
+      if (tempMessage.messageType!=3) tempPrimus->PrintMessage(tempMessage);
 
       // dstIdent为本Node
       if (tempPrimus->SameNode(tempPrimus->m_Ident,tempMessage.dstIdent)
