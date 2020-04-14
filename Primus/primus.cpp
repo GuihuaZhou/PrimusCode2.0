@@ -2768,7 +2768,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 if (tempMessage.linkInfo.linkStatus==true) cout << "/UP]";
                 else cout << "/DOWN]";
               } 
-              cout << ".\n"; 
+              // cout << ".\n"; 
               
               tempPrimus->SendMessageByUDP(tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent),tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent),tempMessage);
               cout << "completely!" << endl;
