@@ -2943,6 +2943,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
             }
             if (!tempPrimus->SameNode(tempNextHopIdent,tempPrimus->tempIdent) && tempDstAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
             {
+              tempMessage.transportType=2;
               // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " send message to node " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "." << endl;
               tempPrimus->SendMessageByUDP(tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent),tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent),tempMessage);
               // cout << "over." << endl;
@@ -3066,6 +3067,7 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
       }
     }
   }
+  cout << "SendToAllAffectedNodes completely.\n";
   return numOfSentNodes;
 }
 
