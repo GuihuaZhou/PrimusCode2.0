@@ -38,15 +38,17 @@ rm /home/guolab/PrimusLog*.txt;
 rm /home/guolab/CostTime*.txt;
 rm /home/guolab/NeighborTable*.txt;
 rm /home/guolab/Primus/Primus;
+rm /home/guolab/switch.stdout;
+rm /home/guolab/switch.stderr;
 # master先编译
 pssh -i -h /home/guolab/host/master.txt "killall -9 Primus;rm /home/guolab/LinkTable*.txt;
 rm /home/guolab/PathTable*.txt;rm /home/guolab/NodeSockTable*.txt;rm /home/guolab/NeighborTable*.txt;
 rm /home/guolab/ControllerSockTable*.txt;rm /home/guolab/PrimusLog*.txt;
-rm /home/guolab/CostTime*.txt;rm /home/guolab/Primus;"
+rm /home/guolab/CostTime*.txt;rm /home/guolab/Primus;rm /home/guolab/switch.stdout;rm /home/guolab/switch.stderr;"
 pssh -i -h /home/guolab/host/ATChost.txt "killall -9 Primus;rm /home/guolab/LinkTable*.txt;
 rm /home/guolab/PathTable*.txt;rm /home/guolab/NodeSockTable*.txt;rm /home/guolab/NeighborTable*.txt;
 rm /home/guolab/ControllerSockTable*.txt;rm /home/guolab/PrimusLog*.txt;
-rm /home/guolab/CostTime*.txt;rm /home/guolab/Primus;"
+rm /home/guolab/CostTime*.txt;rm /home/guolab/Primus;rm /home/guolab/switch.stdout;rm /home/guolab/switch.stderr;"
 # 编译
 rm /home/guolab/Primus/Primus
 cd /home/guolab/Primus
