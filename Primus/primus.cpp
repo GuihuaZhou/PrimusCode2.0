@@ -304,6 +304,10 @@ Primus::PrintMessage(struct message tempMessage)
   else Logfout << "Forward";
 
   Logfout << " message[" ;
+  if (tempMessage.transportType==1) Logfout << "TCP][";
+  else Logfout << "UDP][";
+  if (SameNode(tempMessage.fowIdent,tempIdent)) Logfout << "Direct][";
+  else Logfout << "InDirect][";
   if (tempMessage.messageType==1) Logfout << "HL";
   else if (tempMessage.messageType==2) Logfout << "LS";
   else if (tempMessage.messageType==3) Logfout << "KA";
