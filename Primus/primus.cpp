@@ -2967,12 +2967,12 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
   tempMessage.transportType=1;
 
   // // link type:1)spinenode--leafnode;2)leafnode--tornode;
-  // cout << endl << endl << "SendToAllAffectedNodes[" << tempStartIndex << " to " << tempEndIndex << "]["
-  // << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
-  // << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-  // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-  // else cout << "DOWN";
-  // cout << "]." << endl;
+  cout << endl << endl << "SendToAllAffectedNodes[" << tempStartIndex << " to " << tempEndIndex << "]["
+  << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
+  << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+  if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+  else cout << "DOWN";
+  cout << "]." << endl;
 
   if (tempMessage.linkInfo.identA.level==2) tempIndex=tempMessage.linkInfo.identA.position%m_LeafNodes;
   else if (tempMessage.linkInfo.identB.level==2) tempIndex=tempMessage.linkInfo.identB.position%m_LeafNodes;
