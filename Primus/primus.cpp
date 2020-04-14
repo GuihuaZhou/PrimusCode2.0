@@ -301,7 +301,7 @@ Primus::PrintMessage(struct message tempMessage)
   Logfout << GetNow();
   if (SameNode(tempMessage.srcIdent,m_Ident)) Logfout << "Send";
   else if (SameNode(tempMessage.dstIdent,m_Ident) || ((m_Role==2 || m_Role==3)) && (SameNode(tempMessage.dstIdent,tempIdent))) Logfout << "Recv";
-  else Logfout << "Forward";
+  else Logfout << "Forw";
 
   Logfout << " message[" ;
   if (tempMessage.transportType==1) Logfout << "TCP][";
