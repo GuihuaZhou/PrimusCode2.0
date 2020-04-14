@@ -57,11 +57,8 @@ echo "transport"
 pscp -h /home/guolab/host/master.txt -l root /home/guolab/Primus/Primus /home/guolab/Primus
 pscp -h /home/guolab/host/ATChost.txt -l root /home/guolab/Primus/Primus /home/guolab/Primus
 # # 启动
-tempOutCommand=''
-tempOutCommand=$tempOutCommand" 1> /home/guolab/switch.stdout 2> /home/guolab/switch.stderr"
 tempCommand=''
-tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods$tempOutCommand
-echo "tempCommand:"$tempCommand
+tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" 1> /home/guolab/switch.stdout 2> /home/guolab/switch.stderr"
 # 
 command=''
 command=$command"/home/guolab/Primus/Primus"$tempCommand
