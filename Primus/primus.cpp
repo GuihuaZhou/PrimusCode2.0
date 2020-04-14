@@ -3056,14 +3056,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
           }
         }
       }
-      // for (int j=0;j<MAX_FOWNODE_NUM;j++)
-      // {
-      //   nodeIndex=rand()%nodeSockNum;
-      //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-      //   {
-      //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);
-      //   }
-      // }
+      for (int j=0;j<MAX_FOWNODE_NUM;j++)
+      {
+        nodeIndex=rand()%nodeSockNum;
+        if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+        {
+          SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);
+        }
+      }
     }
   }
   return numOfSentNodes;
