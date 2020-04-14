@@ -2971,7 +2971,7 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
   << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
   if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
   else cout << "DOWN";
-  cout << "]." << endl;
+  cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
 
   if (tempMessage.linkInfo.identA.level==2) tempIndex=tempMessage.linkInfo.identA.position%m_LeafNodes;
   else if (tempMessage.linkInfo.identB.level==2) tempIndex=tempMessage.linkInfo.identB.position%m_LeafNodes;
