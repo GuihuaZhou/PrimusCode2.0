@@ -2944,7 +2944,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
             {
               tempMessage.transportType=2;
               // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " send message to node " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "." << endl;
-              tempPrimus->SendMessageByUDP(tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent),tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent),tempMessage);
+              // tempPrimus->SendMessageByUDP(tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent),tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent),tempMessage);
               // cout << "over." << endl;
             }
           }
