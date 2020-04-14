@@ -2291,7 +2291,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   Logfout.close();
                 }
               } 
-              tempPrimus->PrintMessage(tempMessage); 
             }
             else if (tempPrimus->m_Role==1)
             {
@@ -2377,7 +2376,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 }
               }
             }
-            tempPrimus->PrintMessage(tempMessage);
             // cout << "send hello ack to sock(" << sock << ")." << endl;
             break;
           case 2:// link stauts report，2 type，controller recv or node recv
@@ -2403,6 +2401,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
 
+                tempPrimus->PrintMessage(tempMessage);
                 tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
 
                 if (PRINT_NODE_MODIFY_TIME)
@@ -2431,7 +2430,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position 
                 // << " don't need to UpdateLinkTable." << endl;
               }
-              tempPrimus->PrintMessage(tempMessage);
             }
             else if (tempPrimus->m_Role==2)// master recv
             {
@@ -2439,9 +2437,11 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 tempPrimus->EnqueueMessageIntoEventQueue(tempMessage);
                 Logfout << "Recv tcp packets:" << tempPrimus->recvTcpNum << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
+                tempPrimus->PrintMessage(tempMessage);
               }
               else 
               {
+                tempPrimus->PrintMessage(tempMessage);
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
@@ -2449,7 +2449,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 if (tempPrimus->SendMessageByTCP(sock,tempMessage));
                 else cout << "Invaild nodeSock.";
               }
-              tempPrimus->PrintMessage(tempMessage);
             }
             else if (tempPrimus->m_Role==3)// slave recv
             {
@@ -2508,6 +2507,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 if (tempPrimus->m_RecvReElectFromNode==false)// 未收到请求
                 {
+                  tempPrimus->PrintMessage(tempMessage);
                   for (int j=0;j<MAX_CTRL_NUM;j++)
                   {
                     if (tempPrimus->controllerSockTable[j].controllerSock!=-1 
@@ -2534,7 +2534,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
                       break;
                     }
                   }
-                  tempPrimus->PrintMessage(tempMessage);
                 }
               }
             }
@@ -2558,7 +2557,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
               || tempPrimus->SameNode(tempPrimus->tempIdent,tempPrimus->controllerSockTable[j].controllerIdent)) break;
             tempPrimus->SendMessageByTCP(tempPrimus->controllerSockTable[j].controllerSock,
                                          tempMessage);
-            tempPrimus->PrintMessage(tempMessage);
             // cout << "Forward message from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
             // << " to " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << endl;
           }
@@ -2573,7 +2571,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 tempPrimus->SendMessageByTCP(tempPrimus->controllerSockTable[j].controllerSock,
                                          tempMessage);
-                tempPrimus->PrintMessage(tempMessage);
                 // cout << "Forward message from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
                 // << " to " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << endl;
               }
@@ -2587,7 +2584,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
           if (tempNodeSock>0)
           {
             tempPrimus->SendMessageByTCP(tempNodeSock,tempMessage);
-            tempPrimus->PrintMessage(tempMessage);
             // cout << "Forward message from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
             // << " to " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << endl;             
           }
@@ -2748,7 +2744,12 @@ Primus::RecvMessageThread(void* tempThreadParam)
               // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " send message to node " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "." << endl;
               tempPrimus->SendMessageByUDP(tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent),tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent),tempMessage);
               // cout << "over." << endl;
-              tempPrimus->PrintMessage(tempMessage);
+            }
+            else
+            {
+              cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " can't forward message from "
+              << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << " to " 
+              << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << endl;           
             }
           }
         }
