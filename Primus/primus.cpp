@@ -2739,33 +2739,33 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 }
               }
             }
-            if (!tempPrimus->SameNode(tempNextHopIdent,tempPrimus->tempIdent) && tempDstAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
-            {
-              tempPrimus->SendMessageByUDP(tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent),tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent),tempMessage);
-            }
-            else
-            {
-              cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " can't forward message[";
-              if (tempMessage.messageType==1) cout << "HL";
-              else if (tempMessage.messageType==2) cout << "LS";
-              else if (tempMessage.messageType==3) cout << "KA";
-              else if (tempMessage.messageType==4) cout << "RE";
+            // if (!tempPrimus->SameNode(tempNextHopIdent,tempPrimus->tempIdent) && tempDstAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
+            // {
+            //   tempPrimus->SendMessageByUDP(tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent),tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent),tempMessage);
+            // }
+            // else
+            // {
+            //   cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " can't forward message[";
+            //   if (tempMessage.messageType==1) cout << "HL";
+            //   else if (tempMessage.messageType==2) cout << "LS";
+            //   else if (tempMessage.messageType==3) cout << "KA";
+            //   else if (tempMessage.messageType==4) cout << "RE";
 
-              if (tempMessage.ack==true) cout << ":RS";
-              else cout << ":RP";
-              cout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
-              if (!tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) cout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
-              cout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
+            //   if (tempMessage.ack==true) cout << ":RS";
+            //   else cout << ":RP";
+            //   cout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
+            //   if (!tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) cout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
+            //   cout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
 
-              if (tempMessage.messageType==2)
-              {
-                cout << "[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
-                << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position;
-                if (tempMessage.linkInfo.linkStatus==true) cout << "/UP]";
-                else cout << "/DOWN]";
-              } 
-              cout << ".\n";           
-            }
+            //   if (tempMessage.messageType==2)
+            //   {
+            //     cout << "[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+            //     << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position;
+            //     if (tempMessage.linkInfo.linkStatus==true) cout << "/UP]";
+            //     else cout << "/DOWN]";
+            //   } 
+            //   cout << ".\n";           
+            // }
           }
         }
       }
