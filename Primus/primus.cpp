@@ -2748,7 +2748,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " try to send message["; 
               if (tempMessage.transportType==1) Logfout << "TCP][";
               else Logfout << "UDP][";
-              if (SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) Logfout << "Direct][";
+              if (tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) Logfout << "Direct][";
               else Logfout << "InDirect][";
               if (tempMessage.messageType==1) cout << "HL";
               else if (tempMessage.messageType==2) cout << "LS";
@@ -2778,7 +2778,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " can't forward message[";
               // if (tempMessage.transportType==1) Logfout << "TCP][";
               // else Logfout << "UDP][";
-              // if (SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) Logfout << "Direct][";
+              // if (tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) Logfout << "Direct][";
               // else Logfout << "InDirect][";
               // if (tempMessage.messageType==1) cout << "HL";
               // else if (tempMessage.messageType==2) cout << "LS";
