@@ -813,7 +813,7 @@ Primus::InitiateLinkTable()
   linkNum=m_SpineNodes*m_nPods+m_LeafNodes*m_nPods*m_ToRNodes;
   linkTable=(linktableentry *)malloc(sizeof(linktableentry)*linkNum);
 
-  struct message tempLastMessage={{tempIdent,tempIdent,tempAddr,tempAddr,0,false},tempIdent,tempIdent,tempIdent,false,1,1,0};
+  struct message tempLastMessage={{tempIdent,tempIdent,tempAddr,tempAddr,0,false},tempIdent,tempIdent,tempIdent,false,1,1,0,1};
 
   for (int i=0;i<m_SpineNodes;i++)// spine--leaf
   {
@@ -992,7 +992,7 @@ Primus::SrcWaitRSThread(void* tempThreadParam)
       << tempPrimus->linkTable[linkIndex].linkInfo.identB.level << "." << tempPrimus->linkTable[linkIndex].linkInfo.identB.position << "]."
       << endl;
       struct link tempLink={tempPrimus->tempIdent,tempPrimus->tempIdent,tempPrimus->tempAddr,tempPrimus->tempAddr,-1,false};
-      struct message tempMessage={tempLink,tempPrimus->m_Ident,tempPrimus->tempIdent,tempPrimus->tempIdent,false,4,tempPrimus->m_Role,-1};
+      struct message tempMessage={tempLink,tempPrimus->m_Ident,tempPrimus->tempIdent,tempPrimus->tempIdent,false,4,tempPrimus->m_Role,-1,1};
       for (int j=0;j<MAX_CTRL_NUM;j++)
       {
         if (tempPrimus->SameNode(tempPrimus->controllerSockTable[j].controllerIdent,tempPrimus->tempIdent)) break;
@@ -3416,14 +3416,15 @@ Primus::MasterGenerateLinkStatusChange(void* tempThreadParam)
     else 
       tempPrimus->linkTable[tempLinkIndex].linkInfo.linkStatus=true;
       
-    message tempMessage={tempPrimus->linkTable[tempLinkIndex].linkInfo,
-                        tempPrimus->linkTable[tempLinkIndex].linkInfo.identA,
-                        tempPrimus->tempIdent,
-                        tempPrimus->m_Ident,
-                        false,
-                        2,
-                        1,
-                        -1};
+    struct message tempMessage={tempPrimus->linkTable[tempLinkIndex].linkInfo,
+                              tempPrimus->linkTable[tempLinkIndex].linkInfo.identA,
+                              tempPrimus->tempIdent,
+                              tempPrimus->m_Ident,
+                              false,
+                              2,
+                              1,
+                              -1,
+                              1};
     // tempPrimus->PrintMessage(tempMessage);
     tempPrimus->EnqueueMessageIntoEventQueue(tempMessage);
   }
@@ -3463,14 +3464,15 @@ Primus::KeepaliveThread(void* tempThreadParam)
   
   // node主动发送keep alive
   link tempLink={tempPrimus->tempIdent,tempPrimus->tempIdent,tempPrimus->tempAddr,tempPrimus->tempAddr,-1,false};
-  message tempMessage={tempLink,
-                       tempPrimus->m_Ident,
-                       tempPrimus->tempIdent,
-                       tempPrimus->tempIdent,
-                       false,
-                       3,
-                       tempPrimus->m_Role,
-                       -1};
+  struct message tempMessage={tempLink,
+                            tempPrimus->m_Ident,
+                            tempPrimus->tempIdent,
+                            tempPrimus->tempIdent,
+                            false,
+                            3,
+                            tempPrimus->m_Role,
+                            -1,
+                            1};
   srand((unsigned)time(NULL));
   while (1)
   {
