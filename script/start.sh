@@ -59,8 +59,8 @@ pscp -h /home/guolab/host/ATChost.txt -l root /home/guolab/Primus/Primus /home/g
 # # 启动
 tempCommand=''
 # 1> 与>等价
-# tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" 1>/home/guolab/switch.stdout 2>/home/guolab/switch.stderr"
-tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods
+tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" 1>/home/guolab/switch.stdout 2>/home/guolab/switch.stderr"
+# tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods
 # 
 command=''
 command=$command"/home/guolab/Primus/Primus"$tempCommand
