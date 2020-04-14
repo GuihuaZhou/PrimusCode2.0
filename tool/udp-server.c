@@ -51,9 +51,9 @@ int main(int argc, char *argv[])
 	my_addr.sin_addr.s_addr=INADDR_ANY;
 	my_addr.sin_port=htons(6689); 
 
-	struct timeval timeout;
-	timeout.tv_sec=5;
-	timeout.tv_usec=0;
+	// struct timeval timeout;
+	// timeout.tv_sec=5;
+	// timeout.tv_usec=0;
 	
 	checkInterval=atoi(argv[1]);
 
@@ -86,11 +86,11 @@ int main(int argc, char *argv[])
 		fflush(fp);
 	}
 
-	if (setsockopt(server_sockfd,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout))<0)
-	{
-		perror("set SO_RCVTIMEO");
-		return 1;
-	}
+	// if (setsockopt(server_sockfd,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout))<0)
+	// {
+	// 	perror("set SO_RCVTIMEO");
+	// 	return 1;
+	// }
 
 	clock_gettime(CLOCK_MONOTONIC,&start);
 
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 	}
 	clock_gettime(CLOCK_MONOTONIC,&end);
 	fseek(fp,0L,SEEK_END);
-	fprintf(fp,"Total %f bytes, %f packets recv!\n",allReceiveByte,receiveCount);
+	fprintf(fp,"Total %f bytes, %d packets recv!\n",allReceiveByte,receiveCount);
 	fprintf(fp,"Recv rate is %lf(Mbps)\n",allReceiveByte*8/((end.tv_sec-start.tv_sec)*100000+(end.tv_nsec-start.tv_nsec)*0.001));
 	fflush(fp);
 	fclose(fp);

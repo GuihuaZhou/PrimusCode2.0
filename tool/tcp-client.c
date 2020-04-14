@@ -99,32 +99,39 @@ int main(int argc, char *argv[])
 			fflush(fp);
 			break;
 		}
-		fseek(fp,0L,SEEK_END);
-		fprintf(fp,"%d recv request.\n",counter+1);
-		fflush(fp);
+		// fseek(fp,0L,SEEK_END);
+		// fprintf(fp,"%d recv request.\n",counter);
+		// fflush(fp);
+
 		counter++;
-		bytesSent=0;
-		while (bytesSent<flow_size)
+		if ((len=send(server_sockfd,bufSent,MAXPACKETSIZE,0))==-1)
 		{
-			bytesToSend=flow_size-bytesSent;
-			if(bytesToSend>=MAXPACKETSIZE)
-			{
-				bytesToSend=MAXPACKETSIZE;
-			}
-			memset(bufSent,'.',bytesToSend*sizeof(bufSent[0]));
-			if ((len=send(server_sockfd,bufSent,bytesToSend,0))==-1)
-			{
-				clock_gettime(CLOCK_MONOTONIC,&end);
-				fseek(fp,0L,SEEK_END);
-				fprintf(fp,"interval is %f(us).\n",1000000*(end.tv_sec-start.tv_sec)+(end.tv_nsec-start.tv_nsec)*0.001);
-				fflush(fp);
-			}
+			clock_gettime(CLOCK_MONOTONIC,&end);
 			fseek(fp,0L,SEEK_END);
-			fprintf(fp,"len is %d.\n",len);
-			fflush(fp);
-			bytesSent+=bytesToSend;
-			packetsSent++;
+			fprintf(fp,"interval is %f(us).\n",1000000*(end.tv_sec-start.tv_sec)+(end.tv_nsec-start.tv_nsec)*0.001);
 		}
+		// bytesSent=0;
+		// while (bytesSent<flow_size)
+		// {
+		// 	bytesToSend=flow_size-bytesSent;
+		// 	if(bytesToSend>=MAXPACKETSIZE)
+		// 	{
+		// 		bytesToSend=MAXPACKETSIZE;
+		// 	}
+		// 	memset(bufSent,'.',bytesToSend*sizeof(bufSent[0]));
+		// 	if ((len=send(server_sockfd,bufSent,bytesToSend,0))==-1)
+		// 	{
+		// 		clock_gettime(CLOCK_MONOTONIC,&end);
+		// 		fseek(fp,0L,SEEK_END);
+		// 		fprintf(fp,"interval is %f(us).\n",1000000*(end.tv_sec-start.tv_sec)+(end.tv_nsec-start.tv_nsec)*0.001);
+		// 		fflush(fp);
+		// 	}
+		// 	fseek(fp,0L,SEEK_END);
+		// 	fprintf(fp,"len is %d.\n",len);
+		// 	fflush(fp);
+		// 	bytesSent+=bytesToSend;
+		// 	packetsSent++;
+		// }
 	}
 
 	fprintf(fp,"Total %ld bytes, %ld packets sent to the server!\n",bytesSent,packetsSent);

@@ -1,0 +1,10 @@
+{
+  "name": "raft",
+  "version": "master",
+  "repo": "willemt/raft_amalgamation",
+  "description": "Single file C implementation of the Raft Consensus protocol, BSD licensed",
+  "keywords": ["raft", "consensus", "protocol"],
+  "src": [
+    "raft.h"
+  ]
+}

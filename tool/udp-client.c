@@ -31,9 +31,10 @@ int main(int argc, char *argv[])
 	remote_addr.sin_port=htons(6689);
 	useconds_t packet_interval;
 	packet_interval=atoi(argv[2]);//us
+	int packet_number=atoi(argv[3]);
 
 	FILE * fp;
-	if ((fp=fopen(argv[3], "a+")) == NULL)
+	if ((fp=fopen(argv[4], "a+")) == NULL)
 	{
 		printf("Cannot open record_file\n");
 		exit(0);
@@ -44,25 +45,27 @@ int main(int argc, char *argv[])
 		perror("socket");
 		return 1;
 	}
-	
-	struct timespec start,end,lastPacketStamp;
-	clock_gettime(CLOCK_MONOTONIC,&start);
-
 	long bytesSent=0;
 	long packetsSent=0;
 	int byteToSend=MAXPACKETSIZE;
 	char bufSent[MAXPACKETSIZE];
+	
+	struct timespec start,end,lastPacketStamp;
+	clock_gettime(CLOCK_MONOTONIC,&start);
 
 	while (1)
 	{
-		bytesSent+=byteToSend;
-		memset(bufSent,'.',byteToSend*sizeof(bufSent[0]));
-		if (sendto(client_sockfd,bufSent,byteToSend,0,(struct sockaddr*)&remote_addr,sizeof(remote_addr))<0)
+		for (int i=0;i<packet_number;i++)
 		{
-			fseek(fp,0L,SEEK_END);
-			fprintf(fp,"Send to error\n");
-			fflush(fp);
-			break;
+			bytesSent+=byteToSend;
+			memset(bufSent,'.',byteToSend*sizeof(bufSent[0]));
+			if (sendto(client_sockfd,bufSent,byteToSend,0,(struct sockaddr*)&remote_addr,sizeof(remote_addr))<0)
+			{
+				fseek(fp,0L,SEEK_END);
+				fprintf(fp,"Send to error\n");
+				fflush(fp);
+				break;
+			}
 		}
 		usleep(packet_interval);
 	}
@@ -71,6 +74,7 @@ int main(int argc, char *argv[])
 	double timeuse=1000000*(end.tv_sec-start.tv_sec)+(end.tv_nsec-start.tv_nsec)*0.001; //us
 
 	fseek(fp,0L,SEEK_END);
+	// fprintf(fp,"Time:%f\n",timeuse);
 	fprintf(fp,"Total %ld bytes, %ld packets sent to the server!\n",bytesSent,packetsSent);
 	fprintf(fp,"Total time consumed is %lf(s)\n",timeuse/1000000);
 	fprintf(fp,"Sending rate is %lf(Mbps)\n",bytesSent*8/timeuse);

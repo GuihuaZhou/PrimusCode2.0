@@ -13,6 +13,7 @@
 using namespace std;
 
 FILE *fp;
+int mean=0;
 int times=100;
 int interval=100000;
 bool start=false;
@@ -65,21 +66,21 @@ void* ProcessThread(void* tempThreadParam)
 
 	if (type=="BGP")// BGP
 	{
-		for (int i=0;i<times;i++)
+		while (1)
 		{
 			commandA="ssh root@"+IPA+" ifconfig "+ethA+" down";
 			commandB="ssh root@"+IPB+" ifconfig "+ethB+" down";
 			commandC="ssh root@"+IPA+" ifconfig "+ethA+" up";
 			commandD="ssh root@"+IPB+" ifconfig "+ethB+" up";
-			waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*73529411);
+			waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*mean);
 			usleep(waitTime);
 			// down
-			// system(commandA.c_str());
-			// system(commandB.c_str());
+			system(commandA.c_str());
+			system(commandB.c_str());
 			usleep(interval);
 			// up
-			// system(commandC.c_str());
-			// system(commandD.c_str());
+			system(commandC.c_str());
+			system(commandD.c_str());
 
 			fseek(fp,0L,SEEK_END);
 			fprintf(fp,(commandA+"\n").c_str());
@@ -91,20 +92,20 @@ void* ProcessThread(void* tempThreadParam)
 	}
 	else if (type=="Primus")// Primus
 	{
-		for (int i=0;i<times;i++)
+		while (1)
 		{
 			commandA="ssh root@"+IPA+" ifconfig "+ethA+" down";
 			// commandB="ssh root@"+IPB+" ifconfig "+ethB+" down";
 			commandC="ssh root@"+IPA+" ifconfig "+ethA+" up";
 			// commandD="ssh root@"+IPB+" ifconfig "+ethB+" up";
-			waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*73529411);
+			waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*mean);
 			usleep(waitTime);
 			// down
-			// system(commandA.c_str());
+			system(commandA.c_str());
 			// system(commandB.c_str());
 			usleep(interval);
 			// up
-			// system(commandC.c_str());
+			system(commandC.c_str());
 			// system(commandD.c_str());
 
 			fseek(fp,0L,SEEK_END);
@@ -128,10 +129,10 @@ int main(int argc, char const *argv[])
 	ifstream finA(argv[2],ios::app);
   	string str;
 
-	times=atoi(argv[3]);
-	interval=atoi(argv[4]);
-	failure_startTime_mu=atof(argv[5]);
-	failure_startTime_sigma=atof(argv[6]);
+	interval=atoi(argv[3]);
+	failure_startTime_mu=atof(argv[4]);
+	failure_startTime_sigma=atof(argv[5]);
+	mean=atoi(argv[6]);
 	string type=argv[7];
 
 	pthread_t process_thread;
