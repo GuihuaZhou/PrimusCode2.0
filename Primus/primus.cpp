@@ -2745,7 +2745,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               }
             }
             cout << "search path completely" << endl;
-            if (!tempPrimus->SameNode(tempNextHopIdent,tempPrimus->tempIdent) && tempDstAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
+            // if (!tempPrimus->SameNode(tempNextHopIdent,tempPrimus->tempIdent) && tempDstAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
             // {
             //   cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " forward message["; 
             //   if (tempMessage.transportType==1) Logfout << "TCP][";
