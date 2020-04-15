@@ -2406,6 +2406,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
+                tempPrimus->PrintMessage(tempMessage);
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
