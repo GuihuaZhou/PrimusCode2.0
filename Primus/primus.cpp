@@ -2596,6 +2596,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
           int tempNodeSock=tempPrimus->GetNodeSock(tempMessage.dstIdent);
           if (tempNodeSock>0)
           {
+            tempMessage.fowIdent=tempPrimus->m_Ident;
             tempPrimus->SendMessageByTCP(tempNodeSock,tempMessage);
             // cout << "Forward message from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
             // << " to " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << endl;             
@@ -2762,7 +2763,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               if (tempMessage.transportType==1) Logfout << "TCP][";
               else Logfout << "UDP][";
               if (tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) Logfout << "Direct][";
-              else Logfout << "InDirect][";
+              else Logfout << "Forward][";
               if (tempMessage.messageType==1) cout << "HL";
               else if (tempMessage.messageType==2) cout << "LS";
               else if (tempMessage.messageType==3) cout << "KA";
@@ -2786,6 +2787,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
               cout << "localAddr:" << inet_ntoa(tempLocalAddr.sin_addr) << endl;
               cout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
+              tempMessage.fowIdent=tempPrimus->m_Ident;
               if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
                 tempPrimus->SendMessageByUDP(tempLocalAddr,tempDstAddr,tempMessage);
               cout << " completely!" << endl;
@@ -2827,7 +2829,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
 int 
 Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int tempEndIndex)// 在此处确定下发范围规则
 {
-  int tempIndex=0;//链路中的leafnode在pod中的相对位置
+  int tempIndex=-1;//链路中的leafnode在pod中的相对位置
   int nodeIndex=0;
   int numOfSentNodes=0;
   int ret=0;
@@ -2872,6 +2874,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
             numOfSentNodes++;
           }
           // cout << "[ret:" << ret << "]." << endl;
+          for (int j=0;j<MAX_FOWNODE_NUM;j++)
+          {
+            nodeIndex=rand()%nodeSockNum;
+            if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+            {
+              SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，，
+            }
+          }
         }
         else if (nodeSockTable[i].nodeIdent.level==2 
           && nodeSockTable[i].nodeIdent.position%m_LeafNodes==tempIndex)// leafnode，只有相对位置相同才发送
@@ -2883,6 +2893,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
             numOfSentNodes++;
           }
           // cout << "[ret:" << ret << "]." << endl;
+          for (int j=0;j<MAX_FOWNODE_NUM;j++)
+          {
+            nodeIndex=rand()%nodeSockNum;
+            if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+            {
+              SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);
+            }
+          }
         }
         else if (nodeSockTable[i].nodeIdent.level==3
           && ((SameNode(tempMessage.linkInfo.identA,nodeSockTable[i].nodeIdent)) || (SameNode(tempMessage.linkInfo.identB,nodeSockTable[i].nodeIdent))))
