@@ -40,6 +40,7 @@ rm /home/guolab/NeighborTable*.txt;
 rm /home/guolab/Primus/Primus;
 rm /home/guolab/switch.stdout;
 rm /home/guolab/switch.stderr;
+rm /home/guolab/PacketTypeRecord*;
 # master先编译
 pssh -i -h /home/guolab/host/master.txt "killall -9 Primus;rm /home/guolab/LinkTable*.txt;
 rm /home/guolab/PathTable*.txt;rm /home/guolab/NodeSockTable*.txt;rm /home/guolab/NeighborTable*.txt;
