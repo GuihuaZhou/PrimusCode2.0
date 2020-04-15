@@ -926,6 +926,7 @@ Primus::SendMessageByTCP(int sock,struct message tempMessage)
 int 
 Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteAddr,struct message tempMessage)
 {
+  pthread_mutex_lock(&UdpMutex);
   cout << "localAddr:" << inet_ntoa(localAddr.sin_addr) << endl;
   cout << "remoteAddr:" << inet_ntoa(remoteAddr.sin_addr) << endl;
   int nodeSock=0;
@@ -970,6 +971,7 @@ Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteA
   cout << "3" << endl;
   if (tempMessage.messageType!=3) PrintMessage(tempMessage);
   cout << "4" << endl;
+  pthread_mutex_unlock(&UdpMutex);
   return ret;
 }
 
@@ -2706,7 +2708,9 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   tempDstAddr=tempPrimus->pathTable[pathIndex].addrSet[0];
                 }
               }
-              else if (tempMessage.dstIdent.level==2)
+              else if (tempMessage.dstIdent.level==2 
+                && tempMessage.dstIdent.position%tempPrimus->m_LeafNodes==tempPrimus->m_Ident.position%tempPrimus->m_LeafNodes 
+                && tempMessage.dstIdent.position!=tempPrimus->m_Ident.position)
               {
                 if (tempMessage.dstIdent.position/tempPrimus->m_LeafNodes<tempPrimus->m_Pod)
                   pathIndex=(tempPrimus->m_nPods-1)*tempPrimus->m_ToRNodes*(tempPrimus->m_SpineNodes/tempPrimus->m_LeafNodes)+(tempMessage.dstIdent.position/tempPrimus->m_LeafNodes)*(tempPrimus->m_SpineNodes/tempPrimus->m_LeafNodes);
@@ -2722,7 +2726,8 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   }
                 }
               }
-              else if (tempMessage.dstIdent.level==3)
+              else if (tempMessage.dstIdent.level==3
+                && tempMessage.dstIdent.position/(tempPrimus->m_SpineNodes/tempPrimus->m_LeafNodes)==tempPrimus->m_Ident.position%tempPrimus->m_LeafNodes)
               {
                 pathIndex=(tempPrimus->m_nPods-1)*(tempPrimus->m_ToRNodes+1)*(tempPrimus->m_SpineNodes/tempPrimus->m_LeafNodes)+tempMessage.dstIdent.position%(tempPrimus->m_SpineNodes/tempPrimus->m_LeafNodes);
                 if (tempPrimus->pathTable[pathIndex].faultLinkCounter==0)
@@ -2743,7 +2748,8 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   tempDstAddr=tempPrimus->pathTable[pathIndex].addrSet[0];
                 }
               }
-              else if (tempMessage.dstIdent.level==2)
+              else if (tempMessage.dstIdent.level==2
+                && tempPrimus->m_Ident.position/(tempPrimus->m_SpineNodes/tempPrimus->m_LeafNodes)==tempMessage.dstIdent.position%tempPrimus->m_LeafNodes)
               {
                 pathIndex=tempPrimus->m_nPods*tempPrimus->m_ToRNodes+tempMessage.dstIdent.position/tempPrimus->m_LeafNodes;
                 if (tempPrimus->pathTable[pathIndex].faultLinkCounter==0)

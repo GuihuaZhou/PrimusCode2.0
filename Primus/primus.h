@@ -312,6 +312,7 @@ private:
     pthread_mutex_t MsgQueueMutex;//=PTHREAD_MUTEX_INITIALIZER;//mutex for this queue
     pthread_mutex_t LinkTableMutex;
     pthread_mutex_t MsgQueueEventMutex[MAX_OUTBOUNDING_EVENTS];
+    pthread_mutex_t UdpMutex;
     //mutex for each event position in this queue
     //Note mutex have to be global variables, so we don't attach it to each event struct.
 
