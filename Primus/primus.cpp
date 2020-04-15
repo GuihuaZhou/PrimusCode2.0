@@ -1095,6 +1095,11 @@ Primus::SendLSToController(struct link tempLink,int linkIndex,ident faultNextHop
       }
     }
   }
+  cout << "Send RP " << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+  << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+  if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+  else cout << "DOWN";
+  cout << endl;
 }
 
 void* 
@@ -2304,12 +2309,12 @@ Primus::RecvMessageThread(void* tempThreadParam)
             else if (tempPrimus->m_Role==1)
             {
               tempPrimus->RecvRS(tempMessage.linkInfo);// 收到response，更新链路表，计算时间开销
-              // cout << "Recv RS " << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
-              // << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-              // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-              // else cout << "DOWN";
-              // cout << endl;
-              tempPrimus->PrintMessage(tempMessage);
+              cout << "Recv RS " << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+              << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+              if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+              else cout << "DOWN";
+              cout << endl;
+              // tempPrimus->PrintMessage(tempMessage);
             }
             break;
           case 3:// keepalive ack,node
