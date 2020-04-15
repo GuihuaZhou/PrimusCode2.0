@@ -2451,7 +2451,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
                 << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
-                << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identb.position << "]." << endl;
+                << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "]." << endl;
               }
             }
             else if (tempPrimus->m_Role==2)// master recv
