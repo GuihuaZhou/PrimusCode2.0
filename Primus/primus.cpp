@@ -316,9 +316,7 @@ Primus::PrintMessage(struct message tempMessage)
   if (tempMessage.ack==true) m_MessageLogFout << ":RS";
   else m_MessageLogFout << ":RP";
   m_MessageLogFout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
-  m_MessageLogFout <<  ",fow:";
-  if (!SameNode(tempMessage.fowIdent,tempIdent)) m_MessageLogFout << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
-  else m_MessageLogFout << "-.-";
+  if (!SameNode(tempMessage.fowIdent,tempIdent)) m_MessageLogFout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
   m_MessageLogFout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
 
   if (tempMessage.messageType==2)
