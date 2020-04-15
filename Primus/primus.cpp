@@ -962,13 +962,13 @@ Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteA
   char sendBuf[MESSAGE_BUF_SIZE];
   memcpy(sendBuf,&tempMessage,sizeof(struct message));
 
-  cout << "1" << endl;
+  // cout << "1" << endl;
   ret=sendto(nodeSock,sendBuf,sizeof(struct message),0,(struct sockaddr *)&remoteAddr,sizeof(remoteAddr));
-  cout << "2" << endl;
+  // cout << "2" << endl;
   close(nodeSock);
-  cout << "3" << endl;
+  // cout << "3" << endl;
   if (tempMessage.messageType!=3) PrintMessage(tempMessage);
-  cout << "4" << endl;
+  // cout << "4" << endl;
   pthread_mutex_unlock(&UdpMutex);
   return ret;
 }
