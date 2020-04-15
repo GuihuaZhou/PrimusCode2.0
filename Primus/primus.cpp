@@ -2276,6 +2276,8 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.dstIdent=tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.srcIdent;
                 tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.srcIdent=tempPrimus->m_Ident;
                 tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.ack=true;
+                tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.transportType=1;
+                tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.fowIdent=tempPrimus->tempIdent;
 
                 int dstNodeSock=tempPrimus->GetNodeSock(tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.dstIdent);
                 if (dstNodeSock>0 &&
@@ -2309,11 +2311,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
             else if (tempPrimus->m_Role==1)
             {
               tempPrimus->RecvRS(tempMessage.linkInfo);// 收到response，更新链路表，计算时间开销
-              cout << "Recv RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
-              << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-              if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-              else cout << "DOWN";
-              cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
+              
               // tempPrimus->PrintMessage(tempMessage);
             }
             break;
