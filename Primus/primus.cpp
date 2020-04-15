@@ -1072,9 +1072,12 @@ Primus::SendLSToController(struct link tempLink,int linkIndex,ident faultNextHop
     {
       tempThreadParam->tempMessage=tempMessage;
 
-      if ((pthread_create(&SrcWaitRSThreadID,NULL,SrcWaitRSThread,(void *)tempThreadParam))!=0)
+      if (tempLink.eventId!=1)
       {
-        cout << "Create SrcWaitRSThread failed." << endl;
+        if ((pthread_create(&SrcWaitRSThreadID,NULL,SrcWaitRSThread,(void *)tempThreadParam))!=0)
+        {
+          cout << "Create SrcWaitRSThread failed." << endl;
+        }
       }
       
       srand((unsigned)time(NULL));
@@ -2486,12 +2489,12 @@ Primus::RecvMessageThread(void* tempThreadParam)
               else 
               {
                 // tempPrimus->PrintMessage(tempMessage);
-                tempMessage.dstIdent=tempMessage.srcIdent;
-                tempMessage.srcIdent=tempPrimus->m_Ident;
-                tempMessage.ack=true;
+                // tempMessage.dstIdent=tempMessage.srcIdent;
+                // tempMessage.srcIdent=tempPrimus->m_Ident;
+                // tempMessage.ack=true;
 
-                if (tempPrimus->SendMessageByTCP(sock,tempMessage));
-                else cout << "Invaild nodeSock.";
+                // if (tempPrimus->SendMessageByTCP(sock,tempMessage));
+                // else cout << "Invaild nodeSock.";
               }
             }
             else if (tempPrimus->m_Role==3)// slave recv
