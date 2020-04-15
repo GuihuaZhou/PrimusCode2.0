@@ -2258,11 +2258,11 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 if (PRINT_MASTER_RECV_ALLRS_TIME)
                 {
-                  // cout << "Master recv all RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
-                  // << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-                  // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-                  // else cout << "DOWN";
-                  // cout << "]." << endl;
+                  cout << "Master recv all RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+                  << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+                  if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+                  else cout << "DOWN";
+                  cout << "]." << endl;
                   startStamp=tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].startStamp;
                 }
 
@@ -2309,7 +2309,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
               // else cout << "DOWN";
               // cout << endl;
-              // tempPrimus->PrintMessage(tempMessage);
+              tempPrimus->PrintMessage(tempMessage);
             }
             break;
           case 3:// keepalive ack,node
@@ -2452,7 +2452,10 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
                 << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
-                << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "]." << endl;
+                << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+                if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+                else cout << "DOWN";
+                cout << "]." << endl;
               }
             }
             else if (tempPrimus->m_Role==2)// master recv
