@@ -3699,8 +3699,8 @@ Primus::Start()
 
     InitiateNDServer();
     ConnectWithMaster("172.16.80.1",MGMT_INTERFACE);
-    // ConnectWithMaster("172.16.80.4",MGMT_INTERFACE);
-    // ConnectWithMaster("172.16.80.7",MGMT_INTERFACE);
+    ConnectWithMaster("172.16.80.4",MGMT_INTERFACE);
+    ConnectWithMaster("172.16.80.7",MGMT_INTERFACE);
     
     if (NODE_TEST) 
     {
