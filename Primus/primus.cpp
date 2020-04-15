@@ -2416,7 +2416,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 {
                   if (tempMessage.transportType==1) 
                   {
-                    if (!tempPrimus->SameNode(tempPrimus->tempIdent,tempMessage.fowIdent))// direct
+                    if (tempPrimus->SameNode(tempPrimus->tempIdent,tempMessage.fowIdent))// direct
                       tempPrimus->recvTcpDirNum++;
                     else tempPrimus->recvTcpInDirNum++;
                   }
@@ -2462,7 +2462,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 {
                   if (tempMessage.transportType==1) 
                   {
-                    if (!tempPrimus->SameNode(tempPrimus->tempIdent,tempMessage.fowIdent))// direct
+                    if (tempPrimus->SameNode(tempPrimus->tempIdent,tempMessage.fowIdent))// direct
                       tempPrimus->recvTcpDirNum++;
                     else tempPrimus->recvTcpInDirNum++;
                   }
