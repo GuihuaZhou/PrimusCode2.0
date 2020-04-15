@@ -1072,10 +1072,14 @@ Primus::SendLSToController(struct link tempLink,int linkIndex,ident faultNextHop
     if (controllerSockTable[i].controllerRole==2) 
     {
       tempThreadParam->tempMessage=tempMessage;
-      if ((pthread_create(&SrcWaitRSThreadID,NULL,SrcWaitRSThread,(void *)tempThreadParam))!=0)
+      if (tempLink.eventId!=1)
       {
-        cout << "Create SrcWaitRSThread failed." << endl;
+        if ((pthread_create(&SrcWaitRSThreadID,NULL,SrcWaitRSThread,(void *)tempThreadParam))!=0)
+        {
+          cout << "Create SrcWaitRSThread failed." << endl;
+        }
       }
+      
       srand((unsigned)time(NULL));
       for (int j=0;j<MAX_FOWNODE_NUM;j++)
       {
@@ -2780,13 +2784,13 @@ Primus::RecvMessageThread(void* tempThreadParam)
               // } 
               // cout << "\n"; 
               
-              // sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
-              // // cout << "localAddr:" << inet_ntoa(tempLocalAddr.sin_addr) << endl;
-              // // cout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
-              // tempMessage.fowIdent=tempPrimus->m_Ident;
-              // if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
-              //   tempPrimus->SendMessageByUDP(tempLocalAddr,tempDstAddr,tempMessage);
-              // // cout << " completely!" << endl;
+              sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
+              // cout << "localAddr:" << inet_ntoa(tempLocalAddr.sin_addr) << endl;
+              // cout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
+              tempMessage.fowIdent=tempPrimus->m_Ident;
+              if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
+                tempPrimus->SendMessageByUDP(tempLocalAddr,tempDstAddr,tempMessage);
+              // cout << " completely!" << endl;
             }
             else
             {
