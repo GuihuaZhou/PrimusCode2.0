@@ -2262,13 +2262,13 @@ Primus::RecvMessageThread(void* tempThreadParam)
 
               if (tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesResponsed==tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesShouldNotify)
               {
+                cout << endl << "Master recv all RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+                << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+                if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+                else cout << "DOWN";
+                cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
                 if (PRINT_MASTER_RECV_ALLRS_TIME)
                 {
-                  cout << endl << "Master recv all RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
-                  << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-                  if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-                  else cout << "DOWN";
-                  cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
                   startStamp=tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].startStamp;
                 }
 
