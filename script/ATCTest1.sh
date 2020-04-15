@@ -145,7 +145,7 @@ do
     echo "开始改变链路......" >> /home/guolab/ATCTest-primus.log
     echo "" >> /home/guolab/ATCTest-primus.log
 
-    /home/guolab/tool/linkChange /home/guolab/ATCTest-primus.log /home/guolab/tool/linkInfo-2.txt 0 0 0.25 $mean Primus &
+    /home/guolab/tool/linkChange /home/guolab/ATCTest-primus.log /home/guolab/tool/linkInfo-1.txt 0 0 0.25 $mean Primus &
 
     sleep $time
     echo "终止进程"
