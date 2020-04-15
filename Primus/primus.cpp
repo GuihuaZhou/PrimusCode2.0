@@ -2416,6 +2416,21 @@ Primus::RecvMessageThread(void* tempThreadParam)
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
+
+                if (tempMessage.linkInfo.eventId!=1)
+                {
+                  if (tempMessage.transportType==1) 
+                  {
+                    if (tempPrimus->SameNode(tempPrimus->tempIdent,tempMessage.fowIdent))// direct
+                      tempPrimus->recvTcpDirNum++;
+                    else tempPrimus->recvTcpInDirNum++;
+                  }
+                  else if (tempMessage.transportType==2) tempPrimus->recvUdpNum++;
+                  Logfout << "Recv tcp(Direct) packets:" << tempPrimus->recvTcpDirNum
+                  << "\nRecv tcp(InDirect) packets:" << tempPrimus->recvTcpInDirNum
+                  << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
+                }
+                
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
@@ -2439,20 +2454,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
                       break;
                     }
                   }
-                }
-                
-                if (tempMessage.linkInfo.eventId!=1)
-                {
-                  if (tempMessage.transportType==1) 
-                  {
-                    if (tempPrimus->SameNode(tempPrimus->tempIdent,tempMessage.fowIdent))// direct
-                      tempPrimus->recvTcpDirNum++;
-                    else tempPrimus->recvTcpInDirNum++;
-                  }
-                  else if (tempMessage.transportType==2) tempPrimus->recvUdpNum++;
-                  Logfout << "Recv tcp(Direct) packets:" << tempPrimus->recvTcpDirNum
-                  << "\nRecv tcp(InDirect) packets:" << tempPrimus->recvTcpInDirNum
-                  << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
                 }
 
                 if (PRINT_NODE_MODIFY_TIME)
