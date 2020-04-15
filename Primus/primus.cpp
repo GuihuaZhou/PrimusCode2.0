@@ -927,8 +927,6 @@ int
 Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteAddr,struct message tempMessage)
 {
   pthread_mutex_lock(&UdpMutex);
-  cout << "localAddr:" << inet_ntoa(localAddr.sin_addr) << endl;
-  cout << "remoteAddr:" << inet_ntoa(remoteAddr.sin_addr) << endl;
   int nodeSock=0;
   int ret=0;
 
@@ -2786,9 +2784,10 @@ Primus::RecvMessageThread(void* tempThreadParam)
               cout << "\n"; 
               
               sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
-              sockaddr_in tempGateAddr=tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent);
-              if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr && tempGateAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
-                tempPrimus->SendMessageByUDP(tempLocalAddr,tempGateAddr,tempMessage);
+              cout << "localAddr:" << inet_ntoa(localAddr.sin_addr) << endl;
+              cout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
+              if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
+                tempPrimus->SendMessageByUDP(tempLocalAddr,tempDstAddr,tempMessage);
               cout << " completely!" << endl;
             }
             else
