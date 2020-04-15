@@ -2412,7 +2412,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 gettimeofday(&startStamp,NULL);
               }
               
-              tempPrimus->PrintMessage(tempMessage);
+              // tempPrimus->PrintMessage(tempMessage);
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
@@ -2423,7 +2423,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 if (tempMessage.transportType==1)
                 {
                   tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
-                  tempPrimus->PrintMessage(tempMessage);
+                  // tempPrimus->PrintMessage(tempMessage);
                 }
                 else if (tempMessage.transportType==2)// 从udp收到，转为tcp返回
                 {
@@ -2435,7 +2435,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                     {
                       tempMessage.transportType=1;
                       tempPrimus->SendMessageByTCP(tempPrimus->controllerSockTable[j].controllerSock,tempMessage);
-                      tempPrimus->PrintMessage(tempMessage);
+                      // tempPrimus->PrintMessage(tempMessage);
                       break;
                     }
                   }
