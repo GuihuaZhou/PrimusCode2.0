@@ -4,8 +4,9 @@ leafNodes=2
 torNodes=1
 nPods=2
 killall -9 Primus
-pssh -i -h /home/guolab/host/ATChost.txt "killall -9 Primus;"
-pssh -i -h /home/guolab/host/master.txt "killall -9 Primus;"
+killall -9 linkChange
+pssh -i -h /home/guolab/host/ATChost.txt "killall -9 Primus;killall -9 linkChange;"
+pssh -i -h /home/guolab/host/master.txt "killall -9 Primus;killall -9 linkChange;"
 # 确保所有网卡都是正常的
 # Master
 ifconfig eth0 up
@@ -40,17 +41,18 @@ rm /home/guolab/NeighborTable*.txt;
 rm /home/guolab/Primus/Primus;
 rm /home/guolab/switch.stdout;
 rm /home/guolab/switch.stderr;
-rm /home/guolab/PacketTypeRecord*;
+rm /home/guolab/PacketType*;
 # master先编译
 pssh -i -h /home/guolab/host/master.txt "killall -9 Primus;rm /home/guolab/LinkTable*.txt;
 rm /home/guolab/PathTable*.txt;rm /home/guolab/NodeSockTable*.txt;rm /home/guolab/NeighborTable*.txt;
 rm /home/guolab/ControllerSockTable*.txt;rm /home/guolab/PrimusLog*.txt;
-rm /home/guolab/CostTime*.txt;rm /home/guolab/Primus;rm /home/guolab/switch.stdout;rm /home/guolab/switch.stderr;"
+rm /home/guolab/CostTime*.txt;rm /home/guolab/Primus;rm /home/guolab/switch.stdout;rm /home/guolab/switch.stderr;
+rm /home/guolab/PacketType*;"
 pssh -i -h /home/guolab/host/ATChost.txt "killall -9 Primus;rm /home/guolab/LinkTable*.txt;
 rm /home/guolab/PathTable*.txt;rm /home/guolab/NodeSockTable*.txt;rm /home/guolab/NeighborTable*.txt;
 rm /home/guolab/ControllerSockTable*.txt;rm /home/guolab/PrimusLog*.txt;
 rm /home/guolab/CostTime*.txt;rm /home/guolab/Primus;rm /home/guolab/switch.stdout;rm /home/guolab/switch.stderr;
-rm /home/guolab/PacketTypeRecord*;"
+rm /home/guolab/PacketType*;"
 # 编译
 rm /home/guolab/Primus/Primus
 cd /home/guolab/Primus

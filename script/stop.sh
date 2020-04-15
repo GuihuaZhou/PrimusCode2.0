@@ -24,9 +24,10 @@ ssh root@10.0.80.11 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 echo ""
 echo "stop master"
 killall -9 Primus
-pssh -i -h /home/guolab/host/master.txt -t 0 "killall -9 Primus;"
+killall -9 linkChange
+pssh -i -h /home/guolab/host/master.txt -t 0 "killall -9 Primus;killall -9 linkChange;"
 echo ""
 echo "stop node"
-pssh -i -h /home/guolab/host/ATChost.txt -t 0 "killall -9 Primus;" 
+pssh -i -h /home/guolab/host/ATChost.txt -t 0 "killall -9 Primus;killall -9 linkChange;" 
 #
 pssh -i -h /home/guolab/host/ATChost.txt "killall zebra; killall bgpd;"
