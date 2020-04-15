@@ -1,8 +1,8 @@
 #!/bin/bash
 # Macro-benchmark: Impact on Applications
 counter=1 # 实验次数
-mean=96990000 # 期望
-time=1000 # s
+mean=9699000 # 期望
+time=100 # s
 # # 重启
 # pssh -i -h /home/guolab/host/ATChost.txt "echo 'hello';"
 # pssh -i -h /home/guolab/host/ATChost.txt "reboot;"
