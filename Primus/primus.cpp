@@ -919,7 +919,7 @@ Primus::SendMessageByTCP(int sock,struct message tempMessage)
   memcpy(sendBuf,&tempMessage,sizeof(struct message));
   int ret=send(sock,sendBuf,sizeof(struct message),0);
 
-  if (tempMessage.messageType!=3) PrintMessage(tempMessage);
+  // if (tempMessage.messageType!=3) PrintMessage(tempMessage);
   return ret;
 }
 
@@ -964,7 +964,7 @@ Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteA
 
   ret=sendto(nodeSock,sendBuf,sizeof(struct message),0,(struct sockaddr *)&remoteAddr,sizeof(remoteAddr));
   close(nodeSock);
-  if (tempMessage.messageType!=3) PrintMessage(tempMessage);
+  // if (tempMessage.messageType!=3) PrintMessage(tempMessage);
   pthread_mutex_unlock(&UdpMutex);
   return ret;
 }
@@ -2235,7 +2235,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
           case 1:// hello ack
             // cout << "Recv hello ack from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << endl;
             tempPrimus->UpdateControllerSockTable(sock,tempMessage.srcIdent,tempMessage.srcIdentRole);
-            tempPrimus->PrintMessage(tempMessage);
+            // tempPrimus->PrintMessage(tempMessage);
             break;
           case 2:// link status response
             if (tempPrimus->m_Role==2)// master
@@ -2309,7 +2309,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
               // else cout << "DOWN";
               // cout << endl;
-              tempPrimus->PrintMessage(tempMessage);
+              // tempPrimus->PrintMessage(tempMessage);
             }
             break;
           case 3:// keepalive ack,node
@@ -2410,7 +2410,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
 
-                tempPrimus->PrintMessage(tempMessage);
+                // tempPrimus->PrintMessage(tempMessage);
                 tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
 
                 if (PRINT_NODE_MODIFY_TIME)
@@ -2446,7 +2446,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 tempPrimus->EnqueueMessageIntoEventQueue(tempMessage);
                 Logfout << "Recv tcp packets:" << tempPrimus->recvTcpNum << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
-                tempPrimus->PrintMessage(tempMessage);
+                // tempPrimus->PrintMessage(tempMessage);
               }
               else 
               {
@@ -2465,7 +2465,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 tempPrimus->UpdateLinkTable(tempMessage);
               }
-              tempPrimus->PrintMessage(tempMessage);
+              // tempPrimus->PrintMessage(tempMessage);
             }
             break;
           case 3:// recv keepalive report
@@ -2500,7 +2500,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 }
               }
               // tempPrimus->PrintControllerSockTable();
-              tempPrimus->PrintMessage(tempMessage);
+              // tempPrimus->PrintMessage(tempMessage);
             }
             else if (tempPrimus->m_Role==2)// master recv
             {
@@ -2516,7 +2516,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 if (tempPrimus->m_RecvReElectFromNode==false)// 未收到请求
                 {
-                  tempPrimus->PrintMessage(tempMessage);
+                  // tempPrimus->PrintMessage(tempMessage);
                   for (int j=0;j<MAX_CTRL_NUM;j++)
                   {
                     if (tempPrimus->controllerSockTable[j].controllerSock!=-1 
