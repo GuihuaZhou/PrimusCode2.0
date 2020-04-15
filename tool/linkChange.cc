@@ -104,7 +104,10 @@ void* ProcessThread(void* tempThreadParam)
 			// down
 			system(commandA.c_str());
 			// system(commandB.c_str());
-			usleep(meanB);
+			if (!strcmp(ethA.c_str(),"eth0"))
+				usleep(meanB);
+			else 
+				usleep(interval);
 			// up
 			system(commandC.c_str());
 			// system(commandD.c_str());
