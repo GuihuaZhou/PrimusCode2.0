@@ -1,3 +1,13 @@
+echo ""
+echo "stop master"
+killall -9 Primus
+killall -9 linkChange
+pssh -i -h /home/guolab/host/master.txt -t 0 "killall -9 Primus;killall -9 linkChange;"
+echo ""
+echo "stop node"
+pssh -i -h /home/guolab/host/ATChost.txt -t 0 "killall -9 Primus;killall -9 linkChange;" 
+#
+pssh -i -h /home/guolab/host/ATChost.txt "killall zebra; killall bgpd;"
 # 确保所有网卡都是正常的
 # Master
 ifconfig eth0 up
@@ -21,13 +31,3 @@ ssh root@10.0.80.23 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;ifconfig
 # ToR
 ssh root@10.0.80.10 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 ssh root@10.0.80.11 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
-echo ""
-echo "stop master"
-killall -9 Primus
-killall -9 linkChange
-pssh -i -h /home/guolab/host/master.txt -t 0 "killall -9 Primus;killall -9 linkChange;"
-echo ""
-echo "stop node"
-pssh -i -h /home/guolab/host/ATChost.txt -t 0 "killall -9 Primus;killall -9 linkChange;" 
-#
-pssh -i -h /home/guolab/host/ATChost.txt "killall zebra; killall bgpd;"
