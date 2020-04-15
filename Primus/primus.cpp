@@ -2450,7 +2450,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               }
               else 
               {
-                tempPrimus->PrintMessage(tempMessage);
+                // tempPrimus->PrintMessage(tempMessage);
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
