@@ -962,13 +962,9 @@ Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteA
   char sendBuf[MESSAGE_BUF_SIZE];
   memcpy(sendBuf,&tempMessage,sizeof(struct message));
 
-  // cout << "1" << endl;
   ret=sendto(nodeSock,sendBuf,sizeof(struct message),0,(struct sockaddr *)&remoteAddr,sizeof(remoteAddr));
-  // cout << "2" << endl;
   close(nodeSock);
-  // cout << "3" << endl;
   if (tempMessage.messageType!=3) PrintMessage(tempMessage);
-  // cout << "4" << endl;
   pthread_mutex_unlock(&UdpMutex);
   return ret;
 }
@@ -2874,14 +2870,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
             numOfSentNodes++;
           }
           // cout << "[ret:" << ret << "]." << endl;
-          // for (int j=0;j<MAX_FOWNODE_NUM;j++)
-          // {
-          //   nodeIndex=rand()%nodeSockNum;
-          //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-          //   {
-          //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
-          //   }
-          // }
+          for (int j=0;j<MAX_FOWNODE_NUM;j++)
+          {
+            nodeIndex=rand()%nodeSockNum;
+            if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+            {
+              SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
+            }
+          }
         }
         else if (nodeSockTable[i].nodeIdent.level==2 
           && nodeSockTable[i].nodeIdent.position%m_LeafNodes==tempIndex)// leafnode，只有相对位置相同才发送
@@ -2893,14 +2889,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
             numOfSentNodes++;
           }
           // cout << "[ret:" << ret << "]." << endl;
-          // for (int j=0;j<MAX_FOWNODE_NUM;j++)
-          // {
-          //   nodeIndex=rand()%nodeSockNum;
-          //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-          //   {
-          //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
-          //   }
-          // }
+          for (int j=0;j<MAX_FOWNODE_NUM;j++)
+          {
+            nodeIndex=rand()%nodeSockNum;
+            if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+            {
+              SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
+            }
+          }
         }
         else if (nodeSockTable[i].nodeIdent.level==3
           && ((SameNode(tempMessage.linkInfo.identA,nodeSockTable[i].nodeIdent)) || (SameNode(tempMessage.linkInfo.identB,nodeSockTable[i].nodeIdent))))
@@ -2912,14 +2908,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
             numOfSentNodes++;
           }
           // cout << "[ret:" << ret << "]." << endl;
-          // for (int j=0;j<MAX_FOWNODE_NUM;j++)
-          // {
-          //   nodeIndex=rand()%nodeSockNum;
-          //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-          //   {
-          //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
-          //   }
-          // }
+          for (int j=0;j<MAX_FOWNODE_NUM;j++)
+          {
+            nodeIndex=rand()%nodeSockNum;
+            if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+            {
+              SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
+            }
+          }
         }
         else if (nodeSockTable[i].nodeIdent.level==3)
         {
@@ -2934,14 +2930,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
                 numOfSentNodes++;
               }
               // cout << "[ret:" << ret << "]." << endl;
-              // for (int j=0;j<MAX_FOWNODE_NUM;j++)
-              // {
-              //   nodeIndex=rand()%nodeSockNum;
-              //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-              //   {
-              //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
-              //   }
-              // }
+              for (int j=0;j<MAX_FOWNODE_NUM;j++)
+              {
+                nodeIndex=rand()%nodeSockNum;
+                if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+                {
+                  SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
+                }
+              }
             }
           }
           else if (tempMessage.linkInfo.identA.level==1 || tempMessage.linkInfo.identB.level==1)//leafnode--tornode
@@ -2955,14 +2951,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
                 numOfSentNodes++;
               }
               // cout << "[ret:" << ret << "]." << endl;
-              // for (int j=0;j<MAX_FOWNODE_NUM;j++)
-              // {
-              //   nodeIndex=rand()%nodeSockNum;
-              //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-              //   {
-              //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
-              //   }
-              // }
+              for (int j=0;j<MAX_FOWNODE_NUM;j++)
+              {
+                nodeIndex=rand()%nodeSockNum;
+                if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+                {
+                  SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
+                }
+              }
             }
           }
         }
