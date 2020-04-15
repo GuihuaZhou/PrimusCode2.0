@@ -2604,7 +2604,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
           }
           else // 通过udp转发
           {
-            cout << "start to search path" << endl;
             int pathIndex=0;
             ident tempNextHopIdent=tempPrimus->tempIdent;
             sockaddr_in tempDstAddr=tempPrimus->tempAddr;
@@ -2759,7 +2758,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 }
               }
             }
-            cout << "search path completely" << endl;
             if (!tempPrimus->SameNode(tempNextHopIdent,tempPrimus->tempIdent) && tempDstAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
             {
               cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " forward message["; 
@@ -2785,12 +2783,12 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 if (tempMessage.linkInfo.linkStatus==true) cout << "/UP]";
                 else cout << "/DOWN]";
               } 
-              // cout << ".\n"; 
+              cout << "\n"; 
               
               sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
               sockaddr_in tempGateAddr=tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent);
-              // if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr && tempGateAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
-              //   tempPrimus->SendMessageByUDP(tempLocalAddr,tempGateAddr,tempMessage);
+              if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr && tempGateAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
+                tempPrimus->SendMessageByUDP(tempLocalAddr,tempGateAddr,tempMessage);
               cout << " completely!" << endl;
             }
             else
