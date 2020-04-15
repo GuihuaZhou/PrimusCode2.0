@@ -350,4 +350,7 @@ private:
 
     int recvTcpNum=0;
     int recvUdpNum=0;
+
+    ofstream m_MessageLogFout;
+    ofstream m_PathLogFout;
 };

@@ -36,11 +36,16 @@ Primus::Primus(
     tempAddr.sin_family=AF_INET;
     tempAddr.sin_addr.s_addr=inet_addr("127.0.0.1");
     tempAddr.sin_port=htons(0);
+
+    stringstream logFoutPath;
+    logFoutPath.str("");
+    logFoutPath << COMMON_PATH << "PrimusLog-" << m_Ident.level << "." << m_Ident.position << ".txt";
+    m_MessageLogFout.open(logFoutPath.str().c_str(),ios::app);
 }
 
 Primus::~Primus()
 {
-    // 
+    m_MessageLogFout.close();
 }
 
 int
@@ -293,42 +298,37 @@ Primus::DelRoute(struct sockaddr_in dstAddr,unsigned int prefixLen)
 void 
 Primus::PrintMessage(struct message tempMessage)
 {
-  stringstream logFoutPath;
-  logFoutPath.str("");
-  logFoutPath << COMMON_PATH << "PrimusLog-" << m_Ident.level << "." << m_Ident.position << ".txt";
-  ofstream Logfout(logFoutPath.str().c_str(),ios::app);
+  m_MessageLogFout << GetNow();
+  if (SameNode(tempMessage.srcIdent,m_Ident)) m_MessageLogFout << "Send";
+  else if (SameNode(tempMessage.dstIdent,m_Ident) || ((m_Role==2 || m_Role==3)) && (SameNode(tempMessage.dstIdent,tempIdent))) m_MessageLogFout << "Recv";
+  else m_MessageLogFout << "Forw";
 
-  Logfout << GetNow();
-  if (SameNode(tempMessage.srcIdent,m_Ident)) Logfout << "Send";
-  else if (SameNode(tempMessage.dstIdent,m_Ident) || ((m_Role==2 || m_Role==3)) && (SameNode(tempMessage.dstIdent,tempIdent))) Logfout << "Recv";
-  else Logfout << "Forw";
+  m_MessageLogFout << " message[" ;
+  if (tempMessage.transportType==1) m_MessageLogFout << "TCP][";
+  else m_MessageLogFout << "UDP][";
+  if (SameNode(tempMessage.fowIdent,tempIdent)) m_MessageLogFout << "Direct][";
+  else m_MessageLogFout << "InDirect][";
+  if (tempMessage.messageType==1) m_MessageLogFout << "HL";
+  else if (tempMessage.messageType==2) m_MessageLogFout << "LS";
+  else if (tempMessage.messageType==3) m_MessageLogFout << "KA";
+  else if (tempMessage.messageType==4) m_MessageLogFout << "RE";
 
-  Logfout << " message[" ;
-  if (tempMessage.transportType==1) Logfout << "TCP][";
-  else Logfout << "UDP][";
-  if (SameNode(tempMessage.fowIdent,tempIdent)) Logfout << "Direct][";
-  else Logfout << "InDirect][";
-  if (tempMessage.messageType==1) Logfout << "HL";
-  else if (tempMessage.messageType==2) Logfout << "LS";
-  else if (tempMessage.messageType==3) Logfout << "KA";
-  else if (tempMessage.messageType==4) Logfout << "RE";
-
-  if (tempMessage.ack==true) Logfout << ":RS";
-  else Logfout << ":RP";
-  Logfout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
-  if (!SameNode(tempMessage.fowIdent,tempIdent)) Logfout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
-  Logfout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
+  if (tempMessage.ack==true) m_MessageLogFout << ":RS";
+  else m_MessageLogFout << ":RP";
+  m_MessageLogFout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
+  m_MessageLogFout <<  ",fow:";
+  if (!SameNode(tempMessage.fowIdent,tempIdent)) m_MessageLogFout << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
+  else m_MessageLogFout << "-.-";
+  m_MessageLogFout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
 
   if (tempMessage.messageType==2)
   {
-    Logfout << "[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+    m_MessageLogFout << "[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
     << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position;
-    if (tempMessage.linkInfo.linkStatus==true) Logfout << "/UP]";
-    else Logfout << "/DOWN]";
+    if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "/UP]";
+    else m_MessageLogFout << "/DOWN]";
   }
-  Logfout << "." << endl;
-
-  Logfout.close();
+  m_MessageLogFout << "." << endl;
 }
 
 void 
@@ -1829,7 +1829,7 @@ Primus::UpdateMultiPathBlock(int startIndex,int affectedNextHopIndex,int numOfMo
       }
     }
   }
-  PrintPathTable();
+  // PrintPathTable();
   return true;
 }
 
@@ -1889,7 +1889,7 @@ Primus::UpdateSinglePathBlock(int startIndex,int numOfModifyPathEntryPerDstNode,
       }
     }
   }
-  PrintPathTable();
+  // PrintPathTable();
   return true;
 }
 
@@ -2079,7 +2079,7 @@ Primus::UpdatePathTable(struct link tempLink)
   default:
     break;
   }
-  PrintPathTable();
+  // PrintPathTable();
   return true;
 }
 
@@ -2226,7 +2226,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
       struct message tempMessage;
       memcpy(&tempMessage,recvBuf,sizeof(struct message));
 
-      if (tempMessage.messageType!=3) tempPrimus->PrintMessage(tempMessage);
+      // if (tempMessage.messageType!=3) tempPrimus->PrintMessage(tempMessage);
 
       // dstIdent为本Node
       if (tempPrimus->SameNode(tempPrimus->m_Ident,tempMessage.dstIdent)
@@ -2759,38 +2759,38 @@ Primus::RecvMessageThread(void* tempThreadParam)
             }
             if (!tempPrimus->SameNode(tempNextHopIdent,tempPrimus->tempIdent) && tempDstAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
             {
-              cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " forward message["; 
-              if (tempMessage.transportType==1) Logfout << "TCP][";
-              else Logfout << "UDP][";
-              if (tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) Logfout << "Direct][";
-              else Logfout << "Forward][";
-              if (tempMessage.messageType==1) cout << "HL";
-              else if (tempMessage.messageType==2) cout << "LS";
-              else if (tempMessage.messageType==3) cout << "KA";
-              else if (tempMessage.messageType==4) cout << "RE";
+              // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " forward message["; 
+              // if (tempMessage.transportType==1) Logfout << "TCP][";
+              // else Logfout << "UDP][";
+              // if (tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) Logfout << "Direct][";
+              // else Logfout << "Forward][";
+              // if (tempMessage.messageType==1) cout << "HL";
+              // else if (tempMessage.messageType==2) cout << "LS";
+              // else if (tempMessage.messageType==3) cout << "KA";
+              // else if (tempMessage.messageType==4) cout << "RE";
 
-              if (tempMessage.ack==true) cout << ":RS";
-              else cout << ":RP";
-              cout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
-              if (!tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) cout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
-              cout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
+              // if (tempMessage.ack==true) cout << ":RS";
+              // else cout << ":RP";
+              // cout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
+              // if (!tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) cout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
+              // cout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
 
-              if (tempMessage.messageType==2)
-              {
-                cout << "[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
-                << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position;
-                if (tempMessage.linkInfo.linkStatus==true) cout << "/UP]";
-                else cout << "/DOWN]";
-              } 
-              cout << "\n"; 
+              // if (tempMessage.messageType==2)
+              // {
+              //   cout << "[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+              //   << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position;
+              //   if (tempMessage.linkInfo.linkStatus==true) cout << "/UP]";
+              //   else cout << "/DOWN]";
+              // } 
+              // cout << "\n"; 
               
               sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
-              cout << "localAddr:" << inet_ntoa(tempLocalAddr.sin_addr) << endl;
-              cout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
+              // cout << "localAddr:" << inet_ntoa(tempLocalAddr.sin_addr) << endl;
+              // cout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
               tempMessage.fowIdent=tempPrimus->m_Ident;
               if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
                 tempPrimus->SendMessageByUDP(tempLocalAddr,tempDstAddr,tempMessage);
-              cout << " completely!" << endl;
+              // cout << " completely!" << endl;
             }
             else
             {
@@ -3651,7 +3651,7 @@ Primus::Start()
   else// node
   {
     InitiatePathTable();
-    PrintPathTable();
+    // PrintPathTable();
 
     InitiateControllerTable();
     // PrintControllerSockTable();
