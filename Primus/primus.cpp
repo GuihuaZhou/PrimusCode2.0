@@ -298,6 +298,7 @@ Primus::DelRoute(struct sockaddr_in dstAddr,unsigned int prefixLen)
 void 
 Primus::PrintMessage(struct message tempMessage)
 {
+  pthread_mutex_lock(&PrintMessageMutex);
   m_MessageLogFout << GetNow();
   if (SameNode(tempMessage.srcIdent,m_Ident)) m_MessageLogFout << "Send";
   else if (SameNode(tempMessage.dstIdent,m_Ident) || ((m_Role==2 || m_Role==3)) && (SameNode(tempMessage.dstIdent,tempIdent))) m_MessageLogFout << "Recv";
@@ -327,6 +328,7 @@ Primus::PrintMessage(struct message tempMessage)
     else m_MessageLogFout << "/DOWN]";
   }
   m_MessageLogFout << "." << endl;
+  pthread_mutex_unlock(&PrintMessageMutex);
 }
 
 void 
