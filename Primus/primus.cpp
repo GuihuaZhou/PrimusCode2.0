@@ -1071,12 +1071,10 @@ Primus::SendLSToController(struct link tempLink,int linkIndex,ident faultNextHop
     if (controllerSockTable[i].controllerRole==2) 
     {
       tempThreadParam->tempMessage=tempMessage;
-      if (tempLink.eventId!=1)
+
+      if ((pthread_create(&SrcWaitRSThreadID,NULL,SrcWaitRSThread,(void *)tempThreadParam))!=0)
       {
-        if ((pthread_create(&SrcWaitRSThreadID,NULL,SrcWaitRSThread,(void *)tempThreadParam))!=0)
-        {
-          cout << "Create SrcWaitRSThread failed." << endl;
-        }
+        cout << "Create SrcWaitRSThread failed." << endl;
       }
       
       srand((unsigned)time(NULL));
@@ -2312,6 +2310,11 @@ Primus::RecvMessageThread(void* tempThreadParam)
             {
               tempPrimus->RecvRS(tempMessage.linkInfo);// 收到response，更新链路表，计算时间开销        
               // tempPrimus->PrintMessage(tempMessage);
+              cout << "Recv RP[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+              << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+              if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+              else cout << "DOWN";
+              cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
             }
             break;
           case 3:// keepalive ack,node
@@ -3696,8 +3699,8 @@ Primus::Start()
 
     InitiateNDServer();
     ConnectWithMaster("172.16.80.1",MGMT_INTERFACE);
-    ConnectWithMaster("172.16.80.4",MGMT_INTERFACE);
-    ConnectWithMaster("172.16.80.7",MGMT_INTERFACE);
+    // ConnectWithMaster("172.16.80.4",MGMT_INTERFACE);
+    // ConnectWithMaster("172.16.80.7",MGMT_INTERFACE);
     
     if (NODE_TEST) 
     {
