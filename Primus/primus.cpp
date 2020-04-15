@@ -914,7 +914,6 @@ Primus::UpdateControllerSockTable(int controllerSock,ident controllerIdent,int c
 int 
 Primus::SendMessageByTCP(int sock,struct message tempMessage)
 {
-  tempMessage.transportType=1;
   char sendBuf[MESSAGE_BUF_SIZE];
   memcpy(sendBuf,&tempMessage,sizeof(struct message));
   int ret=send(sock,sendBuf,sizeof(struct message),0);
@@ -958,7 +957,6 @@ Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteA
     exit(1);
   }
 
-  tempMessage.transportType=2;
   char sendBuf[MESSAGE_BUF_SIZE];
   memcpy(sendBuf,&tempMessage,sizeof(struct message));
 
@@ -1067,6 +1065,7 @@ Primus::SendLSToController(struct link tempLink,int linkIndex,ident faultNextHop
       break;
 
     struct message tempMessage={tempLink,m_Ident,tempIdent,controllerSockTable[i].controllerIdent,false,2,m_Role,-1,1};
+    tempMessage.transportType=1;
     SendMessageByTCP(controllerSockTable[i].controllerSock,tempMessage);
 
     if (controllerSockTable[i].controllerRole==2) 
@@ -1081,6 +1080,7 @@ Primus::SendLSToController(struct link tempLink,int linkIndex,ident faultNextHop
       }
       
       srand((unsigned)time(NULL));
+      tempMessage.transportType=2;
       for (int j=0;j<MAX_FOWNODE_NUM;j++)
       {
         int pathIndex=rand()%pathNum;
@@ -2410,7 +2410,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
 
-                // tempPrimus->PrintMessage(tempMessage);
+                tempPrimus->PrintMessage(tempMessage);
                 tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
                 if (tempMessage.linkInfo.eventId!=1)
                 {
@@ -2449,8 +2449,9 @@ Primus::RecvMessageThread(void* tempThreadParam)
               }
               else 
               {
-                // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position 
-                // << " don't need to UpdateLinkTable." << endl;
+                cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
+                << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
+                << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identb.position << "]." << endl;
               }
             }
             else if (tempPrimus->m_Role==2)// master recv
@@ -2890,11 +2891,13 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
         {
           // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
           // << "[sock:" << nodeSockTable[i].nodeSock << "]";
+          tempMessage.transportType=1;
           if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
           {
             numOfSentNodes++;
           }
           // cout << "[ret:" << ret << "]." << endl;
+          tempMessage.transportType=2;
           for (int j=0;j<MAX_FOWNODE_NUM;j++)
           {
             nodeIndex=rand()%nodeSockNum;
@@ -2909,11 +2912,13 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
         {
           // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
           // << "[sock:" << nodeSockTable[i].nodeSock << "]";
+          tempMessage.transportType=1;
           if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
           {
             numOfSentNodes++;
           }
           // cout << "[ret:" << ret << "]." << endl;
+          tempMessage.transportType=2;
           for (int j=0;j<MAX_FOWNODE_NUM;j++)
           {
             nodeIndex=rand()%nodeSockNum;
@@ -2928,11 +2933,13 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
         {
           // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
           // << "[sock:" << nodeSockTable[i].nodeSock << "]";
+          tempMessage.transportType=1;
           if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
           {
             numOfSentNodes++;
           }
           // cout << "[ret:" << ret << "]." << endl;
+          tempMessage.transportType=2;
           for (int j=0;j<MAX_FOWNODE_NUM;j++)
           {
             nodeIndex=rand()%nodeSockNum;
@@ -2950,11 +2957,13 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
             {
               // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
               // << "[sock:" << nodeSockTable[i].nodeSock << "]";
+              tempMessage.transportType=1;
               if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
               {
                 numOfSentNodes++;
               }
               // cout << "[ret:" << ret << "]." << endl;
+              tempMessage.transportType=2;
               for (int j=0;j<MAX_FOWNODE_NUM;j++)
               {
                 nodeIndex=rand()%nodeSockNum;
@@ -2971,11 +2980,13 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
             {
               // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
               // << "[sock:" << nodeSockTable[i].nodeSock << "]";
+              tempMessage.transportType=1;
               if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
               {
                 numOfSentNodes++;
               }
               // cout << "[ret:" << ret << "]." << endl;
+              tempMessage.transportType=2;
               for (int j=0;j<MAX_FOWNODE_NUM;j++)
               {
                 nodeIndex=rand()%nodeSockNum;
