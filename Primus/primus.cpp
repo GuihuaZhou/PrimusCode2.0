@@ -926,6 +926,8 @@ Primus::SendMessageByTCP(int sock,struct message tempMessage)
 int 
 Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteAddr,struct message tempMessage)
 {
+  cout << "localAddr:" << inet_ntoa(localAddr.sin_addr) << endl;
+  cout << "remoteAddr:" << inet_ntoa(remoteAddr.sin_addr) << endl;
   int nodeSock=0;
   int ret=0;
 
@@ -961,9 +963,13 @@ Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteA
   char sendBuf[MESSAGE_BUF_SIZE];
   memcpy(sendBuf,&tempMessage,sizeof(struct message));
 
+  cout << "1" << endl;
   ret=sendto(nodeSock,sendBuf,sizeof(struct message),0,(struct sockaddr *)&remoteAddr,sizeof(remoteAddr));
+  cout << "2" << endl;
   close(nodeSock);
+  cout << "3" << endl;
   if (tempMessage.messageType!=3) PrintMessage(tempMessage);
+  cout << "4" << endl;
   return ret;
 }
 
@@ -2777,8 +2783,8 @@ Primus::RecvMessageThread(void* tempThreadParam)
               
               sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
               sockaddr_in tempGateAddr=tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent);
-              // if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr && tempGateAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
-              //   tempPrimus->SendMessageByUDP(tempLocalAddr,tempGateAddr,tempMessage);
+              if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr && tempGateAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
+                tempPrimus->SendMessageByUDP(tempLocalAddr,tempGateAddr,tempMessage);
               cout << " completely!" << endl;
             }
             else
