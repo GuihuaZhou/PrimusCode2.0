@@ -1681,8 +1681,6 @@ Primus::UpdateLinkTable(struct message tempMessage)// link status change or ip c
       {
         linkTable[linkIndex].linkInfo.linkStatus=tempLink.linkStatus;
         // PrintLinkTable();
-        if (tempMessage.transportType==1) recvTcpNum++;
-        else if (tempMessage.transportType==2) recvUdpNum++;
         return true;
       }
       else if (linkTable[linkIndex].linkInfo.linkStatus==false && tempLink.linkStatus==true)
@@ -1703,8 +1701,6 @@ Primus::UpdateLinkTable(struct message tempMessage)// link status change or ip c
             exit(1);
           }
           // PrintLinkTable();
-          if (tempMessage.transportType==1) recvTcpNum++;
-          else if (tempMessage.transportType==2) recvUdpNum++;
           return true;
         }
       }
@@ -2187,7 +2183,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
 
   stringstream logFoutPath;
   logFoutPath.str("");
-  logFoutPath << COMMON_PATH << "PacketType-" << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << ".txt";
+  logFoutPath << COMMON_PATH << "PacketTypeRecord-" << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << ".txt";
   ofstream Logfout(logFoutPath.str().c_str(),ios::trunc); 
 
   int ret=0;
@@ -2416,6 +2412,19 @@ Primus::RecvMessageThread(void* tempThreadParam)
 
                 // tempPrimus->PrintMessage(tempMessage);
                 tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
+                if (tempMessage.linkInfo.eventId!=1)
+                {
+                  if (tempMessage.transportType==1) 
+                  {
+                    if (!tempMessage->SameNode(tempPrimus->tempIdent,tempMessage.fowIdent))// direct
+                      tempPrimus->recvTcpDirNum++;
+                    else tempPrimus->recvTcpInDirNum++;
+                  }
+                  else if (tempMessage.transportType==2) tempPrimus->recvUdpNum++;
+                  Logfout << "Recv tcp(Direct) packets:" << tempPrimus->recvTcpDirNum
+                  << "\nRecv tcp(InDirect) packets:" << tempPrimus->recvTcpInDirNum
+                  << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
+                }
 
                 if (PRINT_NODE_MODIFY_TIME)
                 {  
@@ -2449,7 +2458,19 @@ Primus::RecvMessageThread(void* tempThreadParam)
               if (tempPrimus->UpdateLinkTable(tempMessage))
               {
                 tempPrimus->EnqueueMessageIntoEventQueue(tempMessage);
-                Logfout << "Recv tcp packets:" << tempPrimus->recvTcpNum << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
+                if (tempMessage.linkInfo.eventId!=1)
+                {
+                  if (tempMessage.transportType==1) 
+                  {
+                    if (!tempMessage->SameNode(tempPrimus->tempIdent,tempMessage.fowIdent))// direct
+                      tempPrimus->recvTcpDirNum++;
+                    else tempPrimus->recvTcpInDirNum++;
+                  }
+                  else if (tempMessage.transportType==2) tempPrimus->recvUdpNum++;
+                  Logfout << "Recv tcp(Direct) packets:" << tempPrimus->recvTcpDirNum
+                  << "\nRecv tcp(InDirect) packets:" << tempPrimus->recvTcpInDirNum
+                  << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
+                }
                 // tempPrimus->PrintMessage(tempMessage);
               }
               else 

@@ -349,7 +349,8 @@ private:
     bool m_RecvReElectFromNode=false;
     bool m_RecvReElectReplyFromMaster=false;
 
-    int recvTcpNum=0;
+    int recvTcpDirNum=0;
+    int recvTcpInDirNum=0;
     int recvUdpNum=0;
 
     ofstream m_MessageLogFout;
