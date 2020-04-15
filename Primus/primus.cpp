@@ -2251,6 +2251,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               pthread_mutex_lock(&(tempPrimus->MsgQueueEventMutex[messageEventQueueIndex]));
               tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesResponsed++;
               pthread_mutex_unlock(&(tempPrimus->MsgQueueEventMutex[messageEventQueueIndex]));
+
               cout << "Master recv RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
               << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
               if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
@@ -2307,7 +2308,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
 
                   Logfout.close();
                 }
-              } 
+              }
             }
             else if (tempPrimus->m_Role==1)
             {
@@ -2418,9 +2419,27 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
+                tempMessage.transportType=1;
 
-                tempPrimus->PrintMessage(tempMessage);
-                tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
+                if (tempMessage.transportType==1)
+                {
+                  tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
+                  tempPrimus->PrintMessage(tempMessage);
+                }
+                else if (tempMessage.transportType==2)// 从udp收到，转为tcp返回
+                {
+                  for (int j=0;j<MAX_CTRL_NUM;j++)
+                  {
+                    if (tempPrimus->controllerSockTable[j].controllerSock==-1 || tempPrimus->SameNode(tempPrimus->controllerSockTable[j].controllerIdent,tempPrimus->tempIdent)) 
+                    break;
+                    if (tempPrimus->controllerSockTable[j].controllerRole==2)
+                    {
+                      tempPrimus->SendMessageByTCP(tempPrimus->controllerSockTable[j].controllerSock,tempMessage);
+                      tempPrimus->PrintMessage(tempMessage);
+                    }
+                  }
+                }
+                
                 if (tempMessage.linkInfo.eventId!=1)
                 {
                   if (tempMessage.transportType==1) 
