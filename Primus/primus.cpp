@@ -2833,12 +2833,12 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
   tempMessage.srcIdentRole=m_Role;
 
   // // link type:1)spinenode--leafnode;2)leafnode--tornode;
-  // cout << endl << endl << "SendToAllAffectedNodes [" << tempStartIndex << " to " << tempEndIndex << "]["
-  // << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
-  // << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-  // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-  // else cout << "DOWN";
-  // cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
+  cout << endl << endl << "SendToAllAffectedNodes [" << tempStartIndex << " to " << tempEndIndex << "]["
+  << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
+  << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+  if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+  else cout << "DOWN";
+  cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
 
   if (tempMessage.linkInfo.identA.level==2) tempIndex=tempMessage.linkInfo.identA.position%m_LeafNodes;
   else if (tempMessage.linkInfo.identB.level==2) tempIndex=tempMessage.linkInfo.identB.position%m_LeafNodes;
@@ -2863,59 +2863,59 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
         }
         else if (nodeSockTable[i].nodeIdent.level==1)// tor，无脑发
         {
-          // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
-          // << "[sock:" << nodeSockTable[i].nodeSock << "]";
+          cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
+          << "[sock:" << nodeSockTable[i].nodeSock << "]";
           if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
           {
             numOfSentNodes++;
           }
-          // cout << "[ret:" << ret << "]." << endl;
-          for (int j=0;j<MAX_FOWNODE_NUM;j++)
-          {
-            nodeIndex=rand()%nodeSockNum;
-            if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-            {
-              SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
-            }
-          }
+          cout << "[ret:" << ret << "]." << endl;
+          // for (int j=0;j<MAX_FOWNODE_NUM;j++)
+          // {
+          //   nodeIndex=rand()%nodeSockNum;
+          //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+          //   {
+          //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
+          //   }
+          // }
         }
         else if (nodeSockTable[i].nodeIdent.level==2 
           && nodeSockTable[i].nodeIdent.position%m_LeafNodes==tempIndex)// leafnode，只有相对位置相同才发送
         {
-          // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
-          // << "[sock:" << nodeSockTable[i].nodeSock << "]";
+          cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
+          << "[sock:" << nodeSockTable[i].nodeSock << "]";
           if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
           {
             numOfSentNodes++;
           }
-          // cout << "[ret:" << ret << "]." << endl;
-          for (int j=0;j<MAX_FOWNODE_NUM;j++)
-          {
-            nodeIndex=rand()%nodeSockNum;
-            if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-            {
-              SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
-            }
-          }
+          cout << "[ret:" << ret << "]." << endl;
+          // for (int j=0;j<MAX_FOWNODE_NUM;j++)
+          // {
+          //   nodeIndex=rand()%nodeSockNum;
+          //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+          //   {
+          //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
+          //   }
+          // }
         }
         else if (nodeSockTable[i].nodeIdent.level==3
           && ((SameNode(tempMessage.linkInfo.identA,nodeSockTable[i].nodeIdent)) || (SameNode(tempMessage.linkInfo.identB,nodeSockTable[i].nodeIdent))))
         {
-          // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
-          // << "[sock:" << nodeSockTable[i].nodeSock << "]";
+          cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
+          << "[sock:" << nodeSockTable[i].nodeSock << "]";
           if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
           {
             numOfSentNodes++;
           }
-          // cout << "[ret:" << ret << "]." << endl;
-          for (int j=0;j<MAX_FOWNODE_NUM;j++)
-          {
-            nodeIndex=rand()%nodeSockNum;
-            if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-            {
-              SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
-            }
-          }
+          cout << "[ret:" << ret << "]." << endl;
+          // for (int j=0;j<MAX_FOWNODE_NUM;j++)
+          // {
+          //   nodeIndex=rand()%nodeSockNum;
+          //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+          //   {
+          //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
+          //   }
+          // }
         }
         else if (nodeSockTable[i].nodeIdent.level==3)
         {
@@ -2923,42 +2923,42 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
           {
             if ((SameNode(tempMessage.linkInfo.identA,nodeSockTable[i].nodeIdent)) || (SameNode(tempMessage.linkInfo.identB,nodeSockTable[i].nodeIdent)))
             {
-              // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
-              // << "[sock:" << nodeSockTable[i].nodeSock << "]";
+              cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
+              << "[sock:" << nodeSockTable[i].nodeSock << "]";
               if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
               {
                 numOfSentNodes++;
               }
-              // cout << "[ret:" << ret << "]." << endl;
-              for (int j=0;j<MAX_FOWNODE_NUM;j++)
-              {
-                nodeIndex=rand()%nodeSockNum;
-                if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-                {
-                  SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
-                }
-              }
+              cout << "[ret:" << ret << "]." << endl;
+              // for (int j=0;j<MAX_FOWNODE_NUM;j++)
+              // {
+              //   nodeIndex=rand()%nodeSockNum;
+              //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+              //   {
+              //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
+              //   }
+              // }
             }
           }
           else if (tempMessage.linkInfo.identA.level==1 || tempMessage.linkInfo.identB.level==1)//leafnode--tornode
           {
             if (nodeSockTable[i].nodeIdent.position/(m_SpineNodes/m_LeafNodes)==tempIndex)
             {
-              // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
-              // << "[sock:" << nodeSockTable[i].nodeSock << "]";
+              cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
+              << "[sock:" << nodeSockTable[i].nodeSock << "]";
               if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
               {
                 numOfSentNodes++;
               }
-              // cout << "[ret:" << ret << "]." << endl;
-              for (int j=0;j<MAX_FOWNODE_NUM;j++)
-              {
-                nodeIndex=rand()%nodeSockNum;
-                if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
-                {
-                  SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
-                }
-              }
+              cout << "[ret:" << ret << "]." << endl;
+              // for (int j=0;j<MAX_FOWNODE_NUM;j++)
+              // {
+              //   nodeIndex=rand()%nodeSockNum;
+              //   if (nodeSockTable[nodeIndex].nodeIdent.level!=0 && (i!=nodeIndex) && nodeSockTable[nodeIndex].nodeSock!=-1)
+              //   {
+              //     SendMessageByTCP(nodeSockTable[nodeIndex].nodeSock,tempMessage);// 模拟udp，转发node会将其转为udp发送，
+              //   }
+              // }
             }
           }
         }
