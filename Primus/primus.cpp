@@ -2777,8 +2777,8 @@ Primus::RecvMessageThread(void* tempThreadParam)
               
               sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
               sockaddr_in tempGateAddr=tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent);
-              if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr && tempGateAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
-                tempPrimus->SendMessageByUDP(tempLocalAddr,tempGateAddr,tempMessage);
+              // if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr && tempGateAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
+              //   tempPrimus->SendMessageByUDP(tempLocalAddr,tempGateAddr,tempMessage);
               cout << " completely!" << endl;
             }
             else
