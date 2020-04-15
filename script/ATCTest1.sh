@@ -1,7 +1,8 @@
 #!/bin/bash
 # Macro-benchmark: Impact on Applications
 counter=1 # 实验次数
-mean=96990000 # 期望
+meanA=96990000 # 数据平面期望
+meanB=96990000 # 控制平面期望
 time=1000 # s
 # # 重启
 # pssh -i -h /home/guolab/host/ATChost.txt "echo 'hello';"
@@ -68,7 +69,7 @@ time=1000 # s
 #     echo "开始改变链路......" >> /home/guolab/ATCTest-bgp.log
 #     echo "" >> /home/guolab/ATCTest-bgp.log
 
-#     /home/guolab/tool/linkChange /home/guolab/ATCTest-bgp.log /home/guolab/tool/linkInfo-1.txt 0 0 0.25 $mean BGP & # 输出文件路径、输入文件路径、运行次数、down/up间隔、两个参数、期望、路由类型
+#     /home/guolab/tool/linkChange /home/guolab/ATCTest-bgp.log /home/guolab/tool/linkInfo-1.txt 0 0 0.25 $meanA $meanB BGP & # 输出文件路径、输入文件路径、运行次数、down/up间隔、两个参数、期望、路由类型
 
 #     sleep $time
 #     echo "终止进程"
@@ -145,7 +146,7 @@ do
     echo "开始改变链路......" >> /home/guolab/ATCTest-primus.log
     echo "" >> /home/guolab/ATCTest-primus.log
 
-    /home/guolab/tool/linkChange /home/guolab/ATCTest-primus.log /home/guolab/tool/linkInfo-2.txt 0 0 0.25 $mean Primus &
+    /home/guolab/tool/linkChange /home/guolab/ATCTest-primus.log /home/guolab/tool/linkInfo-2.txt 0 0 0.25 $meanA $meanB Primus &
 
     sleep $time
     echo "终止进程"

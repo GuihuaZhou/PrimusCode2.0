@@ -13,7 +13,8 @@
 using namespace std;
 
 FILE *fp;
-int mean=0;
+int meanA=0;
+int meanB=0;
 int times=100;
 int interval=100000;
 bool start=false;
@@ -72,7 +73,7 @@ void* ProcessThread(void* tempThreadParam)
 			commandB="ssh root@"+IPB+" ifconfig "+ethB+" down";
 			commandC="ssh root@"+IPA+" ifconfig "+ethA+" up";
 			commandD="ssh root@"+IPB+" ifconfig "+ethB+" up";
-			waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*mean);
+			waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*meanA);
 			usleep(waitTime);
 			// down
 			system(commandA.c_str());
@@ -98,7 +99,9 @@ void* ProcessThread(void* tempThreadParam)
 			// commandB="ssh root@"+IPB+" ifconfig "+ethB+" down";
 			commandC="ssh root@"+IPA+" ifconfig "+ethA+" up";
 			// commandD="ssh root@"+IPB+" ifconfig "+ethB+" up";
-			waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*mean);
+			if (!strcmp(ethA,"eth0"))
+				waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*meanA);
+			else waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*meanB);
 			usleep(waitTime);
 			// down
 			system(commandA.c_str());
@@ -132,8 +135,9 @@ int main(int argc, char const *argv[])
 	interval=atoi(argv[3]);
 	failure_startTime_mu=atof(argv[4]);
 	failure_startTime_sigma=atof(argv[5]);
-	mean=atoi(argv[6]);
-	string type=argv[7];
+	meanA=atoi(argv[6]);
+	meanB=atoi(argv[6]);
+	string type=argv[8];
 
 	pthread_t process_thread;
 
