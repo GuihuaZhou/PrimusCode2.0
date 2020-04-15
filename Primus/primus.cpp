@@ -1831,7 +1831,7 @@ Primus::UpdateMultiPathBlock(int startIndex,int affectedNextHopIndex,int numOfMo
       }
     }
   }
-  // PrintPathTable();
+  PrintPathTable();
   return true;
 }
 
@@ -1891,7 +1891,7 @@ Primus::UpdateSinglePathBlock(int startIndex,int numOfModifyPathEntryPerDstNode,
       }
     }
   }
-  // PrintPathTable();
+  PrintPathTable();
   return true;
 }
 
@@ -2081,7 +2081,7 @@ Primus::UpdatePathTable(struct link tempLink)
   default:
     break;
   }
-  // PrintPathTable();
+  PrintPathTable();
   return true;
 }
 
@@ -2789,8 +2789,8 @@ Primus::RecvMessageThread(void* tempThreadParam)
               
               sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
               sockaddr_in tempGateAddr=tempPrimus->GetGateAddrByNeighborIdent(tempNextHopIdent);
-              if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr && tempGateAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
-                tempPrimus->SendMessageByUDP(tempLocalAddr,tempGateAddr,tempMessage);
+              // if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr && tempGateAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
+              //   tempPrimus->SendMessageByUDP(tempLocalAddr,tempGateAddr,tempMessage);
               cout << " completely!" << endl;
             }
             else
@@ -3621,7 +3621,7 @@ Primus::Start()
   else// node
   {
     InitiatePathTable();
-    // PrintPathTable();
+    PrintPathTable();
 
     InitiateControllerTable();
     // PrintControllerSockTable();
