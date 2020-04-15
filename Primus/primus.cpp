@@ -2780,13 +2780,13 @@ Primus::RecvMessageThread(void* tempThreadParam)
               // } 
               // cout << "\n"; 
               
-              sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
-              // cout << "localAddr:" << inet_ntoa(tempLocalAddr.sin_addr) << endl;
-              // cout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
-              tempMessage.fowIdent=tempPrimus->m_Ident;
-              if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
-                tempPrimus->SendMessageByUDP(tempLocalAddr,tempDstAddr,tempMessage);
-              // cout << " completely!" << endl;
+              // sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
+              // // cout << "localAddr:" << inet_ntoa(tempLocalAddr.sin_addr) << endl;
+              // // cout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
+              // tempMessage.fowIdent=tempPrimus->m_Ident;
+              // if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
+              //   tempPrimus->SendMessageByUDP(tempLocalAddr,tempDstAddr,tempMessage);
+              // // cout << " completely!" << endl;
             }
             else
             {
