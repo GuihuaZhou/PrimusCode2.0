@@ -2251,20 +2251,20 @@ Primus::RecvMessageThread(void* tempThreadParam)
               pthread_mutex_lock(&(tempPrimus->MsgQueueEventMutex[messageEventQueueIndex]));
               tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesResponsed++;
               pthread_mutex_unlock(&(tempPrimus->MsgQueueEventMutex[messageEventQueueIndex]));
-              // cout << "Master recv RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
-              // << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-              // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-              // else cout << "DOWN";
-              // cout << " from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
-              // << "][recvRS:" << tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesResponsed
-              // << ",shouldNotify:" << tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesShouldNotify
-              // << "]." << endl;
+              cout << "Master recv RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+              << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+              if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+              else cout << "DOWN";
+              cout << " from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
+              << "][recvRS:" << tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesResponsed
+              << ",shouldNotify:" << tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesShouldNotify
+              << "]." << endl;
 
               if (tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesResponsed==tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesShouldNotify)
               {
                 if (PRINT_MASTER_RECV_ALLRS_TIME)
                 {
-                  cout << "Master recv all RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+                  cout << endl << "Master recv all RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
                   << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
                   if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
                   else cout << "DOWN";
@@ -2411,10 +2411,10 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 gettimeofday(&startStamp,NULL);
               }
               
+              tempPrimus->PrintMessage(tempMessage);
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
-                tempPrimus->PrintMessage(tempMessage);
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
