@@ -2408,7 +2408,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
-                // tempPrimus->PrintMessage(tempMessage);
+                tempPrimus->PrintMessage(tempMessage);
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
@@ -2816,8 +2816,8 @@ Primus::RecvMessageThread(void* tempThreadParam)
               // cout << "localAddr:" << inet_ntoa(tempLocalAddr.sin_addr) << endl;
               // cout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
               tempMessage.fowIdent=tempPrimus->m_Ident;
-              // if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
-              //   tempPrimus->SendMessageByUDP(tempLocalAddr,tempDstAddr,tempMessage);
+              if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
+                tempPrimus->SendMessageByUDP(tempLocalAddr,tempDstAddr,tempMessage);
               // cout << " completely!" << endl;
             }
             else
