@@ -2,7 +2,7 @@
 # Macro-benchmark: Impact on Applications
 counter=1 # 实验次数
 meanA=96990000 # 数据平面期望
-meanB=96990000 # 控制平面期望
+meanB=96990000 # 控制平面故障持续时间
 time=1000 # s
 # # 重启
 # pssh -i -h /home/guolab/host/ATChost.txt "echo 'hello';"

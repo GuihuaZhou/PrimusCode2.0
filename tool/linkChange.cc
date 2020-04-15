@@ -99,14 +99,12 @@ void* ProcessThread(void* tempThreadParam)
 			// commandB="ssh root@"+IPB+" ifconfig "+ethB+" down";
 			commandC="ssh root@"+IPA+" ifconfig "+ethA+" up";
 			// commandD="ssh root@"+IPB+" ifconfig "+ethB+" up";
-			if (!strcmp(ethA.c_str(),"eth0"))
-				waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*meanA);
-			else waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*meanB);
+			waitTime=(int)(LogNormalDistribution(failure_startTime_mu,failure_startTime_sigma)*meanA);
 			usleep(waitTime);
 			// down
 			system(commandA.c_str());
 			// system(commandB.c_str());
-			usleep(interval);
+			usleep(meanB);
 			// up
 			system(commandC.c_str());
 			// system(commandD.c_str());
