@@ -1094,12 +1094,12 @@ Primus::SendLSToController(struct link tempLink,int linkIndex,ident faultNextHop
         }
       }
     }
+    cout << "Send RP " << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+    << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+    if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+    else cout << "DOWN";
+    cout << endl;
   }
-  cout << "Send RP " << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
-  << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-  if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-  else cout << "DOWN";
-  cout << endl;
 }
 
 void* 
