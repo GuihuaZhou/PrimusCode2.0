@@ -1095,11 +1095,11 @@ Primus::SendLSToController(struct link tempLink,int linkIndex,ident faultNextHop
         }
       }
     }
-    cout << "Send RP[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
-    << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-    if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-    else cout << "DOWN";
-    cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
+    // cout << "Send RP[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+    // << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+    // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+    // else cout << "DOWN";
+    // cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
   }
 }
 
@@ -2314,11 +2314,11 @@ Primus::RecvMessageThread(void* tempThreadParam)
             {
               tempPrimus->RecvRS(tempMessage.linkInfo);// 收到response，更新链路表，计算时间开销        
               // tempPrimus->PrintMessage(tempMessage);
-              cout << "Recv RP[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
-              << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-              if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-              else cout << "DOWN";
-              cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
+              // cout << "Recv RP[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+              // << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+              // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+              // else cout << "DOWN";
+              // cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
             }
             break;
           case 3:// keepalive ack,node
@@ -2419,7 +2419,6 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
-                tempMessage.transportType=1;
 
                 if (tempMessage.transportType==1)
                 {
@@ -2431,11 +2430,13 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   for (int j=0;j<MAX_CTRL_NUM;j++)
                   {
                     if (tempPrimus->controllerSockTable[j].controllerSock==-1 || tempPrimus->SameNode(tempPrimus->controllerSockTable[j].controllerIdent,tempPrimus->tempIdent)) 
-                    break;
+                      break;
                     if (tempPrimus->controllerSockTable[j].controllerRole==2)
                     {
+                      tempMessage.transportType=1;
                       tempPrimus->SendMessageByTCP(tempPrimus->controllerSockTable[j].controllerSock,tempMessage);
                       tempPrimus->PrintMessage(tempMessage);
+                      break;
                     }
                   }
                 }
@@ -2477,12 +2478,12 @@ Primus::RecvMessageThread(void* tempThreadParam)
               }
               else 
               {
-                cout << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
-                << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
-                << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-                if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-                else cout << "DOWN";
-                cout << "]." << endl;
+                // cout << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
+                // << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
+                // << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+                // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+                // else cout << "DOWN";
+                // cout << "]." << endl;
               }
             }
             else if (tempPrimus->m_Role==2)// master recv
