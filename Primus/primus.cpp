@@ -2411,12 +2411,12 @@ Primus::RecvMessageThread(void* tempThreadParam)
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
-                tempPrimus->PrintMessage(tempMessage);
+                // tempPrimus->PrintMessage(tempMessage);
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
 
-                tempPrimus->PrintMessage(tempMessage);
+                // tempPrimus->PrintMessage(tempMessage);
                 tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
                 if (tempMessage.linkInfo.eventId!=1)
                 {
@@ -2455,12 +2455,12 @@ Primus::RecvMessageThread(void* tempThreadParam)
               }
               else 
               {
-                cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
-                << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
-                << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-                if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-                else cout << "DOWN";
-                cout << "]." << endl;
+                // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
+                // << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
+                // << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+                // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+                // else cout << "DOWN";
+                // cout << "]." << endl;
               }
             }
             else if (tempPrimus->m_Role==2)// master recv
