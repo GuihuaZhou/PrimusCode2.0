@@ -2281,9 +2281,9 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.transportType=1;
                 tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.fowIdent=tempPrimus->tempIdent;
 
+                cout << "1" << endl;
                 int dstNodeSock=tempPrimus->GetNodeSock(tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.dstIdent);
-                if (dstNodeSock>0 &&
-                  tempPrimus->SendMessageByTCP(dstNodeSock,tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo));
+                if (dstNodeSock>0 && tempPrimus->SendMessageByTCP(dstNodeSock,tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo));
                 else 
                   cout << "Invaild nodeSock.";
                 
@@ -2648,6 +2648,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
         }
         else if (tempMessage.dstIdent.level!=0)//转发给某个特定的Node
         {
+          cout << "2" << endl;
           int tempNodeSock=tempPrimus->GetNodeSock(tempMessage.dstIdent);
           if (tempNodeSock>0)
           {
