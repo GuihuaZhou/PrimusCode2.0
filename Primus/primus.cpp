@@ -879,7 +879,9 @@ Primus::GetNodeSock(ident nodeIdent)
   else
   {
     fprintf(stderr,
-      "GetNodeSock error!(nodeSockTable[%d]:%d.%d,nodeIdent:%d.%d).\n",
+      "%d.%d GetNodeSock error!(nodeSockTable[%d]:%d.%d,nodeIdent:%d.%d).\n",
+      m_Ident.level,
+      m_Ident.position,
       nodeSockIndex,
       nodeSockTable[nodeSockIndex].nodeIdent.level,
       nodeSockTable[nodeSockIndex].nodeIdent.position,
