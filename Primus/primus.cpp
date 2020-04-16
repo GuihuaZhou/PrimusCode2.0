@@ -2614,6 +2614,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
       }
       else// 转发
       {
+        if (tempPrimus->m_Ident.level==0) continue;// 控制器不参与转发
         if (tempPrimus->udpSock!=sock && tempMessage.messageType==1 && tempMessage.ack==false && tempPrimus->m_Ident.level!=0)
         {
           tempPrimus->AddNodeSock(tempMessage.srcIdent,sock);// node作为转发节点添加套接字，应该是tcp
@@ -2649,8 +2650,8 @@ Primus::RecvMessageThread(void* tempThreadParam)
         }
         else if (tempMessage.dstIdent.level!=0)//转发给某个特定的Node
         {
-          cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << "[sock:" << sock 
-          << "] srcIdent:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << endl;
+          // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << "[sock:" << sock 
+          // << "] srcIdent:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << endl;
           int tempNodeSock=tempPrimus->GetNodeSock(tempMessage.dstIdent);
           if (tempNodeSock>0)
           {
