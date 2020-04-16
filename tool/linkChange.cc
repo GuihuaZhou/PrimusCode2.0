@@ -129,9 +129,9 @@ int main(int argc, char const *argv[])
 		printf("Cannot open record file.\n");
 		exit(0);
 	}
-
-	ifstream finA(argv[2],ios::app);
+	
   	string str;
+  	ifstream finA(argv[2],ios::app);
 
 	interval=atoi(argv[3]);
 	failure_startTime_mu=atof(argv[4]);
