@@ -137,7 +137,7 @@ int main(int argc, char const *argv[])
 	failure_startTime_mu=atof(argv[4]);
 	failure_startTime_sigma=atof(argv[5]);
 	meanA=atoi(argv[6]);
-	meanB=atoi(argv[6]);
+	meanB=atoi(argv[7]);
 	string type=argv[8];
 
 	pthread_t process_thread;
