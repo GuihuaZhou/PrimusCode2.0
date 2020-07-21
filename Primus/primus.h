@@ -17,6 +17,10 @@
 #include <netinet/tcp.h>
 #include <linux/rtnetlink.h>
 // #include "raft.h"
+#include "GraphElements.h"
+#include "Graph.h"
+#include "DijkstraShortestPathAlg.h"
+#include "YenTopKShortestPathsAlg.h"
 
 #define MAX_OUTBOUNDING_EVENTS 1000
 #define MAX_PATH_LEN 5
@@ -46,7 +50,7 @@
 #define MASTER_TEST false
 #define NODE_TEST false
 #define COMMON_PATH "/home/guolab/"
-#define FIREPATH false
+#define FIREPATH true
 
 // // vm testbed
 #define MGMT_INTERFACE "eth0"
@@ -356,4 +360,6 @@ private:
 
     ofstream m_MessageLogFout;
     ofstream m_PathLogFout;
+
+    Graph *m_graph;
 };

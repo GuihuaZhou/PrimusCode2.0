@@ -41,6 +41,11 @@ Primus::Primus(
     logFoutPath.str("");
     logFoutPath << COMMON_PATH << "PrimusLog-" << m_Ident.level << "." << m_Ident.position << ".txt";
     m_MessageLogFout.open(logFoutPath.str().c_str(),ios::app);
+    if (FIREPATH) 
+    {
+      m_graph = new Graph(level, pos, SpineNodes, ToRNodes, LeafNodes, nPods);
+    }
+    else m_graph = nullptr;
 }
 
 Primus::~Primus()
@@ -1914,6 +1919,31 @@ Primus::UpdatePathTable(struct link tempLink)
 
   int affectedNextHopIndex=0;
   int startIndex=0;
+
+  // test firepath
+  if (m_Ident.level==1 && high.level==2 && low.level == 1)// 只有leaf--tor的链路故障才启动kshortestpath算法
+  {
+    if (SameNode(low,m_Ident)) continue;
+    int src_index = 2000 + high.position;
+    int dst_index = 10000 + low.position;
+    my_graph.remove_edge_(src_index,dst_index);
+    src_index = 10000 + m_Ident.position;
+
+    struct timeval beginStamp;
+    struct timeval endStamp;
+    gettimeofday(&beginStamp, NULL);
+
+    YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(src_index),my_graph.get_vertex(dst_index));
+
+    cout << "time cost: " << (endStamp.tv_sec-beginStamp.tv_sec)*1000+(endStamp.tv_usec-beginStamp.tv_usec)*0.001 << " ms\n"; 
+    int i=0;
+    while(yenAlg.has_next())
+    {
+      ++i;
+      yenAlg.next()->PrintOut(cout);
+    }
+  }
+  // end
 
   switch (m_Ident.level)
   {
