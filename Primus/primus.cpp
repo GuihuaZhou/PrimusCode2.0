@@ -1921,7 +1921,7 @@ Primus::UpdatePathTable(struct link tempLink)
   int startIndex=0;
 
   // test firepath
-  if (m_Ident.level==1 && high.level==2 && low.level == 1)// 只有leaf--tor的链路故障才启动kshortestpath算法
+  if (m_Ident.level==1 && high.level==2 && low.level==1)// 只有leaf--tor的链路故障才启动kshortestpath算法
   {
     if (SameNode(low,m_Ident)) continue;
     int src_index = 2000 + high.position;
