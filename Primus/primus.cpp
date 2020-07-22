@@ -3222,7 +3222,7 @@ Primus::ConnectWithMaster(string masterIP,string NICName)
       break;
     }
     else {
-      cout << "Sock(" << nodeSock << ") connect error:" << strerror(errno) << "(errno:" << errno << ")." << endl;
+      cout << "Sock(" << nodeSock << ")[" << masterIP << "] connect error:" << strerror(errno) << "(errno:" << errno << ")." << endl;
       usleep(CONNECT_INTERVAL);
     }
   }
