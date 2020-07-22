@@ -57,7 +57,7 @@ rm /home/guolab/PacketType*;"
 rm /home/guolab/Primus/Primus
 cd /home/guolab/Primus
 # g++ -std=c++0x init.cpp primus.cpp -o Primus -lpthread
-g++ -std=c++0x init.cpp primus.cpp Graph.cpp YenTopKShortestPathsAlg.cpp -o Primus -lpthread
+g++ -std=c++0x init.cpp primus.cpp Graph.cpp YenTopKShortestPathsAlg.cpp DijkstraShortestPathAlg.cpp -o Primus -lpthread
 cd ..
 # # 传输
 echo "transport"
