@@ -1684,7 +1684,7 @@ Primus::UpdateLinkTable(struct message tempMessage)// link status change or ip c
       if (tempLink.linkStatus!=linkTable[linkIndex].linkInfo.linkStatus)
       {
         linkTable[linkIndex].linkInfo.linkStatus=tempLink.linkStatus;
-        // PrintLinkTable();
+        PrintLinkTable();
         return true;
       }
     }
@@ -1693,7 +1693,7 @@ Primus::UpdateLinkTable(struct message tempMessage)// link status change or ip c
       if (linkTable[linkIndex].linkInfo.linkStatus==true && tempLink.linkStatus==false)// 收到链路故障信息立即处理
       {
         linkTable[linkIndex].linkInfo.linkStatus=tempLink.linkStatus;
-        // PrintLinkTable();
+        PrintLinkTable();
         return true;
       }
       else if (linkTable[linkIndex].linkInfo.linkStatus==false && tempLink.linkStatus==true)
@@ -1713,7 +1713,7 @@ Primus::UpdateLinkTable(struct message tempMessage)// link status change or ip c
             fprintf(stderr, "ERROR! Thread create failed!\n");
             exit(1);
           }
-          // PrintLinkTable();
+          PrintLinkTable();
           return true;
         }
       }
@@ -1726,7 +1726,7 @@ Primus::UpdateLinkTable(struct message tempMessage)// link status change or ip c
   {
     // 
   }
-  // PrintLinkTable();
+  PrintLinkTable();
   return false;
 }
 
@@ -2112,7 +2112,7 @@ Primus::UpdatePathTable(struct link tempLink)
   default:
     break;
   }
-  // PrintPathTable();
+  PrintPathTable();
   return true;
 }
 
