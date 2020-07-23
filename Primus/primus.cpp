@@ -1921,27 +1921,27 @@ Primus::UpdatePathTable(struct link tempLink)
   int startIndex=0;
 
   // test firepath
-  if (m_Ident.level==1 && high.level==2 && low.level==1 && !SameNode(low,m_Ident))// 只有leaf--tor的链路故障才启动kshortestpath算法
-  {
-    int src_index = 2000 + high.position;
-    int dst_index = 10000 + low.position;
-    m_graph->remove_edge_(src_index,dst_index);
-    src_index = 10000 + m_Ident.position;
+  // if (m_Ident.level==1 && high.level==2 && low.level==1 && !SameNode(low,m_Ident))// 只有leaf--tor的链路故障才启动kshortestpath算法
+  // {
+  //   int src_index = 2000 + high.position;
+  //   int dst_index = 10000 + low.position;
+  //   m_graph->remove_edge_(src_index,dst_index);
+  //   src_index = 10000 + m_Ident.position;
 
-    struct timeval beginStamp;
-    struct timeval endStamp;
-    gettimeofday(&beginStamp, NULL);
+  //   struct timeval beginStamp;
+  //   struct timeval endStamp;
+  //   gettimeofday(&beginStamp, NULL);
 
-    YenTopKShortestPathsAlg yenAlg(*m_graph, m_graph->get_vertex(src_index),m_graph->get_vertex(dst_index));
+  //   YenTopKShortestPathsAlg yenAlg(*m_graph, m_graph->get_vertex(src_index),m_graph->get_vertex(dst_index));
 
-    // cout << "time cost: " << (endStamp.tv_sec-beginStamp.tv_sec)*1000+(endStamp.tv_usec-beginStamp.tv_usec)*0.001 << " ms\n"; 
-    // int i=0;
-    // while(yenAlg.has_next())
-    // {
-    //   ++i;
-    //   yenAlg.next()->PrintOut(cout);
-    // }
-  }
+  //   // cout << "time cost: " << (endStamp.tv_sec-beginStamp.tv_sec)*1000+(endStamp.tv_usec-beginStamp.tv_usec)*0.001 << " ms\n"; 
+  //   // int i=0;
+  //   // while(yenAlg.has_next())
+  //   // {
+  //   //   ++i;
+  //   //   yenAlg.next()->PrintOut(cout);
+  //   // }
+  // }
   // end
 
   switch (m_Ident.level)
