@@ -2442,7 +2442,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 gettimeofday(&startStamp,NULL);
               }
               
-              // tempPrimus->PrintMessage(tempMessage);
+              tempPrimus->PrintMessage(tempMessage);
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
@@ -2535,11 +2535,11 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   << "\nRecv tcp(InDirect) packets:" << tempPrimus->recvTcpInDirNum
                   << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
                 }
-                // tempPrimus->PrintMessage(tempMessage);
+                tempPrimus->PrintMessage(tempMessage);
               }
               else 
               {
-                // tempPrimus->PrintMessage(tempMessage);
+                tempPrimus->PrintMessage(tempMessage);
                 // tempMessage.dstIdent=tempMessage.srcIdent;
                 // tempMessage.srcIdent=tempPrimus->m_Ident;
                 // tempMessage.ack=true;
@@ -2554,7 +2554,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 tempPrimus->UpdateLinkTable(tempMessage);
               }
-              // tempPrimus->PrintMessage(tempMessage);
+              tempPrimus->PrintMessage(tempMessage);
             }
             break;
           case 3:// recv keepalive report

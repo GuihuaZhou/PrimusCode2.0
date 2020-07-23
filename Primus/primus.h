@@ -52,7 +52,7 @@
 #define MASTER_TEST false
 #define NODE_TEST false
 #define COMMON_PATH "/home/guolab/"
-#define FIREPATH true
+#define FIREPATH false
 
 // // vm testbed
 #define MGMT_INTERFACE "eth0"
