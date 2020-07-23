@@ -497,8 +497,8 @@ Primus::DelSocket(int sock)
     exit(1);
   }
 
-  // close(sock);
-  shutdown(sock,SHUT_RDWR);
+  close(sock);
+  // shutdown(sock,SHUT_RDWR);
 
   for (int i=0;i<nodeSockNum;i++)
   {
@@ -3719,7 +3719,7 @@ Primus::Start()
   InitiateNodeSockTable();
 
   CreateEpollFdAndRecvMessageThread();
-  CreateKeepAliveThread();
+  // CreateKeepAliveThread();
   InitiateUDPServer();
 
   pthread_mutex_init(&MsgQueueMutex,NULL);
