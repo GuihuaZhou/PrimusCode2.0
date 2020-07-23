@@ -2443,10 +2443,17 @@ Primus::RecvMessageThread(void* tempThreadParam)
               }
               
               // tempPrimus->PrintMessage(tempMessage);
+              cout << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " try to UpdateLinkTable[" 
+              << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
+              << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+              if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+              else cout << "DOWN";
+              cout << "]." << endl;
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
+                cout << "Try to update pathtable" << endl;
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
-
+                cout << "update pathtable over" << endl;
                 if (tempMessage.linkInfo.eventId!=1)
                 {
                   if (tempMessage.transportType==1) 
@@ -2460,18 +2467,20 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   << "\nRecv tcp(InDirect) packets:" << tempPrimus->recvTcpInDirNum
                   << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
                 }
-                
+                cout << "try to send response to master" << endl;
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
 
                 if (tempMessage.transportType==1)
                 {
+                  cout << "transportType==1" << endl;
                   tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
                   // tempPrimus->PrintMessage(tempMessage);
                 }
                 else if (tempMessage.transportType==2)// 从udp收到，转为tcp返回
                 {
+                  cout << "transportType==2" << endl;
                   for (int j=0;j<MAX_CTRL_NUM;j++)
                   {
                     if (tempPrimus->controllerSockTable[j].controllerSock==-1 || tempPrimus->SameNode(tempPrimus->controllerSockTable[j].controllerIdent,tempPrimus->tempIdent)) 
@@ -2485,7 +2494,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                     }
                   }
                 }
-
+                cout << "send response over" << endl;
                 if (PRINT_NODE_MODIFY_TIME)
                 {  
                   gettimeofday(&endStamp,NULL);
@@ -2509,12 +2518,12 @@ Primus::RecvMessageThread(void* tempThreadParam)
               }
               else 
               {
-                // cout << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
-                // << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
-                // << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-                // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-                // else cout << "DOWN";
-                // cout << "]." << endl;
+                cout << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
+                << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
+                << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
+                if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
+                else cout << "DOWN";
+                cout << "]." << endl;
               }
             }
             else if (tempPrimus->m_Role==2)// master recv
