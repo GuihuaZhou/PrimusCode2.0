@@ -925,7 +925,7 @@ Primus::SendMessageByTCP(int sock,struct message tempMessage)
   memcpy(sendBuf,&tempMessage,sizeof(struct message));
   int ret=send(sock,sendBuf,sizeof(struct message),0);
 
-  // if (tempMessage.messageType!=3) PrintMessage(tempMessage);
+  if (tempMessage.messageType!=3) PrintMessage(tempMessage);
   return ret;
 }
 
@@ -969,7 +969,7 @@ Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteA
 
   ret=sendto(nodeSock,sendBuf,sizeof(struct message),0,(struct sockaddr *)&remoteAddr,sizeof(remoteAddr));
   close(nodeSock);
-  // if (tempMessage.messageType!=3) PrintMessage(tempMessage);
+  if (tempMessage.messageType!=3) PrintMessage(tempMessage);
   pthread_mutex_unlock(&UdpMutex);
   return ret;
 }
@@ -2259,7 +2259,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
       struct message tempMessage;
       memcpy(&tempMessage,recvBuf,sizeof(struct message));
 
-      // if (tempMessage.messageType!=3) tempPrimus->PrintMessage(tempMessage);
+      if (tempMessage.messageType!=3) tempPrimus->PrintMessage(tempMessage);
 
       // dstIdent为本Node
       if (tempPrimus->SameNode(tempPrimus->m_Ident,tempMessage.dstIdent)
@@ -2442,7 +2442,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 gettimeofday(&startStamp,NULL);
               }
               
-              tempPrimus->PrintMessage(tempMessage);
+              // tempPrimus->PrintMessage(tempMessage);
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
@@ -2535,11 +2535,11 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   << "\nRecv tcp(InDirect) packets:" << tempPrimus->recvTcpInDirNum
                   << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
                 }
-                tempPrimus->PrintMessage(tempMessage);
+                // tempPrimus->PrintMessage(tempMessage);
               }
               else 
               {
-                tempPrimus->PrintMessage(tempMessage);
+                // tempPrimus->PrintMessage(tempMessage);
                 // tempMessage.dstIdent=tempMessage.srcIdent;
                 // tempMessage.srcIdent=tempPrimus->m_Ident;
                 // tempMessage.ack=true;
@@ -2554,7 +2554,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 tempPrimus->UpdateLinkTable(tempMessage);
               }
-              tempPrimus->PrintMessage(tempMessage);
+              // tempPrimus->PrintMessage(tempMessage);
             }
             break;
           case 3:// recv keepalive report
