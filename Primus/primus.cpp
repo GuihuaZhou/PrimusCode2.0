@@ -1,6 +1,6 @@
 #include "primus.h"
 
-Graph *m_graph == NULL;
+Graph *m_graph = NULL;
 
 Primus::Primus(
     int level,
@@ -1929,7 +1929,7 @@ Primus::UpdatePathTable(struct link tempLink)
     if (!tempLink.linkStatus)
       m_graph->remove_edge_(src_index,dst_index);
     else
-      my_graph.build_edge(src_index,dst_index);
+      m_graph->build_edge(src_index,dst_index);
     src_index = 10000 + m_Ident.position;
 
     struct timeval beginStamp;
