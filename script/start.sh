@@ -84,3 +84,5 @@ command=$command"pssh -t 0 -i -h /home/guolab/host/ATChost.txt /home/guolab/Prim
 $command &
 ########################## ##########################
 # ./configure --enable-vtysh --enable-user=root --enable-group=root --enable-multipath=64
+
+taskset -c 0 ./kshortestpath 1 0 16 100 4 100 10000 1>/home/tencent/switch.stdout 2>/home/tencent/switch.stderr &

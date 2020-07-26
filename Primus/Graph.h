@@ -65,8 +65,8 @@ public:
 	// add by guihuazhou
 	Graph(int level, int pos, int SpineNodes, int ToRNodes, int LeafNodes, int nPods);
 	void build_graph(int level, int pos, int SpineNodes, int ToRNodes, int LeafNodes, int nPods);
-	void build_edge(int start_vertex, int end_vertex);
-	void remove_edge_(int start_vertex, int end_vertex);
+	void build_edge(int start_vertex, int end_vertex);// 同时可以添加一条边
+	void remove_edge_(int start_vertex, int end_vertex);// 删除一条边
 	// end
 	~Graph(void);
 
