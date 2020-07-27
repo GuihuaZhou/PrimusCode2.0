@@ -52,7 +52,7 @@
 #define MASTER_TEST false
 #define NODE_TEST false
 #define COMMON_PATH "/home/guolab/"
-#define FIREPATH false
+#define FIREPATH true
 
 // // vm testbed
 #define MGMT_INTERFACE "eth0"
@@ -363,5 +363,5 @@ private:
     ofstream m_MessageLogFout;
     ofstream m_PathLogFout;
 
-    Graph *m_graph;
+    Graph *m_graph = nullptr;
 };
