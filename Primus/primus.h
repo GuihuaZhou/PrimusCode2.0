@@ -362,4 +362,6 @@ private:
 
     ofstream m_MessageLogFout;
     ofstream m_PathLogFout;
+
+    Graph *m_graph;
 };

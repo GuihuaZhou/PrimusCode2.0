@@ -1,7 +1,5 @@
 #include "primus.h"
 
-Graph *m_graph = NULL;
-
 Primus::Primus(
     int level,
     int position,
@@ -47,6 +45,8 @@ Primus::Primus(
     {
       m_graph = new Graph(level, position, spineNodes, toRNodes, leafNodes, nPods);
     }
+    else
+      m_graph = NULL;
 }
 
 Primus::~Primus()
@@ -1928,9 +1928,17 @@ Primus::UpdatePathTable(struct link tempLink)
     int src_index = 2000 + high.position;
     int dst_index = 10000 + low.position;
     if (!tempLink.linkStatus)
+    {
+      cout << "try to remove edge" << end;
       m_graph->remove_edge_(src_index,dst_index);
+      cout << "Remove edge over" << end;
+    }
     else
+    {
+      cout << "try to build edge" << end;
       m_graph->build_edge(src_index,dst_index);
+      cout << "Build edge over" << end;
+    }
     src_index = 10000 + m_Ident.position;
 
     struct timeval beginStamp;
