@@ -1922,6 +1922,7 @@ Primus::UpdatePathTable(struct link tempLink)
   int startIndex=0;
 
   // // test firepath
+  cout << "Try to test firepath, and eventId is " << tempLink.linkInfo.eventId << endl;
   if (m_Ident.level==1 && high.level==2 && low.level==1 && !SameNode(low,m_Ident))// 只有leaf--tor的链路故障才启动kshortestpath算法
   {
     int src_index = 2000 + high.position;
@@ -1946,6 +1947,7 @@ Primus::UpdatePathTable(struct link tempLink)
     //   yenAlg.next()->PrintOut(cout);
     // }
   }
+  cout << "Test firepath over" << endl;
   // // end
 
   switch (m_Ident.level)
@@ -2447,7 +2449,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               }
               
               // tempPrimus->PrintMessage(tempMessage);
-              cout << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " try to UpdateLinkTable[" 
+              cout << endl << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " try to UpdateLinkTable[" 
               << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
               << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
               if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
