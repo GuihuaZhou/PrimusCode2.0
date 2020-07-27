@@ -1922,7 +1922,7 @@ Primus::UpdatePathTable(struct link tempLink)
   int startIndex=0;
 
   // // test firepath
-  cout << "Try to test firepath, and eventId is " << tempLink.linkInfo.eventId << endl;
+  cout << "Try to test firepath, and eventId is " << tempLink.eventId << endl;
   if (m_Ident.level==1 && high.level==2 && low.level==1 && !SameNode(low,m_Ident))// 只有leaf--tor的链路故障才启动kshortestpath算法
   {
     int src_index = 2000 + high.position;
