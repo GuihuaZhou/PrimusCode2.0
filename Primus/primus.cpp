@@ -1929,15 +1929,15 @@ Primus::UpdatePathTable(struct link tempLink)
     int dst_index = 10000 + low.position;
     if (!tempLink.linkStatus)
     {
-      cout << "try to remove edge" << end;
+      cout << "try to remove edge" << endl;
       m_graph->remove_edge_(src_index,dst_index);
-      cout << "Remove edge over" << end;
+      cout << "Remove edge over" << endl;
     }
     else
     {
-      cout << "try to build edge" << end;
+      cout << "try to build edge" << endl;
       m_graph->build_edge(src_index,dst_index);
-      cout << "Build edge over" << end;
+      cout << "Build edge over" << endl;
     }
     src_index = 10000 + m_Ident.position;
 
