@@ -46,23 +46,17 @@
 #define MAX_FOWNODE_NUM 3
 #define NIC_CHECK_INTERVAL 6000
 #define KEEPALIVE_INTERVAL 30//s
-#define PRINT_MASTER_RECV_ALLRS_TIME false
-#define PRINT_NODE_MODIFY_TIME false 
-#define PRINT_NODE_RECV_RS_TIME false
+// #define PRINT_MASTER_RECV_AL_LRS_TIME false
+// #define PRINT_NODE_MODIFY_TIME false
+// #define PRINT_NODE_RECV_RS_TIME false
 #define MASTER_TEST false
 #define NODE_TEST false
-#define COMMON_PATH "/home/guolab/"
-#define FIREPATH true
+#define COMMON_PATH "~/"
+#define FIREPATH false
+#define PRINT_MESSAGE true
 
 // // vm testbed
-#define MGMT_INTERFACE "eth0"
-#define MASTER_ADDRESS "172.16.80.1"
-// // tlinux
 // #define MGMT_INTERFACE "eth0"
-// #define MASTER_ADDRESS "9.134.73.204"
-// // 9.1-10.1
-// #define MGMT_INTERFACE "eno1"
-// #define MASTER_ADDRESS "10.0.9.1"
 
 // 函数名：所有首字母大写
 // 变量名：第一个首字母小写，其他大写（驼峰命名）
@@ -81,7 +75,12 @@ public:
         int spineNodes,
         int nPods,
         int defaultLinkTimer,
-        int defaultKeepaliveTimer);
+        int defaultKeepaliveTimer,
+        vector<string> masterAddress,
+        int print_master_recv_all_LRs_time,
+        int print_node_modify_time,
+        int print_node_recv_RS_time,
+        string mgmt_interface);
     ~Primus();
 
     struct threadparama
@@ -364,4 +363,6 @@ private:
     ofstream m_PathLogFout;
 
     Graph *m_graph = nullptr;
+
+    vector<string> m_MasterAddress;
 };

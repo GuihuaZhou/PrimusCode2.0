@@ -3,6 +3,10 @@ spineNodes=8
 leafNodes=2
 torNodes=1
 nPods=2
+print_master_recv_all_LRs_time=0
+print_node_modify_time=0
+print_node_recv_RS_time=0
+mgmt_interface="eth0"
 killall -9 Primus
 killall -9 linkChange
 pssh -i -h /home/guolab/host/ATChost.txt "killall -9 Primus;killall -9 linkChange;"
@@ -56,8 +60,8 @@ rm /home/guolab/PacketType*;"
 # 编译
 rm /home/guolab/Primus/Primus
 cd /home/guolab/Primus
-# g++ -std=c++0x init.cpp primus.cpp -o Primus -lpthread
-g++ -std=c++0x init.cpp primus.cpp Graph.cpp YenTopKShortestPathsAlg.cpp DijkstraShortestPathAlg.cpp -o Primus -lpthread
+g++ -std=c++0x init.cpp primus.cpp -o Primus -lpthread
+# g++ -std=c++0x init.cpp primus.cpp Graph.cpp YenTopKShortestPathsAlg.cpp DijkstraShortestPathAlg.cpp -o Primus -lpthread
 cd ..
 # # 传输
 echo "transport"
@@ -67,7 +71,7 @@ pscp -h /home/guolab/host/ATChost.txt -l root /home/guolab/Primus/Primus /home/g
 tempCommand=''
 # 1> 与>等价
 # 输出log
-tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" 1>/home/guolab/switch.stdout 2>/home/guolab/switch.stderr"
+tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" "$print_master_recv_all_LRs_time" "$print_node_modify_time" "$print_node_recv_RS_time" $mgmt_interface 1>/home/guolab/switch.stdout 2>/home/guolab/switch.stderr"
 # tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods
 # 
 command=''

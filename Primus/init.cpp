@@ -22,6 +22,11 @@ int LeafNodes=4;//单个pod里2层交换机数
 int ToRNodes=1;//每个pod里的ToR交换机数
 int defaultLinkTimer=1000;//ms
 int defaultKeepaliveTimer=6;
+vector<string> masterAddress;
+int print_master_recv_all_LRs_time=false;//
+int print_node_modify_time=false;
+int print_node_recv_RS_time=false;
+string mgmt_interface="eth0";
 
 int
 OpenNetlink(){
@@ -313,30 +318,15 @@ pid_t getDaemon(pid_t primusPid, uint32_t intervalSeconds)
 
 int main(int argc,char *argv[])
 {
-  // struct sockaddr_in sockaddr;
-  // vector<struct DestNetmaskProtoNum> destNetmaskProtoNum_vector;//把每一条路由的协议号、网络号和掩码存储在destNetmaskProtoNum_vector向量里
-  // vector<struct DestNetmaskProtoNum> * p_destNetmaskProtoNum_vector=&destNetmaskProtoNum_vector;
-    
-  // get_destNetmaskProtoNum_info_all(p_destNetmaskProtoNum_vector);
-  // for(int i=0;i<(*p_destNetmaskProtoNum_vector).size(); i++)
-  // {
-  //     if ((*p_destNetmaskProtoNum_vector)[i].protocolNum == RTPROT_ZEBRA)
-  //     {
-  //         sockaddr.sin_family = AF_INET;
-  //         sockaddr.sin_addr.s_addr = (*p_destNetmaskProtoNum_vector)[i].des;
-  //         DelRoute( sockaddr, (*p_destNetmaskProtoNum_vector)[i].netmask);    //网络字节序IP
-  //     }
-  // }
-
   ifstream fin("/usr/local/etc/Primus.conf",ios::in);
-
+  
   string config;
   int begin,end;
 
   config="";
   getline(fin,config);
   begin=config.find(':',0)+1;
-  // masterAddress.push_back(config.substr(begin,config.length()-begin));
+  masterAddress.push_back(config.substr(begin,config.length()-begin));
 
   config="";
   getline(fin,config);
@@ -344,7 +334,7 @@ int main(int argc,char *argv[])
   for (int i=begin;i<config.length();)
   {
     while (i<config.length() && config[i]!=',') i++;
-    // masterAddress.push_back(config.substr(begin,i-begin));
+    masterAddress.push_back(config.substr(begin,i-begin));
     begin=++i;
   }
 
@@ -388,14 +378,33 @@ int main(int argc,char *argv[])
   // begin=config.find(':',0)+1;
   // nPods=atoi(config.substr(begin,config.length()-begin).c_str());
 
+  fin.close();
+
   ToRNodes=atoi(argv[1]);
   LeafNodes=atoi(argv[2]);
   SpineNodes=atoi(argv[3]);
   nPods=atoi(argv[4]);
+  print_master_recv_all_LRs_time=atoi(argv[5]);//
+  print_node_modify_time=atoi(argv[6]);
+  print_node_recv_RS_time=atoi(argv[7]);
+  mgmt_interface=argv[8];
 
   // raft_server_t* raft = raft_new();
 
-  Primus *m_Primus=new Primus(level,position,ToRNodes,LeafNodes,SpineNodes,nPods,defaultLinkTimer,defaultKeepaliveTimer);
+  Primus *m_Primus=new Primus(level,
+    position,
+    ToRNodes,
+    LeafNodes,
+    SpineNodes,
+    nPods,
+    defaultLinkTimer,
+    defaultKeepaliveTimer,
+    masterAddress,
+    print_master_recv_all_LRs_time,
+    print_node_modify_time,
+    print_node_recv_RS_time,
+    mgmt_interface);
+
   pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
   m_Primus->Start();
   pthread_exit(NULL);
