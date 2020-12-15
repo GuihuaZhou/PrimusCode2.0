@@ -10,7 +10,7 @@ pssh -i -h $rootDirectory/host/ATChost.txt -t 0 "killall -9 Primus;killall -9 li
 #
 pssh -i -h $rootDirectory/host/ATChost.txt "killall zebra; killall bgpd;"
 # 确保所有网卡都是正常的
-# Master
+# Masterß
 ifconfig eth0 up
 ifconfig eth1 up
 ifconfig eth2 up
