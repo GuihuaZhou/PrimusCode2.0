@@ -4,6 +4,7 @@ bool PRINT_MASTER_RECV_AL_LRS_TIME=false;
 bool PRINT_NODE_MODIFY_TIME=false;
 bool PRINT_NODE_RECV_RS_TIME=false;
 string MGMT_INTERFACE="eth0";
+ofstream m_MessageLogFout;
 
 Primus::Primus(
     int level,
@@ -183,10 +184,10 @@ Primus::Convert(struct sockaddr_in dstAddr,unsigned int prefixLen)
 void
 Primus::AddSingleRoute(struct sockaddr_in dstAddr,unsigned int prefixLen,struct nexthopandweight tempNextHopAndWeight)
 {  
-  // cout << "AddSingleRoute:" << inet_ntoa(dstAddr.sin_addr) << "/" << prefixLen << ",NICName:" << tempNextHopAndWeight.NICName;
-  // // // cout << ",srcAddr:" << inet_ntoa(tempNextHopAndWeight.srcAddr.sin_addr);
-  // // // cout << ",gateAddr:" << inet_ntoa(tempNextHopAndWeight.gateAddr.sin_addr);
-  // cout << endl;
+  // m_MessageLogFout << "AddSingleRoute:" << inet_ntoa(dstAddr.sin_addr) << "/" << prefixLen << ",NICName:" << tempNextHopAndWeight.NICName;
+  // // // m_MessageLogFout << ",srcAddr:" << inet_ntoa(tempNextHopAndWeight.srcAddr.sin_addr);
+  // // // m_MessageLogFout << ",gateAddr:" << inet_ntoa(tempNextHopAndWeight.gateAddr.sin_addr);
+  // m_MessageLogFout << endl;
 
   struct {
     struct nlmsghdr n;
@@ -227,14 +228,14 @@ Primus::AddSingleRoute(struct sockaddr_in dstAddr,unsigned int prefixLen,struct 
 void
 Primus::AddMultiRoute(struct sockaddr_in dstAddr,unsigned int prefixLen,vector<struct nexthopandweight> nextHopAndWeight)
 {    
-  // cout << "AddMultiRoute:" << inet_ntoa(dstAddr.sin_addr) << "/" << prefixLen << ",";
+  // m_MessageLogFout << "AddMultiRoute:" << inet_ntoa(dstAddr.sin_addr) << "/" << prefixLen << ",";
   // for (int i=0;i<nextHopAndWeight.size();i++)
   // {
-  //   cout << endl << "\t\t\tNICName:" << nextHopAndWeight[i].NICName << " weight:" << nextHopAndWeight[i].weight;
-  //   // cout << " srcAddr:" << inet_ntoa(nextHopAndWeight[i].srcAddr.sin_addr);
-  //   // cout << " gateAddr:" << inet_ntoa(nextHopAndWeight[i].gateAddr.sin_addr);
+  //   m_MessageLogFout << endl << "\t\t\tNICName:" << nextHopAndWeight[i].NICName << " weight:" << nextHopAndWeight[i].weight;
+  //   // m_MessageLogFout << " srcAddr:" << inet_ntoa(nextHopAndWeight[i].srcAddr.sin_addr);
+  //   // m_MessageLogFout << " gateAddr:" << inet_ntoa(nextHopAndWeight[i].gateAddr.sin_addr);
   // }
-  // cout << endl;
+  // m_MessageLogFout << endl;
 
   struct {
     struct nlmsghdr n;
@@ -290,7 +291,7 @@ Primus::AddMultiRoute(struct sockaddr_in dstAddr,unsigned int prefixLen,vector<s
 void 
 Primus::DelRoute(struct sockaddr_in dstAddr,unsigned int prefixLen)
 {
-  // cout << "DelRoute " << inet_ntoa(dstAddr.sin_addr) << "/" << prefixLen << endl;
+  // m_MessageLogFout << "DelRoute " << inet_ntoa(dstAddr.sin_addr) << "/" << prefixLen << endl;
   struct {
     struct nlmsghdr n;
     struct rtmsg r;
@@ -916,11 +917,11 @@ Primus::GetNodeSock(ident nodeIdent)
 void 
 Primus::UpdateControllerSockTable(int controllerSock,ident controllerIdent,int controllerRole)
 {
-  // cout << endl << "UpdateControllerSockTable\n[controllerSock:" << controllerSock << ",controllerIdent:" << controllerIdent.level << "." << controllerIdent.position
+  // m_MessageLogFout << endl << "UpdateControllerSockTable\n[controllerSock:" << controllerSock << ",controllerIdent:" << controllerIdent.level << "." << controllerIdent.position
   // << ",controllerRole:" << controllerRole << endl << endl;
   for (int i=0;i<MAX_CTRL_NUM;i++)
   {
-    // cout << "i:" << i << ",[" << controllerSockTable[i].controllerIdent.level << "." << controllerSockTable[i].controllerIdent.position << endl;
+    // m_MessageLogFout << "i:" << i << ",[" << controllerSockTable[i].controllerIdent.level << "." << controllerSockTable[i].controllerIdent.position << endl;
     if (SameNode(controllerSockTable[i].controllerIdent,tempIdent) // 遍历完表未找到直接添加
     || SameNode(controllerSockTable[i].controllerIdent,controllerIdent))
     {
@@ -931,7 +932,7 @@ Primus::UpdateControllerSockTable(int controllerSock,ident controllerIdent,int c
       break;
     }
   }
-  // cout << endl;
+  // m_MessageLogFout << endl;
   // PrintControllerSockTable();
 }
 
@@ -958,26 +959,26 @@ Primus::SendMessageByUDP(struct sockaddr_in localAddr,struct sockaddr_in remoteA
 
   if ((nodeSock=socket(PF_INET,SOCK_DGRAM,0))<0)
   {
-    cout << "SendPathInfoTo sock failed" << endl;
+    m_MessageLogFout << "SendPathInfoTo get sock failed" << endl;
     exit(1);
   }
 
   int value=1;
   if (setsockopt(nodeSock,SOL_SOCKET,SO_REUSEPORT,&value,sizeof(value))<0)
   {
-    cout << "SendPathInfoTo set SO_REUSEPORT error" << endl;
+    m_MessageLogFout << "SendPathInfoTo set SO_REUSEPORT error" << endl;
     exit(1);
   }
 
   if (setsockopt(nodeSock,SOL_SOCKET,SO_REUSEADDR,&value,sizeof(value))<0)
   {
-    cout << "SendPathInfoTo set SO_REUSEADDR error" << endl;
+    m_MessageLogFout << "SendPathInfoTo set SO_REUSEADDR error" << endl;
     exit(0);
   }
 
   if ((bind(nodeSock,(struct sockaddr*)&(localAddr),sizeof(localAddr))<0))
   {
-    cout << "SendPathInfoTo bind failed"<<std::endl;
+    m_MessageLogFout << "SendPathInfoTo bind failed"<<std::endl;
     exit(1);
   }
 
@@ -1011,7 +1012,7 @@ Primus::SrcWaitRSThread(void* tempThreadParam)
 
     if (i==3)// 超时3次未收到
     {
-      cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " din't recv RS["
+      m_MessageLogFout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " din't recv RS["
       << tempPrimus->linkTable[linkIndex].linkInfo.identA.level << "." << tempPrimus->linkTable[linkIndex].linkInfo.identA.position << "--"
       << tempPrimus->linkTable[linkIndex].linkInfo.identB.level << "." << tempPrimus->linkTable[linkIndex].linkInfo.identB.position << "]."
       << endl;
@@ -1024,7 +1025,7 @@ Primus::SrcWaitRSThread(void* tempThreadParam)
         {
           tempMessage.dstIdent=tempPrimus->controllerSockTable[j].controllerIdent;
           if ((tempPrimus->SendMessageByTCP(tempPrimus->controllerSockTable[j].controllerSock,tempMessage))==MESSAGE_BUF_SIZE)
-            cout << "Send to slave " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "." << endl;
+            m_MessageLogFout << "Send to slave " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "." << endl;
         }
       }
       usleep(WAIT_INTERVAL*8);
@@ -1100,7 +1101,7 @@ Primus::SendLSToController(struct link tempLink,int linkIndex,ident faultNextHop
       {
         if ((pthread_create(&SrcWaitRSThreadID,NULL,SrcWaitRSThread,(void *)tempThreadParam))!=0)
         {
-          cout << "Create SrcWaitRSThread failed." << endl;
+          m_MessageLogFout << "Create SrcWaitRSThread failed." << endl;
         }
       }
       
@@ -1119,11 +1120,11 @@ Primus::SendLSToController(struct link tempLink,int linkIndex,ident faultNextHop
         }
       }
     }
-    // cout << "Send RP[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+    // m_MessageLogFout << "Send RP[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
     // << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-    // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-    // else cout << "DOWN";
-    // cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
+    // if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "UP";
+    // else m_MessageLogFout << "DOWN";
+    // m_MessageLogFout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
   }
 }
 
@@ -1193,33 +1194,33 @@ Primus::SendNDHelloThread(void* tempThreadParam)
   //set dgram for client
   if ((sock=socket(AF_INET, SOCK_DGRAM, 0))<0)
   {
-    cout << "NDHelloThread Create Socket Failed." << std::endl;
+    m_MessageLogFout << "NDHelloThread Create Socket Failed." << std::endl;
     exit(1);
   }
 
   int value=1;
   if (setsockopt(sock,SOL_SOCKET,SO_REUSEPORT,&value,sizeof(value))<0)
   {
-    cout << "NDHelloThread set SO_REUSEPORT error" << endl;
+    m_MessageLogFout << "NDHelloThread set SO_REUSEPORT error" << endl;
     exit(1);
   }
 
   if (setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&value,sizeof(value))<0)
   {
-    cout << "NDHelloThread set SO_REUSEADDR error" << endl;
+    m_MessageLogFout << "NDHelloThread set SO_REUSEADDR error" << endl;
     exit(1);
   }
 
   if ((bind(sock,(struct sockaddr*)&(localAddr),sizeof(localAddr))<0))
   {
-    cout << "NDHelloThread Bind interface Failed." << endl;
+    m_MessageLogFout << "NDHelloThread Bind interface Failed." << endl;
     exit(1);
   }
 
   //the default socket doesn't support broadcast,so we should set socket discriptor to do it.
   if ((setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &so_broadcast,sizeof(so_broadcast))) < 0)
   {
-    cout << "NDHelloThread SetSocketOpt Failed." << endl;
+    m_MessageLogFout << "NDHelloThread SetSocketOpt Failed." << endl;
     exit(1);
   }
 
@@ -1246,7 +1247,7 @@ Primus::SendNDHelloThread(void* tempThreadParam)
       timeoutNum++;
       if (timeoutNum>=3)// 超时3次，直接挂掉
       {
-        cout << "Recv NDReply from[" << inet_ntoa(neighborAddr.sin_addr) << "][error:" << strerror(errno) << "(errno:" << errno <<  ")]." << endl;
+        m_MessageLogFout << "Recv NDReply from[" << inet_ntoa(neighborAddr.sin_addr) << "][error:" << strerror(errno) << "(errno:" << errno <<  ")]." << endl;
         break;
       }
       else continue;
@@ -1255,12 +1256,12 @@ Primus::SendNDHelloThread(void* tempThreadParam)
     memcpy(&tempNDMessage,recvBuf,ND_BUF_SIZE);
     if (tempNDMessage.messageType==2)
     {
-      // cout << "Recv NDReply from[" << inet_ntoa(fromAddr.sin_addr) << "]." << endl;
+      // m_MessageLogFout << "Recv NDReply from[" << inet_ntoa(fromAddr.sin_addr) << "]." << endl;
       tempPrimus->RecvNDReply(tempNDMessage,fromAddr);
     }
     else
     {
-      cout << "Recv invaild NDMessage." << endl;
+      m_MessageLogFout << "Recv invaild NDMessage." << endl;
     }
     break;
   }
@@ -1269,7 +1270,7 @@ Primus::SendNDHelloThread(void* tempThreadParam)
 void* 
 Primus::ListenNICThread(void* tempThreadParam)
 {
-  // cout << "Listening NIC......" << endl;
+  // m_MessageLogFout << "Listening NIC......" << endl;
   Primus *tempPrimus=((threadparama*)tempThreadParam)->tempPrimus;
 
   struct ifaddrs *ifa;
@@ -1278,7 +1279,7 @@ Primus::ListenNICThread(void* tempThreadParam)
   {
     if (0!=getifaddrs(&ifa))
     {
-      cout << "Getifaddrs error." << endl;
+      m_MessageLogFout << "Getifaddrs error." << endl;
       break;
     }
     for (;ifa!=NULL;)
@@ -1295,7 +1296,7 @@ Primus::ListenNICThread(void* tempThreadParam)
         {
           if (!strcmp(tempPrimus->neighborTable[i].localNICName.c_str(),ifa->ifa_name))// 已经存在
           {
-            // cout << "Old NIC " << ifa->ifa_name << endl;
+            // m_MessageLogFout << "Old NIC " << ifa->ifa_name << endl;
             // 正在进行邻居发现或者已经完成
             if (tempPrimus->neighborTable[i].NICFlag==0) tempPrimus->neighborTable[i].NICFlag=1;// 正常检查
             if (tempPrimus->neighborTable[i].NDType>0) isFind=true;
@@ -1321,7 +1322,7 @@ Primus::ListenNICThread(void* tempThreadParam)
 
           if ((tempAddress[0]=='3' && tempAddress[1]=='2') || (tempAddress[0]=='2' && tempAddress[1]=='1'))
           {
-            // cout << "New NIC " << ifa->ifa_name << endl;
+            // m_MessageLogFout << "New NIC " << ifa->ifa_name << endl;
             struct sockaddr_in neighborAddr;
             bzero(&neighborAddr,sizeof(struct sockaddr_in));
             neighborAddr.sin_family=AF_INET;
@@ -1343,7 +1344,7 @@ Primus::ListenNICThread(void* tempThreadParam)
             pthread_t NDThreadID;
             if (pthread_create(&NDThreadID,NULL,SendNDHelloThread,(void *)tempThreadParam)!=0)
             {
-              cout << "Create SendNDHelloThread failed." << endl;
+              m_MessageLogFout << "Create SendNDHelloThread failed." << endl;
             }
           }
         }
@@ -1456,31 +1457,31 @@ Primus::RecvNDMessageThread(void* tempThreadParam)
 
   if((sock=socket(AF_INET, SOCK_DGRAM, 0))<0)
   {
-    cout << "RecvNDMessageThread Create Socket Failed." << endl;
+    m_MessageLogFout << "RecvNDMessageThread Create Socket Failed." << endl;
     exit(1);
   }
 
   value=1;
   if (setsockopt(sock,SOL_SOCKET,SO_REUSEPORT,&value,sizeof(value))<0)
   {
-    cout << "RecvNDMessageThread set SO_REUSEPORT error" << endl;
+    m_MessageLogFout << "RecvNDMessageThread set SO_REUSEPORT error" << endl;
     exit(1);
   }
 
   if (setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&value,sizeof(value))<0)
   {
-    cout << "RecvNDMessageThread set SO_REUSEADDR error" << endl;
+    m_MessageLogFout << "RecvNDMessageThread set SO_REUSEADDR error" << endl;
     exit(1);
   }
 
   //bind 
   if((bind(sock,(struct sockaddr*) &serverAddr,sizeof(serverAddr))) < 0)
   {
-    cout << "RecvNDMessageThread Bind Socket Failed(" << inet_ntoa(serverAddr.sin_addr) << ")" << endl;
+    m_MessageLogFout << "RecvNDMessageThread Bind Socket Failed(" << inet_ntoa(serverAddr.sin_addr) << ")" << endl;
     exit(1);
   }
   
-  // cout << "Waiting for ND......" << endl;
+  // m_MessageLogFout << "Waiting for ND......" << endl;
 
   char recvBuf[ND_BUF_SIZE],sendBuf[ND_BUF_SIZE];
   
@@ -1489,7 +1490,7 @@ Primus::RecvNDMessageThread(void* tempThreadParam)
     memset(recvBuf,'\0',ND_BUF_SIZE);
     if((value=recvfrom(sock,recvBuf,ND_BUF_SIZE,0,(struct sockaddr *)&clientAddr,(socklen_t*)&len)) < 0)
     {
-      cout << "RecvNDMessageThread Socket recvfrom Failed." << endl;
+      m_MessageLogFout << "RecvNDMessageThread Socket recvfrom Failed." << endl;
       break;
     }
     //排除本地广播
@@ -1502,7 +1503,7 @@ Primus::RecvNDMessageThread(void* tempThreadParam)
     struct NDmessage tempNDMessage;
     memcpy(&tempNDMessage,recvBuf,sizeof(struct NDmessage));
 
-    // cout << "Recv NDmessage from[" << inet_ntoa(clientAddr.sin_addr) << "][" << clientAddr.sin_port << "]." << endl;
+    // m_MessageLogFout << "Recv NDmessage from[" << inet_ntoa(clientAddr.sin_addr) << "][" << clientAddr.sin_port << "]." << endl;
 
     if (tempNDMessage.messageType==1)// hello
     {
@@ -1515,8 +1516,8 @@ Primus::RecvNDMessageThread(void* tempThreadParam)
       memcpy(sendBuf,&tempNDMessage,ND_BUF_SIZE);
 
       if (sendto(sock,sendBuf,ND_BUF_SIZE,0,(struct sockaddr *)&clientAddr,len)<0)
-        cout << "RecvNDMessageThread Send ND reply error." << endl;
-      // else cout << "Send NDReply to[" << inet_ntoa(clientAddr.sin_addr) << "]." << endl;
+        m_MessageLogFout << "RecvNDMessageThread Send ND reply error." << endl;
+      // else m_MessageLogFout << "Send NDReply to[" << inet_ntoa(clientAddr.sin_addr) << "]." << endl;
     }
   }
 }
@@ -1557,14 +1558,14 @@ Primus::UpdateLinkTable(struct message tempMessage)// link status change or ip c
   else if (high.level==2) linkIndex=m_SpineNodes*m_nPods+high.position*m_ToRNodes+low.position%m_ToRNodes;
   else 
   {
-    cout << "Update invaild link " << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+    m_MessageLogFout << "Update invaild link " << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
     << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-    if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-    else cout << "DONW";
-    cout << " from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << endl;
+    if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "UP";
+    else m_MessageLogFout << "DONW";
+    m_MessageLogFout << " from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << endl;
   }
 
-  // cout << "linkIndex:" << linkIndex << endl;
+  // m_MessageLogFout << "linkIndex:" << linkIndex << endl;
 
   if (tempLink.eventId>linkTable[linkIndex].linkInfo.eventId)// status change
   {
@@ -1734,7 +1735,7 @@ Primus::UpdateLinkTable(struct message tempMessage)// link status change or ip c
           return true;
         }
       }
-      // cout << "Waiting......" << endl;
+      // m_MessageLogFout << "Waiting......" << endl;
       linkTable[linkIndex].linkSleepTimes+=1;
       linkTable[linkIndex].lastMessage=tempMessage;
     }
@@ -1938,22 +1939,22 @@ Primus::UpdatePathTable(struct link tempLink)
   int startIndex=0;
 
   // // // test firepath
-  // cout << "Try to test firepath, and eventId is " << tempLink.eventId << endl;
+  // m_MessageLogFout << "Try to test firepath, and eventId is " << tempLink.eventId << endl;
   // if (m_Ident.level==1 && tempLink.eventId != 1 && high.level==2 && low.level==1 && !SameNode(low,m_Ident))// 只有leaf--tor的链路故障才启动kshortestpath算法
   // {
   //   int src_index = 2000 + high.position;
   //   int dst_index = 10000 + low.position;
   //   if (!tempLink.linkStatus)
   //   {
-  //     cout << "try to remove edge" << endl;
+  //     m_MessageLogFout << "try to remove edge" << endl;
   //     m_graph->remove_edge_(src_index,dst_index);
-  //     cout << "Remove edge over" << endl;
+  //     m_MessageLogFout << "Remove edge over" << endl;
   //   }
   //   else
   //   {
-  //     cout << "try to build edge" << endl;
+  //     m_MessageLogFout << "try to build edge" << endl;
   //     m_graph->build_edge(src_index,dst_index);
-  //     cout << "Build edge over" << endl;
+  //     m_MessageLogFout << "Build edge over" << endl;
   //   }
   //   src_index = 10000 + m_Ident.position;
 
@@ -1962,7 +1963,7 @@ Primus::UpdatePathTable(struct link tempLink)
   //   gettimeofday(&beginStamp, NULL);
   //   YenTopKShortestPathsAlg yenAlg(*m_graph, m_graph->get_vertex(src_index),m_graph->get_vertex(dst_index));
   //   gettimeofday(&endStamp, NULL);
-  //   cout << "time cost: " << (endStamp.tv_sec-beginStamp.tv_sec)*1000+(endStamp.tv_usec-beginStamp.tv_usec)*0.001 << " ms\n"; 
+  //   m_MessageLogFout << "time cost: " << (endStamp.tv_sec-beginStamp.tv_sec)*1000+(endStamp.tv_usec-beginStamp.tv_usec)*0.001 << " ms\n"; 
   //   // int i=0;
   //   // while(yenAlg.has_next())
   //   // {
@@ -1970,7 +1971,7 @@ Primus::UpdatePathTable(struct link tempLink)
   //   //   yenAlg.next()->PrintOut(cout);
   //   // }
   // }
-  // cout << "Test firepath over" << endl;
+  // m_MessageLogFout << "Test firepath over" << endl;
   // // // end
 
   switch (m_Ident.level)
@@ -2198,7 +2199,7 @@ Primus::UpdateNodeKeepAlive(ident nodeIdent)
     nodeSockTable[nodeSockIndex].unRecvNum--;
     return true;
   }
-  cout << "error UpdateNodeKeepAlive! nodeIdent[" << nodeIdent.level << "." << nodeIdent.position << "]." << endl;
+  m_MessageLogFout << "error UpdateNodeKeepAlive! nodeIdent[" << nodeIdent.level << "." << nodeIdent.position << "]." << endl;
   return false;
 }
 
@@ -2223,7 +2224,7 @@ Primus::SlaveWaitRSThread(void* tempThreadParam)
   }
   if (timeout==true && tempPrimus->m_Role==3 && tempPrimus->m_Ident.position==1)// 强行让0.1做master
   {
-    cout << "I am the new master!" << endl;
+    m_MessageLogFout << "I am the new master!" << endl;
     tempPrimus->m_Role=2;
     struct link tempLink={tempPrimus->tempIdent,tempPrimus->tempIdent,tempPrimus->tempAddr,tempPrimus->tempAddr,-1,false};
     struct message tempMessage={tempLink,tempPrimus->m_Ident,tempPrimus->tempIdent,tempPrimus->tempIdent,false,4,tempPrimus->m_Role,-1,1};
@@ -2236,7 +2237,7 @@ Primus::SlaveWaitRSThread(void* tempThreadParam)
       }
     }
     gettimeofday(&endStamp,NULL);
-    cout << "Slave wait time is " << ((endStamp.tv_sec-startStamp.tv_sec)*1000+(endStamp.tv_usec-startStamp.tv_usec)*0.001) << " ms.\n";
+    m_MessageLogFout << "Slave wait time is " << ((endStamp.tv_sec-startStamp.tv_sec)*1000+(endStamp.tv_usec-startStamp.tv_usec)*0.001) << " ms.\n";
   }
   tempPrimus->m_RecvReElectFromNode=false;
 }
@@ -2279,7 +2280,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
 
       if ((ret=recv(sock,recvBuf,MESSAGE_BUF_SIZE,0))<=0)
       {
-        cout << "RecvMessageThread ret(" << ret << ") sock(" << sock << ") recv error:" << strerror(errno) << "(errno:" << errno << ")" << endl;
+        m_MessageLogFout << "RecvMessageThread ret(" << ret << ") sock(" << sock << ") recv error:" << strerror(errno) << "(errno:" << errno << ")" << endl;
         tempPrimus->DelSocket(sock);
         continue;
         // exit(1);
@@ -2290,7 +2291,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
       
       if (tempMessage.messageType<1 || tempMessage.messageType>3)
       {
-        cout << "messageType[" << tempMessage.messageType << "] error!" << endl << endl;
+        m_MessageLogFout << "messageType[" << tempMessage.messageType << "] error!" << endl << endl;
         continue;
       }
       if (tempMessage.messageType!=3) tempPrimus->PrintMessage(tempMessage);
@@ -2304,7 +2305,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
           switch (tempMessage.messageType)
           {
           case 1:// hello ack
-            // cout << "Recv hello ack from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << endl;
+            // m_MessageLogFout << "Recv hello ack from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << endl;
             tempPrimus->UpdateControllerSockTable(sock,tempMessage.srcIdent,tempMessage.srcIdentRole);
             tempPrimus->PrintMessage(tempMessage);
             break;
@@ -2317,22 +2318,22 @@ Primus::RecvMessageThread(void* tempThreadParam)
               tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesResponsed++;
               pthread_mutex_unlock(&(tempPrimus->MsgQueueEventMutex[messageEventQueueIndex]));
 
-              // cout << "Master recv RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+              // m_MessageLogFout << "Master recv RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
               // << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-              // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-              // else cout << "DOWN";
-              // cout << " from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
+              // if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "UP";
+              // else m_MessageLogFout << "DOWN";
+              // m_MessageLogFout << " from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
               // << "][recvRS:" << tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesResponsed
               // << ",shouldNotify:" << tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesShouldNotify
               // << "]." << endl;
 
               if (tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesResponsed==tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].numOfSwitchesShouldNotify)
               {
-                cout << "Master recv all RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+                m_MessageLogFout << "Master recv all RS[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
                 << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-                if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-                else cout << "DOWN";
-                cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
+                if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "UP";
+                else m_MessageLogFout << "DOWN";
+                m_MessageLogFout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
                 if (PRINT_MASTER_RECV_AL_LRS_TIME)
                 {
                   startStamp=tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].startStamp;
@@ -2349,7 +2350,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 int dstNodeSock=tempPrimus->GetNodeSock(tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo.dstIdent);
                 if (dstNodeSock>0 && tempPrimus->SendMessageByTCP(dstNodeSock,tempPrimus->messageEventQueue.eventQueue[messageEventQueueIndex].messageInfo));
                 else 
-                  cout << "Invaild nodeSock.";
+                  m_MessageLogFout << "Invaild nodeSock.";
                 
                 if (PRINT_MASTER_RECV_AL_LRS_TIME)
                 {
@@ -2378,11 +2379,11 @@ Primus::RecvMessageThread(void* tempThreadParam)
             {
               tempPrimus->RecvRS(tempMessage.linkInfo);// 收到response，更新链路表，计算时间开销        
               tempPrimus->PrintMessage(tempMessage);
-              // cout << "Recv RP[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+              // m_MessageLogFout << "Recv RP[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
               // << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-              // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-              // else cout << "DOWN";
-              // cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
+              // if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "UP";
+              // else m_MessageLogFout << "DOWN";
+              // m_MessageLogFout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
             }
             break;
           case 3:// keepalive ack,node
@@ -2392,7 +2393,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 && tempPrimus->controllerSockTable[j].unRecvNum>0)
               {
                 tempPrimus->controllerSockTable[j].unRecvNum--;
-                // cout << "Recv keepalive ack from master " << tempMessage.srcIdent.level << "."
+                // m_MessageLogFout << "Recv keepalive ack from master " << tempMessage.srcIdent.level << "."
                 // << tempMessage.srcIdent.position << endl;
               }
             }
@@ -2458,18 +2459,18 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 }
               }
             }
-            // cout << "send hello ack to sock(" << sock << ")." << endl;
+            // m_MessageLogFout << "send hello ack to sock(" << sock << ")." << endl;
             break;
           case 2:// link stauts report，2 type，controller recv or node recv
             if (tempPrimus->m_Role==1)// node recv
             {
               // static int recvNum=0;
-              // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position
+              // m_MessageLogFout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position
               // << " recv[" << ++recvNum << "] " << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
               // << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-              // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-              // else cout << "DONW";
-              // cout << " from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << endl;
+              // if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "UP";
+              // else m_MessageLogFout << "DONW";
+              // m_MessageLogFout << " from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << endl;
               
               if (PRINT_NODE_MODIFY_TIME)
               {
@@ -2477,17 +2478,17 @@ Primus::RecvMessageThread(void* tempThreadParam)
               }
               
               tempPrimus->PrintMessage(tempMessage);
-              cout << endl << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " try to UpdateLinkTable[" 
+              m_MessageLogFout << endl << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " try to UpdateLinkTable[" 
               << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
               << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-              if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-              else cout << "DOWN";
-              cout << "]." << endl;
+              if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "UP";
+              else m_MessageLogFout << "DOWN";
+              m_MessageLogFout << "]." << endl;
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
-                cout << "Try to update pathtable" << endl;
+                m_MessageLogFout << "Try to update pathtable" << endl;
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
-                cout << "update pathtable over" << endl;
+                m_MessageLogFout << "update pathtable over" << endl;
                 if (tempMessage.linkInfo.eventId!=1)
                 {
                   if (tempMessage.transportType==1) 
@@ -2501,20 +2502,20 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   << "\nRecv tcp(InDirect) packets:" << tempPrimus->recvTcpInDirNum
                   << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
                 }
-                cout << "try to send response to master" << endl;
+                m_MessageLogFout << "try to send response to master" << endl;
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
 
                 if (tempMessage.transportType==1)
                 {
-                  cout << "transportType==1" << endl;
+                  m_MessageLogFout << "transportType==1" << endl;
                   tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
                   tempPrimus->PrintMessage(tempMessage);
                 }
                 else if (tempMessage.transportType==2)// 从udp收到，转为tcp返回
                 {
-                  cout << "transportType==2" << endl;
+                  m_MessageLogFout << "transportType==2" << endl;
                   for (int j=0;j<MAX_CTRL_NUM;j++)
                   {
                     if (tempPrimus->controllerSockTable[j].controllerSock==-1 || tempPrimus->SameNode(tempPrimus->controllerSockTable[j].controllerIdent,tempPrimus->tempIdent)) 
@@ -2528,7 +2529,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                     }
                   }
                 }
-                cout << "send response over" << endl;
+                m_MessageLogFout << "send response over" << endl;
                 if (PRINT_NODE_MODIFY_TIME)
                 {  
                   gettimeofday(&endStamp,NULL);
@@ -2552,12 +2553,12 @@ Primus::RecvMessageThread(void* tempThreadParam)
               }
               else 
               {
-                cout << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
+                m_MessageLogFout << GetNow() << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " don't need to UpdateLinkTable[" 
                 << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
                 << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-                if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-                else cout << "DOWN";
-                cout << "]." << endl;
+                if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "UP";
+                else m_MessageLogFout << "DOWN";
+                m_MessageLogFout << "]." << endl;
               }
             }
             else if (tempPrimus->m_Role==2)// master recv
@@ -2588,7 +2589,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                 // tempMessage.ack=true;
 
                 // if (tempPrimus->SendMessageByTCP(sock,tempMessage));
-                // else cout << "Invaild nodeSock.";
+                // else m_MessageLogFout << "Invaild nodeSock.";
               }
             }
             else if (tempPrimus->m_Role==3)// slave recv
@@ -2601,7 +2602,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
             }
             break;
           case 3:// recv keepalive report
-            // cout << "Recv keepalive from node " << tempMessage.srcIdent.level << "."
+            // m_MessageLogFout << "Recv keepalive from node " << tempMessage.srcIdent.level << "."
             // << tempMessage.srcIdent.position << endl;
             if (tempPrimus->UpdateNodeKeepAlive(tempMessage.srcIdent))
             {
@@ -2609,14 +2610,14 @@ Primus::RecvMessageThread(void* tempThreadParam)
               tempMessage.srcIdent=tempPrimus->m_Ident;
               tempMessage.ack=true;
               tempPrimus->SendMessageByTCP(sock,tempMessage);
-              // cout << "Send keepalive ack to node " << tempMessage.dstIdent.level << "."
+              // m_MessageLogFout << "Send keepalive ack to node " << tempMessage.dstIdent.level << "."
               // << tempMessage.dstIdent.position << endl;
             }
             break;
           case 4:// reelect
             if (tempPrimus->m_Role==1)// node recv
             {
-              cout << "Recv RE from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << "." << endl;
+              m_MessageLogFout << "Recv RE from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << "." << endl;
               for (int j=0;j<MAX_CTRL_NUM;j++)
               {
                 if (tempPrimus->SameNode(tempPrimus->controllerSockTable[j].controllerIdent,tempPrimus->tempIdent)) break; // 遍历完表未找到直接添加
@@ -2667,7 +2668,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                       tempThreadParam->tempEpollFd=-1;
 
                       if (pthread_create(&SlaveWaitRSThreadID,NULL,SlaveWaitRSThread,(void*)tempThreadParam)!=0)
-                        cout << "Create SlaveWaitRSThread failed." << endl;
+                        m_MessageLogFout << "Create SlaveWaitRSThread failed." << endl;
                       else 
                       {
                         tempPrimus->m_RecvReElectFromNode=true;
@@ -2699,7 +2700,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               || tempPrimus->SameNode(tempPrimus->tempIdent,tempPrimus->controllerSockTable[j].controllerIdent)) break;
             tempPrimus->SendMessageByTCP(tempPrimus->controllerSockTable[j].controllerSock,
                                          tempMessage);
-            // cout << "Forward message from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
+            // m_MessageLogFout << "Forward message from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
             // << " to " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << endl;
           }
         }
@@ -2713,7 +2714,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
               {
                 tempPrimus->SendMessageByTCP(tempPrimus->controllerSockTable[j].controllerSock,
                                          tempMessage);
-                // cout << "Forward message from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
+                // m_MessageLogFout << "Forward message from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
                 // << " to " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << endl;
               }
               break;
@@ -2722,14 +2723,14 @@ Primus::RecvMessageThread(void* tempThreadParam)
         }
         else if (tempMessage.dstIdent.level!=0)//转发给某个特定的Node
         {
-          cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << "[sock:" << sock 
+          m_MessageLogFout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << "[sock:" << sock 
           << "] srcIdent:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << endl;
           int tempNodeSock=tempPrimus->GetNodeSock(tempMessage.dstIdent);
           if (tempNodeSock>0)
           {
             tempMessage.fowIdent=tempPrimus->m_Ident;
             tempPrimus->SendMessageByTCP(tempNodeSock,tempMessage);
-            // cout << "Forward message from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
+            // m_MessageLogFout << "Forward message from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position
             // << " to " << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << endl;             
           }
           else // 通过udp转发
@@ -2890,65 +2891,65 @@ Primus::RecvMessageThread(void* tempThreadParam)
             }
             if (!tempPrimus->SameNode(tempNextHopIdent,tempPrimus->tempIdent) && tempDstAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
             {
-              // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " forward message["; 
+              // m_MessageLogFout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " forward message["; 
               // if (tempMessage.transportType==1) Logfout << "TCP][";
               // else Logfout << "UDP][";
               // if (tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) Logfout << "Direct][";
               // else Logfout << "Forward][";
-              // if (tempMessage.messageType==1) cout << "HL";
-              // else if (tempMessage.messageType==2) cout << "LS";
-              // else if (tempMessage.messageType==3) cout << "KA";
-              // else if (tempMessage.messageType==4) cout << "RE";
+              // if (tempMessage.messageType==1) m_MessageLogFout << "HL";
+              // else if (tempMessage.messageType==2) m_MessageLogFout << "LS";
+              // else if (tempMessage.messageType==3) m_MessageLogFout << "KA";
+              // else if (tempMessage.messageType==4) m_MessageLogFout << "RE";
 
-              // if (tempMessage.ack==true) cout << ":RS";
-              // else cout << ":RP";
-              // cout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
-              // if (!tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) cout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
-              // cout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
+              // if (tempMessage.ack==true) m_MessageLogFout << ":RS";
+              // else m_MessageLogFout << ":RP";
+              // m_MessageLogFout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
+              // if (!tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) m_MessageLogFout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
+              // m_MessageLogFout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
 
               // if (tempMessage.messageType==2)
               // {
-              //   cout << "[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+              //   m_MessageLogFout << "[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
               //   << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position;
-              //   if (tempMessage.linkInfo.linkStatus==true) cout << "/UP]";
-              //   else cout << "/DOWN]";
+              //   if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "/UP]";
+              //   else m_MessageLogFout << "/DOWN]";
               // } 
-              // cout << "\n"; 
+              // m_MessageLogFout << "\n"; 
               
               sockaddr_in tempLocalAddr=tempPrimus->GetLocalAddrByNeighborIdent(tempNextHopIdent);
-              // cout << "localAddr:" << inet_ntoa(tempLocalAddr.sin_addr) << endl;
-              // cout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
+              // m_MessageLogFout << "localAddr:" << inet_ntoa(tempLocalAddr.sin_addr) << endl;
+              // m_MessageLogFout << "dstAddr:" << inet_ntoa(tempDstAddr.sin_addr) << endl;
               tempMessage.fowIdent=tempPrimus->m_Ident;
               if (tempLocalAddr.sin_addr.s_addr!=tempPrimus->tempAddr.sin_addr.s_addr)
                 tempPrimus->SendMessageByUDP(tempLocalAddr,tempDstAddr,tempMessage);
-              // cout << " completely!" << endl;
+              // m_MessageLogFout << " completely!" << endl;
             }
             else
             {
-              // cout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " can't forward message[";
+              // m_MessageLogFout << tempPrimus->m_Ident.level << "." << tempPrimus->m_Ident.position << " can't forward message[";
               // if (tempMessage.transportType==1) Logfout << "TCP][";
               // else Logfout << "UDP][";
               // if (tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) Logfout << "Direct][";
               // else Logfout << "InDirect][";
-              // if (tempMessage.messageType==1) cout << "HL";
-              // else if (tempMessage.messageType==2) cout << "LS";
-              // else if (tempMessage.messageType==3) cout << "KA";
-              // else if (tempMessage.messageType==4) cout << "RE";
+              // if (tempMessage.messageType==1) m_MessageLogFout << "HL";
+              // else if (tempMessage.messageType==2) m_MessageLogFout << "LS";
+              // else if (tempMessage.messageType==3) m_MessageLogFout << "KA";
+              // else if (tempMessage.messageType==4) m_MessageLogFout << "RE";
 
-              // if (tempMessage.ack==true) cout << ":RS";
-              // else cout << ":RP";
-              // cout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
-              // if (!tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) cout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
-              // cout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
+              // if (tempMessage.ack==true) m_MessageLogFout << ":RS";
+              // else m_MessageLogFout << ":RP";
+              // m_MessageLogFout << ":" << tempMessage.linkInfo.eventId << "][src:" << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position;
+              // if (!tempPrimus->SameNode(tempMessage.fowIdent,tempPrimus->tempIdent)) m_MessageLogFout << ",fow:" << tempMessage.fowIdent.level << "." << tempMessage.fowIdent.position;
+              // m_MessageLogFout << ",dst:" << tempMessage.dstIdent.level << "." << tempMessage.dstIdent.position << "]";
 
               // if (tempMessage.messageType==2)
               // {
-              //   cout << "[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
+              //   m_MessageLogFout << "[" << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position
               //   << "--" << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position;
-              //   if (tempMessage.linkInfo.linkStatus==true) cout << "/UP]";
-              //   else cout << "/DOWN]";
+              //   if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "/UP]";
+              //   else m_MessageLogFout << "/DOWN]";
               // } 
-              // cout << ".\n";           
+              // m_MessageLogFout << ".\n";           
             }
           }
         }
@@ -2968,18 +2969,18 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
   tempMessage.srcIdentRole=m_Role;
 
   // // link type:1)spinenode--leafnode;2)leafnode--tornode;
-  // cout << endl << endl << "SendToAllAffectedNodes [" << tempStartIndex << " to " << tempEndIndex << "]["
+  // m_MessageLogFout << endl << endl << "SendToAllAffectedNodes [" << tempStartIndex << " to " << tempEndIndex << "]["
   // << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
   // << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-  // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-  // else cout << "DOWN";
-  // cout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
+  // if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "UP";
+  // else m_MessageLogFout << "DOWN";
+  // m_MessageLogFout << "][eventId:" << tempMessage.linkInfo.eventId << "]." << endl;
 
   if (tempMessage.linkInfo.identA.level==2) tempIndex=tempMessage.linkInfo.identA.position%m_LeafNodes;
   else if (tempMessage.linkInfo.identB.level==2) tempIndex=tempMessage.linkInfo.identB.position%m_LeafNodes;
   else 
   {
-    cout << "SendToAllAffectedNodes don't find tempIndex." << endl;
+    m_MessageLogFout << "SendToAllAffectedNodes don't find tempIndex." << endl;
     return numOfSentNodes;
   }
 
@@ -2998,14 +2999,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
         }
         else if (nodeSockTable[i].nodeIdent.level==1)// tor，无脑发
         {
-          // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
+          // m_MessageLogFout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
           // << "[sock:" << nodeSockTable[i].nodeSock << "]";
           tempMessage.transportType=1;
           if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
           {
             numOfSentNodes++;
           }
-          // cout << "[ret:" << ret << "]." << endl;
+          // m_MessageLogFout << "[ret:" << ret << "]." << endl;
           tempMessage.transportType=2;
           for (int j=0;j<MAX_FOWNODE_NUM;j++)
           {
@@ -3019,14 +3020,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
         else if (nodeSockTable[i].nodeIdent.level==2 
           && nodeSockTable[i].nodeIdent.position%m_LeafNodes==tempIndex)// leafnode，只有相对位置相同才发送
         {
-          // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
+          // m_MessageLogFout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
           // << "[sock:" << nodeSockTable[i].nodeSock << "]";
           tempMessage.transportType=1;
           if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
           {
             numOfSentNodes++;
           }
-          // cout << "[ret:" << ret << "]." << endl;
+          // m_MessageLogFout << "[ret:" << ret << "]." << endl;
           tempMessage.transportType=2;
           for (int j=0;j<MAX_FOWNODE_NUM;j++)
           {
@@ -3040,14 +3041,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
         else if (nodeSockTable[i].nodeIdent.level==3
           && ((SameNode(tempMessage.linkInfo.identA,nodeSockTable[i].nodeIdent)) || (SameNode(tempMessage.linkInfo.identB,nodeSockTable[i].nodeIdent))))
         {
-          // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
+          // m_MessageLogFout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
           // << "[sock:" << nodeSockTable[i].nodeSock << "]";
           tempMessage.transportType=1;
           if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
           {
             numOfSentNodes++;
           }
-          // cout << "[ret:" << ret << "]." << endl;
+          // m_MessageLogFout << "[ret:" << ret << "]." << endl;
           tempMessage.transportType=2;
           for (int j=0;j<MAX_FOWNODE_NUM;j++)
           {
@@ -3064,14 +3065,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
           {
             if ((SameNode(tempMessage.linkInfo.identA,nodeSockTable[i].nodeIdent)) || (SameNode(tempMessage.linkInfo.identB,nodeSockTable[i].nodeIdent)))
             {
-              // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
+              // m_MessageLogFout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
               // << "[sock:" << nodeSockTable[i].nodeSock << "]";
               tempMessage.transportType=1;
               if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
               {
                 numOfSentNodes++;
               }
-              // cout << "[ret:" << ret << "]." << endl;
+              // m_MessageLogFout << "[ret:" << ret << "]." << endl;
               tempMessage.transportType=2;
               for (int j=0;j<MAX_FOWNODE_NUM;j++)
               {
@@ -3087,14 +3088,14 @@ Primus::SendToAllAffectedNodes(struct message tempMessage,int tempStartIndex,int
           {
             if (nodeSockTable[i].nodeIdent.position/(m_SpineNodes/m_LeafNodes)==tempIndex)
             {
-              // cout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
+              // m_MessageLogFout << "Send to " << nodeSockTable[i].nodeIdent.level << "." << nodeSockTable[i].nodeIdent.position 
               // << "[sock:" << nodeSockTable[i].nodeSock << "]";
               tempMessage.transportType=1;
               if ((ret=SendMessageByTCP(nodeSockTable[i].nodeSock,tempMessage))==MESSAGE_BUF_SIZE)// 发送成功
               {
                 numOfSentNodes++;
               }
-              // cout << "[ret:" << ret << "]." << endl;
+              // m_MessageLogFout << "[ret:" << ret << "]." << endl;
               tempMessage.transportType=2;
               for (int j=0;j<MAX_FOWNODE_NUM;j++)
               {
@@ -3159,7 +3160,7 @@ Primus::SendMessageThread(void* tempThreadParam)
       tempPrimus->messageEventQueue.eventQueue[thisSendQueueHead].numOfSwitchesSent+=thisEventNumOfNodesSentByThisThread;
       pthread_mutex_unlock(&(tempPrimus->MsgQueueEventMutex[thisSendQueueHead]));
 
-      // cout << "Send to " << thisEventNumOfNodesSentByThisThread << " affected nodes." << endl;
+      // m_MessageLogFout << "Send to " << thisEventNumOfNodesSentByThisThread << " affected nodes." << endl;
 
       thisSendQueueHead=(thisSendQueueHead+1)%MAX_OUTBOUNDING_EVENTS;
       numOfEventsSentByThisThread++;
@@ -3260,7 +3261,7 @@ Primus::ConnectWithMaster(string masterIP,string NICName)
     else {
       fail_times++;
       if (fail_times>=10) return false;
-      cout << "Sock(" << nodeSock << ")[" << masterIP << "] connect error:" << strerror(errno) << "(errno:" << errno << ")." << endl << endl;
+      m_MessageLogFout << "Sock(" << nodeSock << ")[" << masterIP << "] connect error:" << strerror(errno) << "(errno:" << errno << ")." << endl << endl;
       usleep(CONNECT_INTERVAL);
     }
   }
@@ -3301,12 +3302,12 @@ Primus::InitiateMessageEventQueues()
 int 
 Primus::EnqueueMessageIntoEventQueue(struct message tempMessage)//Return queue len if enqueue succeed, else return -1
 { 
-  // cout << "EnqueueMessageIntoEventQueue[" 
+  // m_MessageLogFout << "EnqueueMessageIntoEventQueue[" 
   // << tempMessage.linkInfo.identA.level << "." << tempMessage.linkInfo.identA.position << "--"
   // << tempMessage.linkInfo.identB.level << "." << tempMessage.linkInfo.identB.position << "/";
-  // if (tempMessage.linkInfo.linkStatus==true) cout << "UP";
-  // else cout << "DOWN";
-  // cout << " from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << "]." << endl;
+  // if (tempMessage.linkInfo.linkStatus==true) m_MessageLogFout << "UP";
+  // else m_MessageLogFout << "DOWN";
+  // m_MessageLogFout << " from " << tempMessage.srcIdent.level << "." << tempMessage.srcIdent.position << "]." << endl;
 
   struct messageevent tempMessageEvent;
   memcpy(&(tempMessageEvent.messageInfo),&tempMessage,sizeof(struct message));
@@ -3389,26 +3390,26 @@ Primus::InitiateUDPServer()
 
   if ((serverSock=socket(PF_INET,SOCK_DGRAM,0))<0)
   {  
-    cout << "HandleReadLinkInfo socket failed" << endl;
+    m_MessageLogFout << "HandleReadLinkInfo socket failed" << endl;
     exit(1);
   }
 
   int value=1;
   if (setsockopt(serverSock,SOL_SOCKET,SO_REUSEPORT,&value,sizeof(value))<0)
   {
-    cout << "HandleReadLinkInfo set SO_REUSEPORT error" << endl;
+    m_MessageLogFout << "HandleReadLinkInfo set SO_REUSEPORT error" << endl;
     exit(0);
   }
 
   if (setsockopt(serverSock,SOL_SOCKET,SO_REUSEADDR,&value,sizeof(value))<0)
   {
-    cout << "HandleReadLinkInfo set SO_REUSEADDR error" << endl;
+    m_MessageLogFout << "HandleReadLinkInfo set SO_REUSEADDR error" << endl;
     exit(0);
   }
   
   if (bind(serverSock,(struct sockaddr *)&localAddr,sizeof(localAddr))<0)
   {
-    cout << "HandleReadLinkInfo bind failed" << endl;
+    m_MessageLogFout << "HandleReadLinkInfo bind failed" << endl;
     exit(1);
   }
 
@@ -3426,7 +3427,7 @@ Primus::InitiateNDServer()
 
   if (pthread_create(&NDServerThreadID,NULL,RecvNDMessageThread,(void*)tempThreadParam)!=0)
   {
-    cout << "Create RecvNDMessageThread failed!" << endl;
+    m_MessageLogFout << "Create RecvNDMessageThread failed!" << endl;
   }
 }
 
@@ -3450,21 +3451,21 @@ Primus::ListenTCP()
   int value=1;
   if (setsockopt(serverSock,SOL_SOCKET,SO_REUSEPORT,&value,sizeof(value))<0)
   {
-    cout << strerror(errno) << "(errno:" << errno << ").\t";
+    m_MessageLogFout << strerror(errno) << "(errno:" << errno << ").\t";
     fprintf(stderr,"Set SO_REUSEPORT error.\n");
     exit(1);
   }
 
   if (setsockopt(serverSock,SOL_SOCKET,SO_REUSEADDR,&value,sizeof(value))<0)
   {
-    cout << strerror(errno) << "(errno:" << errno << ").\t";
+    m_MessageLogFout << strerror(errno) << "(errno:" << errno << ").\t";
     fprintf(stderr,"Set SO_REUSEADDR error.\n");
     exit(1);
   }
 
   if (setsockopt(serverSock, IPPROTO_TCP, TCP_NODELAY, &value, sizeof(value)) < 0)
   {
-    cout << strerror(errno) << "(errno:" << errno << ").\t";
+    m_MessageLogFout << strerror(errno) << "(errno:" << errno << ").\t";
     fprintf(stderr,"Set TCP_NODELAY error.\n");
     exit(1);
   }
@@ -3472,14 +3473,14 @@ Primus::ListenTCP()
   /*将套接字绑定到服务器的网络地址上*/
   if(bind(serverSock,(struct sockaddr *)&localAddr,sizeof(struct sockaddr))<0)
   {
-    cout << strerror(errno) << "(errno:" << errno << ").\t";
+    m_MessageLogFout << strerror(errno) << "(errno:" << errno << ").\t";
     fprintf(stderr,"Bind Socket Failed.\n");
         exit(1);
   }
 
   if(listen(serverSock,MAX_TCP_PENDING_ACCEPT_CONNS)<0)
   {
-    cout << strerror(errno) << "(errno:" << errno << ").\t";
+    m_MessageLogFout << strerror(errno) << "(errno:" << errno << ").\t";
     fprintf(stderr,"Listen Socket Failed.\n");
     exit(1);
   }
@@ -3494,7 +3495,7 @@ Primus::ListenTCP()
     if ((nodeSock=accept(serverSock,(struct sockaddr *)&(clientAddr),&sin_size))<0)
     {
       fprintf(stderr,"Accept Socket Failed from %s:%d.\n", inet_ntoa(clientAddr.sin_addr),ntohs(clientAddr.sin_port));
-      cout << "Sock(" << nodeSock << ") connect error:" << strerror(errno) << "(errno:" << errno << ")." << endl << endl;
+      m_MessageLogFout << "Sock(" << nodeSock << ") connect error:" << strerror(errno) << "(errno:" << errno << ")." << endl << endl;
       exit(1);
     }
     else
@@ -3671,7 +3672,7 @@ Primus::KeepaliveThread(void* tempThreadParam)
       {
         // shutdown(tempPrimus->controllerSockTable[i].controllerSock,SHUT_RDWR);
         tempPrimus->controllerSockTable[i].controllerSock=-1;
-        cout << "Can't connect with master." << endl;
+        m_MessageLogFout << "Can't connect with master." << endl;
       }
       if (tempPrimus->controllerSockTable[i].controllerSock!=-1)
       {
@@ -3679,34 +3680,34 @@ Primus::KeepaliveThread(void* tempThreadParam)
         if (tempPrimus->SendMessageByTCP(tempPrimus->controllerSockTable[i].controllerSock,tempMessage)==MESSAGE_BUF_SIZE)
         {
           tempPrimus->controllerSockTable[i].unRecvNum++;
-          // cout << "Send keepalive to master " << tempPrimus->controllerSockTable[i].controllerIdent.level
+          // m_MessageLogFout << "Send keepalive to master " << tempPrimus->controllerSockTable[i].controllerIdent.level
           // << "." << tempPrimus->controllerSockTable[i].controllerIdent.position << endl;
         }
       }
       else
       {
-        // cout << "We need to choose a new path to connect with master!" << endl;
+        // m_MessageLogFout << "We need to choose a new path to connect with master!" << endl;
         int tempPathIndex=0;
         for (int j=0;j<10;j++)
         {
-          // cout << "i:" << i << endl;
+          // m_MessageLogFout << "i:" << i << endl;
           tempPathIndex=rand()%(tempPrimus->pathNum);
-          // cout << "tempPathIndex:" << tempPathIndex << endl;
+          // m_MessageLogFout << "tempPathIndex:" << tempPathIndex << endl;
           string masterIP=inet_ntoa(tempPrimus->pathTable[tempPathIndex].addrSet[0].sin_addr);
-          // cout << "masterIP:" << masterIP << endl;
-          // cout << "faultLinkCounter:" << tempPrimus->pathTable[tempPathIndex].faultLinkCounter << endl;
+          // m_MessageLogFout << "masterIP:" << masterIP << endl;
+          // m_MessageLogFout << "faultLinkCounter:" << tempPrimus->pathTable[tempPathIndex].faultLinkCounter << endl;
           if (tempPrimus->pathTable[tempPathIndex].faultLinkCounter==0
             && strcmp(masterIP.c_str(),"127.0.0.1"))
           {
-            // cout << "Maybe a fine path" << endl;
+            // m_MessageLogFout << "Maybe a fine path" << endl;
             string tempNICName=tempPrimus->GetLocalNICNameByNeighborIdent(tempPrimus->pathTable[tempPathIndex].pathNodeIdent[1]);
-            // cout << "tempNICName:" << tempNICName << endl;
+            // m_MessageLogFout << "tempNICName:" << tempNICName << endl;
             tempPrimus->ConnectWithMaster(masterIP,tempNICName);
-            // cout << "Choose path[" << tempPathIndex << "] to connect with Master." << endl << endl;
-            // cout << "Choose path[";
+            // m_MessageLogFout << "Choose path[" << tempPathIndex << "] to connect with Master." << endl << endl;
+            // m_MessageLogFout << "Choose path[";
             break;
           }
-          // cout << endl;
+          // m_MessageLogFout << endl;
         }
       }
     }
@@ -3724,7 +3725,7 @@ Primus::CreateKeepAliveThread()
     tempThreadParam->tempEpollFd=-1;
 
     if ((pthread_create(&checkKeepaliveThreadID,NULL,CheckKeepaliveThread,(void*)tempThreadParam))!=0)
-     cout << "Create CheckKeepaliveThread failed." << endl;
+     m_MessageLogFout << "Create CheckKeepaliveThread failed." << endl;
   }
   if (m_Role==1 || m_Role==3)
   {
@@ -3734,7 +3735,7 @@ Primus::CreateKeepAliveThread()
     tempThreadParam->tempEpollFd=-1;
 
     if ((pthread_create(&keepaliveThreadID,NULL,KeepaliveThread,(void*)tempThreadParam))!=0)
-     cout << "Create KeepaliveThread failed." << endl;
+     m_MessageLogFout << "Create KeepaliveThread failed." << endl;
   }
 }
 
@@ -3764,7 +3765,7 @@ Primus::Start()
       tempThreadParam->tempEpollFd=-1;
 
       if ((pthread_create(&masterGenerateLinkStatusChangeID,NULL,MasterGenerateLinkStatusChange,(void*)tempThreadParam))!=0)
-        cout << "Create MasterGenerateLinkStatusChange failed." << endl;
+        m_MessageLogFout << "Create MasterGenerateLinkStatusChange failed." << endl;
     }
     if (m_Role==3)
     {
@@ -3803,7 +3804,7 @@ Primus::Start()
     tempThreadParam->tempPrimus=this;
     tempThreadParam->tempEpollFd=-1;
     if (pthread_create(&listenNICThreadID,NULL,ListenNICThread,(void*)tempThreadParam)!=0) 
-      cout << "Create ListenNICThread failed!" << endl;
+      m_MessageLogFout << "Create ListenNICThread failed!" << endl;
 
     CreateKeepAliveThread();
     ListenTCP();

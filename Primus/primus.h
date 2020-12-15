@@ -359,7 +359,7 @@ private:
     int recvTcpInDirNum=0;
     int recvUdpNum=0;
 
-    ofstream m_MessageLogFout;
+    // ofstream m_MessageLogFout;
     ofstream m_PathLogFout;
 
     Graph *m_graph = nullptr;
