@@ -1,19 +1,20 @@
+rootDirectory="/home/guolab/PrimusCode2.0"
 echo ""
 echo "stop master"
 killall -9 Primus
 killall -9 linkChange
-pssh -i -h ~/host/master.txt -t 0 "killall -9 Primus;killall -9 linkChange;"
+pssh -i -h $rootDirectory/host/master.txt -t 0 "killall -9 Primus;killall -9 linkChange;"
 echo ""
 echo "stop node"
-pssh -i -h ~/host/ATChost.txt -t 0 "killall -9 Primus;killall -9 linkChange;" 
+pssh -i -h $rootDirectory/host/ATChost.txt -t 0 "killall -9 Primus;killall -9 linkChange;" 
 #
-pssh -i -h ~/host/ATChost.txt "killall zebra; killall bgpd;"
+pssh -i -h $rootDirectory/host/ATChost.txt "killall zebra; killall bgpd;"
 # 确保所有网卡都是正常的
 # Master
 ifconfig eth0 up
 ifconfig eth1 up
 ifconfig eth2 up
-pssh -i -h ~/host/master.txt "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+pssh -i -h $rootDirectory/host/master.txt "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 # # Spine
 # ssh root@10.0.80.30 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 # ssh root@10.0.80.31 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"

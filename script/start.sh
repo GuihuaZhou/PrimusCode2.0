@@ -1,4 +1,5 @@
 ##########################虚拟机测试部分##########################
+rootDirectory="/home/guolab/PrimusCode2.0"
 spineNodes=8
 leafNodes=2
 torNodes=1
@@ -47,9 +48,9 @@ rm ~/switch.stdout;
 rm ~/switch.stderr;
 rm ~/PacketType*;
 # master先编译
-pssh -i -h ~/host/master.txt "killall -9 Primus;rm ~/LinkTable*.txt;rm ~/PathTable*.txt;rm ~/NodeSockTable*.txt;rm ~/NeighborTable*.txt;
+pssh -i -h $rootDirectory/host/master.txt "killall -9 Primus;rm ~/LinkTable*.txt;rm ~/PathTable*.txt;rm ~/NodeSockTable*.txt;rm ~/NeighborTable*.txt;
 rm ~/ControllerSockTable*.txt;rm ~/PrimusLog*.txt;rm ~/CostTime*.txt;rm ~/Primus;rm ~/switch.stdout;rm ~/switch.stderr;rm ~/PacketType*;"
-pssh -i -h ~/host/ATChost.txt "killall -9 Primus;rm ~/LinkTable*.txt;rm ~/PathTable*.txt;rm ~/NodeSockTable*.txt;rm ~/NeighborTable*.txt;
+pssh -i -h $rootDirectory/host/ATChost.txt "killall -9 Primus;rm ~/LinkTable*.txt;rm ~/PathTable*.txt;rm ~/NodeSockTable*.txt;rm ~/NeighborTable*.txt;
 rm ~/ControllerSockTable*.txt;rm ~/PrimusLog*.txt;rm ~/CostTime*.txt;rm ~/Primus;rm ~/switch.stdout;rm ~/switch.stderr;rm ~/PacketType*;"
 # 编译
 rm ../Primus/Primus
@@ -59,8 +60,8 @@ g++ -std=c++0x init.cpp primus.cpp -o Primus -lpthread
 cd ..
 # # 传输
 echo "transport"
-pscp -h ~/host/master.txt -l root ~/Primus/Primus ~/Primus
-pscp -h ~/host/ATChost.txt -l root ~/Primus/Primus ~/Primus
+pscp -h $rootDirectory/host/master.txt -l root $rootDirectory/Primus/Primus ~/Primus
+pscp -h $rootDirectory/host/ATChost.txt -l root $rootDirectory/Primus/Primus ~/Primus
 # # 启动
 tempCommand=''
 # 1> 与>等价
@@ -74,11 +75,11 @@ echo "Master"
 $command &
 sleep 3
 command=''
-command=$command"pssh -t 0 -i -h ~/host/master.txt ~/Primus"$tempCommand
+command=$command"pssh -t 0 -i -h "$rootDirectory"/host/master.txt ~/Primus"$tempCommand
 $command &
 echo "Node"
 command=''
-command=$command"pssh -t 0 -i -h ~/host/ATChost.txt ~/Primus"$tempCommand
+command=$command"pssh -t 0 -i -h "$rootDirectory"/host/ATChost.txt ~/Primus"$tempCommand
 $command &
 ########################## ##########################
 # ./configure --enable-vtysh --enable-user=root --enable-group=root --enable-multipath=64
