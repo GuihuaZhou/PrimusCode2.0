@@ -10,14 +10,14 @@ print_node_recv_RS_time=0
 mgmt_interface="eth0"
 killall -9 Primus
 killall -9 linkChange
-pssh -i -h ~/host/ATChost.txt "killall -9 Primus;killall -9 linkChange;"
-pssh -i -h ~/host/master.txt "killall -9 Primus;killall -9 linkChange;"
+pssh -i -h $rootDirectory/host/ATChost.txt "killall -9 Primus;killall -9 linkChange;"
+pssh -i -h $rootDirectory/host/master.txt "killall -9 Primus;killall -9 linkChange;"
 # 确保所有网卡都是正常的
 # Master
 ifconfig eth0 up
 ifconfig eth1 up
 ifconfig eth2 up
-pssh -i -h ~/host/master.txt "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+pssh -i -h $rootDirectory/host/master.txt "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 # # Spine
 # ssh root@10.0.80.30 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 # ssh root@10.0.80.31 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
@@ -60,8 +60,8 @@ g++ -std=c++0x init.cpp primus.cpp -o Primus -lpthread
 cd ..
 # # 传输
 echo "transport"
-pscp -h $rootDirectory/host/master.txt -l root $rootDirectory/Primus/Primus ~/Primus
-pscp -h $rootDirectory/host/ATChost.txt -l root $rootDirectory/Primus/Primus ~/Primus
+pscp -h $rootDirectory/host/master.txt -l root $rootDirectory/Primus/Primus /home/guolab/Primus
+pscp -h $rootDirectory/host/ATChost.txt -l root $rootDirectory/Primus/Primus /home/guolab/Primus
 # # 启动
 tempCommand=''
 # 1> 与>等价
@@ -75,11 +75,11 @@ echo "Master"
 $command &
 sleep 3
 command=''
-command=$command"pssh -t 0 -i -h "$rootDirectory"/host/master.txt ~/Primus"$tempCommand
+command=$command"pssh -t 0 -i -h "$rootDirectory"/host/master.txt /home/guolab/Primus"$tempCommand
 $command &
 echo "Node"
 command=''
-command=$command"pssh -t 0 -i -h "$rootDirectory"/host/ATChost.txt ~/Primus"$tempCommand
+command=$command"pssh -t 0 -i -h "$rootDirectory"/host/ATChost.txt /home/guolab/Primus"$tempCommand
 $command &
 ########################## ##########################
 # ./configure --enable-vtysh --enable-user=root --enable-group=root --enable-multipath=64
