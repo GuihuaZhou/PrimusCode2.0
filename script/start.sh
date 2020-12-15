@@ -41,7 +41,7 @@ rm $rootDirectory/LinkTable*.txt;
 rm $rootDirectory/PathTable*.txt;
 rm $rootDirectory/NodeSockTable*.txt;
 rm $rootDirectory/ControllerSockTable*.txt;
-rm $rootDirectory/PrimusLog*.txt;
+rm $rootDirectory/primusLog*.txt;
 rm $rootDirectory/CostTime*.txt;
 rm $rootDirectory/NeighborTable*.txt;
 rm $rootDirectory/Primus/Primus;
@@ -50,9 +50,9 @@ rm $rootDirectory/switch.stderr;
 rm $rootDirectory/PacketType*;
 # master先编译
 pssh -i -h $gitDirectory/host/master.txt "killall -9 Primus;rm "$rootDirectory"/LinkTable*.txt;rm "$rootDirectory"/PathTable*.txt;rm "$rootDirectory"/NodeSockTable*.txt;rm "$rootDirectory"/NeighborTable*.txt;
-rm "$rootDirectory"/ControllerSockTable*.txt;rm "$rootDirectory"/PrimusLog*.txt;rm "$rootDirectory"/CostTime*.txt;rm "$rootDirectory"/Primus;rm "$rootDirectory"/switch.stdout;rm "$rootDirectory"/switch.stderr;rm "$rootDirectory"/PacketType*;"
+rm "$rootDirectory"/ControllerSockTable*.txt;rm "$rootDirectory"/primusLog*.txt;rm "$rootDirectory"/CostTime*.txt;rm "$rootDirectory"/Primus;rm "$rootDirectory"/switch.stdout;rm "$rootDirectory"/switch.stderr;rm "$rootDirectory"/PacketType*;"
 pssh -i -h $gitDirectory/host/ATChost.txt "killall -9 Primus;rm "$rootDirectory"/LinkTable*.txt;rm "$rootDirectory"/PathTable*.txt;rm "$rootDirectory"/NodeSockTable*.txt;rm "$rootDirectory"/NeighborTable*.txt;
-rm "$rootDirectory"/ControllerSockTable*.txt;rm "$rootDirectory"/PrimusLog*.txt;rm "$rootDirectory"/CostTime*.txt;rm "$rootDirectory"/Primus;rm "$rootDirectory"/switch.stdout;rm "$rootDirectory"/switch.stderr;rm "$rootDirectory"/PacketType*;"
+rm "$rootDirectory"/ControllerSockTable*.txt;rm "$rootDirectory"/primusLog*.txt;rm "$rootDirectory"/CostTime*.txt;rm "$rootDirectory"/Primus;rm "$rootDirectory"/switch.stdout;rm "$rootDirectory"/switch.stderr;rm "$rootDirectory"/PacketType*;"
 # 编译
 rm $gitDirectory/Primus/Primus
 cd $gitDirectory/Primus
