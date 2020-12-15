@@ -1,5 +1,6 @@
 ##########################虚拟机测试部分##########################
-rootDirectory="/home/guolab/PrimusCode2.0"
+rootDirectory="/home/guolab"
+gitDirectory="/home/guolab/PrimusCode2.0"
 spineNodes=8
 leafNodes=2
 torNodes=1
@@ -10,14 +11,14 @@ print_node_recv_RS_time=0
 mgmt_interface="eth0"
 killall -9 Primus
 killall -9 linkChange
-pssh -i -h $rootDirectory/host/ATChost.txt "killall -9 Primus;killall -9 linkChange;"
-pssh -i -h $rootDirectory/host/master.txt "killall -9 Primus;killall -9 linkChange;"
+pssh -i -h $gitDirectory/host/ATChost.txt "killall -9 Primus;killall -9 linkChange;"
+pssh -i -h $gitDirectory/host/master.txt "killall -9 Primus;killall -9 linkChange;"
 # 确保所有网卡都是正常的
 # Master
 ifconfig eth0 up
 ifconfig eth1 up
 ifconfig eth2 up
-pssh -i -h $rootDirectory/host/master.txt "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
+pssh -i -h $gitDirectory/host/master.txt "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 # # Spine
 # ssh root@10.0.80.30 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 # ssh root@10.0.80.31 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
@@ -36,37 +37,37 @@ ssh root@10.0.80.21 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;ifconfig
 ssh root@10.0.80.10 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 ssh root@10.0.80.11 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 # # 删除一些日志文件
-rm ~/LinkTable*.txt;
-rm ~/PathTable*.txt;
-rm ~/NodeSockTable*.txt;
-rm ~/ControllerSockTable*.txt;
-rm ~/PrimusLog*.txt;
-rm ~/CostTime*.txt;
-rm ~/NeighborTable*.txt;
-rm ~/Primus/Primus;
-rm ~/switch.stdout;
-rm ~/switch.stderr;
-rm ~/PacketType*;
+rm $rootDirectory/LinkTable*.txt;
+rm $rootDirectory/PathTable*.txt;
+rm $rootDirectory/NodeSockTable*.txt;
+rm $rootDirectory/ControllerSockTable*.txt;
+rm $rootDirectory/PrimusLog*.txt;
+rm $rootDirectory/CostTime*.txt;
+rm $rootDirectory/NeighborTable*.txt;
+rm $rootDirectory/Primus/Primus;
+rm $rootDirectory/switch.stdout;
+rm $rootDirectory/switch.stderr;
+rm $rootDirectory/PacketType*;
 # master先编译
-pssh -i -h $rootDirectory/host/master.txt "killall -9 Primus;rm ~/LinkTable*.txt;rm ~/PathTable*.txt;rm ~/NodeSockTable*.txt;rm ~/NeighborTable*.txt;
-rm ~/ControllerSockTable*.txt;rm ~/PrimusLog*.txt;rm ~/CostTime*.txt;rm ~/Primus;rm ~/switch.stdout;rm ~/switch.stderr;rm ~/PacketType*;"
-pssh -i -h $rootDirectory/host/ATChost.txt "killall -9 Primus;rm ~/LinkTable*.txt;rm ~/PathTable*.txt;rm ~/NodeSockTable*.txt;rm ~/NeighborTable*.txt;
-rm ~/ControllerSockTable*.txt;rm ~/PrimusLog*.txt;rm ~/CostTime*.txt;rm ~/Primus;rm ~/switch.stdout;rm ~/switch.stderr;rm ~/PacketType*;"
+pssh -i -h $gitDirectory/host/master.txt "killall -9 Primus;rm "$rootDirectory"/LinkTable*.txt;rm "$rootDirectory"/PathTable*.txt;rm "$rootDirectory"/NodeSockTable*.txt;rm "$rootDirectory"/NeighborTable*.txt;
+rm "$rootDirectory"/ControllerSockTable*.txt;rm "$rootDirectory"/PrimusLog*.txt;rm "$rootDirectory"/CostTime*.txt;rm "$rootDirectory"/Primus;rm "$rootDirectory"/switch.stdout;rm "$rootDirectory"/switch.stderr;rm "$rootDirectory"/PacketType*;"
+pssh -i -h $gitDirectory/host/ATChost.txt "killall -9 Primus;rm "$rootDirectory"/LinkTable*.txt;rm "$rootDirectory"/PathTable*.txt;rm "$rootDirectory"/NodeSockTable*.txt;rm "$rootDirectory"/NeighborTable*.txt;
+rm "$rootDirectory"/ControllerSockTable*.txt;rm "$rootDirectory"/PrimusLog*.txt;rm "$rootDirectory"/CostTime*.txt;rm "$rootDirectory"/Primus;rm "$rootDirectory"/switch.stdout;rm "$rootDirectory"/switch.stderr;rm "$rootDirectory"/PacketType*;"
 # 编译
-rm ../Primus/Primus
-cd ../Primus
+rm $gitDirectory/Primus/Primus
+cd $gitDirectory/Primus
 g++ -std=c++0x init.cpp primus.cpp -o Primus -lpthread
 # g++ -std=c++0x init.cpp primus.cpp Graph.cpp YenTopKShortestPathsAlg.cpp DijkstraShortestPathAlg.cpp -o Primus -lpthread
 cd ..
 # # 传输
 echo "transport"
-pscp -h $rootDirectory/host/master.txt -l root $rootDirectory/Primus/Primus /home/guolab/Primus
-pscp -h $rootDirectory/host/ATChost.txt -l root $rootDirectory/Primus/Primus /home/guolab/Primus
+pscp -h $gitDirectory/host/master.txt -l root $gitDirectory/Primus/Primus $rootDirectory/Primus
+pscp -h $gitDirectory/host/ATChost.txt -l root $gitDirectory/Primus/Primus $rootDirectory/Primus
 # # 启动
 tempCommand=''
 # 1> 与>等价
 # 输出log
-tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" "$print_master_recv_all_LRs_time" "$print_node_modify_time" "$print_node_recv_RS_time" $mgmt_interface 1>~/switch.stdout 2>~/switch.stderr"
+tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" "$print_master_recv_all_LRs_time" "$print_node_modify_time" "$print_node_recv_RS_time" $mgmt_interface 1>$rootDirectory/switch.stdout 2>$rootDirectory/switch.stderr"
 # tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods
 # 
 command=''
@@ -75,11 +76,11 @@ echo "Master"
 $command &
 sleep 3
 command=''
-command=$command"pssh -t 0 -i -h "$rootDirectory"/host/master.txt /home/guolab/Primus"$tempCommand
+command=$command"pssh -t 0 -i -h "$gitDirectory"/host/master.txt "$rootDirectory"/Primus"$tempCommand
 $command &
 echo "Node"
 command=''
-command=$command"pssh -t 0 -i -h "$rootDirectory"/host/ATChost.txt /home/guolab/Primus"$tempCommand
+command=$command"pssh -t 0 -i -h "$gitDirectory"/host/ATChost.txt "$rootDirectory"/Primus"$tempCommand
 $command &
 ########################## ##########################
 # ./configure --enable-vtysh --enable-user=root --enable-group=root --enable-multipath=64
