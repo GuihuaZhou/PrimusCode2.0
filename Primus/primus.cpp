@@ -2486,9 +2486,9 @@ Primus::RecvMessageThread(void* tempThreadParam)
               m_MessageLogFout << "]." << endl;
               if (tempPrimus->UpdateLinkTable(tempMessage))//只处理链路状态变化
               {
-                m_MessageLogFout << "Try to update pathtable" << endl;
+                // m_MessageLogFout << "Try to update pathtable" << endl;
                 tempPrimus->UpdatePathTable(tempMessage.linkInfo);//处理成功
-                m_MessageLogFout << "update pathtable over" << endl;
+                // m_MessageLogFout << "update pathtable over" << endl;
                 if (tempMessage.linkInfo.eventId!=1)
                 {
                   if (tempMessage.transportType==1) 
@@ -2502,20 +2502,20 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   << "\nRecv tcp(InDirect) packets:" << tempPrimus->recvTcpInDirNum
                   << "\nRecv udp packets:" << tempPrimus->recvUdpNum << endl;
                 }
-                m_MessageLogFout << "try to send response to master" << endl;
+                // m_MessageLogFout << "try to send response to master" << endl;
                 tempMessage.dstIdent=tempMessage.srcIdent;
                 tempMessage.srcIdent=tempPrimus->m_Ident;
                 tempMessage.ack=true;
 
                 if (tempMessage.transportType==1)
                 {
-                  m_MessageLogFout << "transportType==1" << endl;
+                  // m_MessageLogFout << "transportType==1" << endl;
                   tempPrimus->SendMessageByTCP(sock,tempMessage);// 向master返回response
                   tempPrimus->PrintMessage(tempMessage);
                 }
                 else if (tempMessage.transportType==2)// 从udp收到，转为tcp返回
                 {
-                  m_MessageLogFout << "transportType==2" << endl;
+                  // m_MessageLogFout << "transportType==2" << endl;
                   for (int j=0;j<MAX_CTRL_NUM;j++)
                   {
                     if (tempPrimus->controllerSockTable[j].controllerSock==-1 || tempPrimus->SameNode(tempPrimus->controllerSockTable[j].controllerIdent,tempPrimus->tempIdent)) 
@@ -2528,8 +2528,8 @@ Primus::RecvMessageThread(void* tempThreadParam)
                       break;
                     }
                   }
-                }
-                m_MessageLogFout << "send response over" << endl;
+                } 
+                // m_MessageLogFout << "send response over" << endl;
                 if (PRINT_NODE_MODIFY_TIME)
                 {  
                   gettimeofday(&endStamp,NULL);
@@ -3636,9 +3636,10 @@ Primus::CheckKeepaliveThread(void* tempThreadParam)
       {
         // shutdown(tempPrimus->nodeSockTable[i].nodeSock,SHUT_RDWR);
         tempPrimus->nodeSockTable[i].nodeSock=-1;
-        fprintf(stderr,"Can not touch %d.%d.\n",
-          tempPrimus->nodeSockTable[i].nodeIdent.level,
-          tempPrimus->nodeSockTable[i].nodeIdent.position);
+        // fprintf(stderr,"Can not touch %d.%d.\n",
+        //   tempPrimus->nodeSockTable[i].nodeIdent.level,
+        //   tempPrimus->nodeSockTable[i].nodeIdent.position);
+        m_MessageLogFout << tempPrimus->m_Ident.level << tempPrimus->m_Ident.position << " can't touch " << tempPrimus->nodeSockTable[i].nodeIdent.level << tempPrimus->nodeSockTable[i].nodeIdent.position << endl;
       }
     }
   }
@@ -3773,7 +3774,7 @@ Primus::Start()
       // PrintControllerSockTable();
       ConnectWithMaster(m_MasterAddress[0].c_str(),MGMT_INTERFACE);
     }
-    
+    CreateKeepAliveThread();
     ListenTCP();
   }
   else// node
