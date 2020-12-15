@@ -54,7 +54,7 @@ Primus::Primus(
 
     stringstream logFoutPath;
     logFoutPath.str("");
-    logFoutPath << COMMON_PATH << "PrimusLog-" << m_Ident.level << "." << m_Ident.position << ".txt";
+    logFoutPath << COMMON_PATH << "primusLog-" << m_Ident.level << "." << m_Ident.position << ".txt";
     m_MessageLogFout.open(logFoutPath.str().c_str(),ios::app);
     if (FIREPATH) 
     {
