@@ -82,6 +82,9 @@ echo "Node"
 command=''
 command=$command"pssh -t 0 -i -h "$gitDirectory"/host/ATChost.txt "$rootDirectory"/Primus"$tempCommand
 $command &
+
+# pssh -i -h $gitDirectory/host/master.txt "echo \'hello\'"
+# pssh -i -h $gitDirectory/host/ATChost.txt "echo \'hello\'"
 ########################## ##########################
 # ./configure --enable-vtysh --enable-user=root --enable-group=root --enable-multipath=64
 
