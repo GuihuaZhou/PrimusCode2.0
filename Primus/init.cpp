@@ -22,7 +22,7 @@ int LeafNodes=4;//单个pod里2层交换机数
 int ToRNodes=1;//每个pod里的ToR交换机数
 int defaultLinkTimer=1000;//ms
 int defaultKeepaliveTimer=6;
-vector<string> masterAddress;
+vector<string> slaveAddress;
 int print_master_recv_all_LRs_time=false;//
 int print_node_modify_time=false;
 int print_node_recv_RS_time=false;
@@ -318,6 +318,7 @@ pid_t getDaemon(pid_t primusPid, uint32_t intervalSeconds)
 
 int main(int argc,char *argv[])
 {
+  string leaderAddress;
   ifstream fin("/usr/local/etc/Primus.conf",ios::in);
   
   string config;
@@ -326,7 +327,8 @@ int main(int argc,char *argv[])
   config="";
   getline(fin,config);
   begin=config.find(':',0)+1;
-  masterAddress.push_back(config.substr(begin,config.length()-begin));
+  // slaveAddress.push_back(config.substr(begin,config.length()-begin));
+  leaderAddress=config.substr(begin,config.length()-begin);
 
   config="";
   getline(fin,config);
@@ -334,7 +336,7 @@ int main(int argc,char *argv[])
   for (int i=begin;i<config.length();)
   {
     while (i<config.length() && config[i]!=',') i++;
-    masterAddress.push_back(config.substr(begin,i-begin));
+    slaveAddress.push_back(config.substr(begin,i-begin));
     begin=++i;
   }
 
@@ -399,7 +401,8 @@ int main(int argc,char *argv[])
     nPods,
     defaultLinkTimer,
     defaultKeepaliveTimer,
-    masterAddress,
+    leaderAddress,
+    slaveAddress,
     print_master_recv_all_LRs_time,
     print_node_modify_time,
     print_node_recv_RS_time,

@@ -15,7 +15,8 @@ Primus::Primus(
     int nPods,
     int defaultLinkTimer,
     int defaultKeepaliveTimer,
-    vector<string> masterAddress,
+    string leaderAddress,
+    vector<string> slaveAddress,
     int print_master_recv_all_LRs_time,
     int print_node_modify_time,
     int print_node_recv_RS_time,
@@ -35,7 +36,8 @@ Primus::Primus(
     else if (m_Ident.level==1) m_Pod=m_Ident.position/m_ToRNodes;
     m_DefaultLinkTimer=defaultLinkTimer*1000;// master链路定时器，配置文件写成了ms，所以要乘以1000，换算成us
     m_DefaultKeepaliveTimer=defaultKeepaliveTimer;
-    m_MasterAddress=masterAddress;
+    m_leaderAddress=leaderAddress;
+    m_slaveAddress=slaveAddress;
     PRINT_MASTER_RECV_AL_LRS_TIME=print_master_recv_all_LRs_time;
     PRINT_NODE_MODIFY_TIME=print_node_modify_time;
     PRINT_NODE_RECV_RS_TIME=print_node_recv_RS_time;
@@ -933,7 +935,7 @@ Primus::UpdateControllerSockTable(int controllerSock,ident controllerIdent,int c
     }
   }
   // m_MessageLogFout << endl;
-  // PrintControllerSockTable();
+  PrintControllerSockTable();
 }
 
 int 
@@ -2632,7 +2634,7 @@ Primus::RecvMessageThread(void* tempThreadParam)
                   tempPrimus->controllerSockTable[j].controllerRole=3;
                 }
               }
-              // tempPrimus->PrintControllerSockTable();
+              tempPrimus->PrintControllerSockTable();
               tempPrimus->PrintMessage(tempMessage);
             }
             else if (tempPrimus->m_Role==2)// master recv
@@ -3181,7 +3183,7 @@ Primus::AddNodeSock(ident nodeIdent,int nodeSock)
   {
     nodeSockTable[nodeSockIndex].nodeSock=nodeSock;
     nodeSockTable[nodeSockIndex].unRecvNum=0;
-    // PrintNodeSockTable();
+    PrintNodeSockTable();
     return true;
   }
   else
@@ -3200,6 +3202,7 @@ Primus::AddNodeSock(ident nodeIdent,int nodeSock)
 bool 
 Primus::ConnectWithMaster(string masterIP,string NICName)
 {
+  m_MessageLogFout << GetNow() << "Try to connect " << masterIP << endl;
   struct sockaddr_in masterAddr;
   memset(&masterAddr,0,sizeof(masterAddr)); //数据初始化--清零
   masterAddr.sin_family=AF_INET; //设置为IP通信
@@ -3279,7 +3282,7 @@ Primus::ConnectWithMaster(string masterIP,string NICName)
     exit(1);
   }
 
-  printf("Send hello to master(%s) ret(%d) success.\n\n",masterIP.c_str(),ret);
+  m_MessageLogFout << GetNow() << "Send hello to master(" << masterIP << ") ret(" << ret << ") success\n";
   // printf("[%d.%d] connected to master[%s]!\n",m_Ident.level,m_Ident.position,masterIP);
   return true;
 }
@@ -3772,8 +3775,7 @@ Primus::Start()
     {
       InitiateControllerTable();
       // PrintControllerSockTable();
-      ConnectWithMaster(m_MasterAddress[0].c_str(),MGMT_INTERFACE);
-      m_MessageLogFout << GetNow() << "Try to connect " << m_MasterAddress[0].c_str() << endl;
+      ConnectWithMaster(m_leaderAddress,MGMT_INTERFACE);
     }
     CreateKeepAliveThread();
     ListenTCP();
@@ -3787,10 +3789,11 @@ Primus::Start()
     // PrintControllerSockTable();
 
     InitiateNDServer();
-    for (int i=0; i<m_MasterAddress.size(); i++)
+    ConnectWithMaster(m_leaderAddress,MGMT_INTERFACE);
+    for (int i=0; i<m_slaveAddress.size(); i++)
     {
-      ConnectWithMaster(m_MasterAddress[i].c_str(),MGMT_INTERFACE);
-      m_MessageLogFout << GetNow() << "Try to connect " << m_MasterAddress[i].c_str() << endl;
+      ConnectWithMaster(m_slaveAddress[i].c_str(),MGMT_INTERFACE);
+      
     }
     // ConnectWithMaster("172.16.80.1",MGMT_INTERFACE);
     // ConnectWithMaster("172.16.80.4",MGMT_INTERFACE);

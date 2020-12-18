@@ -76,7 +76,8 @@ public:
         int nPods,
         int defaultLinkTimer,
         int defaultKeepaliveTimer,
-        vector<string> masterAddress,
+        string leaderAddress,
+        vector<string> slaveAddress,
         int print_master_recv_all_LRs_time,
         int print_node_modify_time,
         int print_node_recv_RS_time,
@@ -364,5 +365,6 @@ private:
 
     Graph *m_graph = nullptr;
 
-    vector<string> m_MasterAddress;
+    vector<string> m_slaveAddress;
+    string m_leaderAddress;
 };
