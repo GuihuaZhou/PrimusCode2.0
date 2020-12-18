@@ -3773,6 +3773,7 @@ Primus::Start()
       InitiateControllerTable();
       // PrintControllerSockTable();
       ConnectWithMaster(m_MasterAddress[0].c_str(),MGMT_INTERFACE);
+      m_MessageLogFout << GetNow() << "Try to connect " << m_MasterAddress[0].c_str() << endl;
     }
     CreateKeepAliveThread();
     ListenTCP();
@@ -3789,6 +3790,7 @@ Primus::Start()
     for (int i=0; i<m_MasterAddress.size(); i++)
     {
       ConnectWithMaster(m_MasterAddress[i].c_str(),MGMT_INTERFACE);
+      m_MessageLogFout << GetNow() << "Try to connect " << m_MasterAddress[i].c_str() << endl;
     }
     // ConnectWithMaster("172.16.80.1",MGMT_INTERFACE);
     // ConnectWithMaster("172.16.80.4",MGMT_INTERFACE);
