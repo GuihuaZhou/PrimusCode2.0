@@ -350,36 +350,6 @@ int main(int argc,char *argv[])
   begin=config.find(':',0)+1;
   position=atoi(config.substr(begin,config.length()-begin).c_str());
 
-  // config="";
-  // getline(fin,config);
-  // begin=config.find(':',0)+1;
-  // defaultLinkTimer=atoi(config.substr(begin,config.length()-begin).c_str());
-
-  // config="";
-  // getline(fin,config);
-  // begin=config.find(':',0)+1;
-  // defaultKeepaliveTimer=atoi(config.substr(begin,config.length()-begin).c_str());
-
-  // config="";
-  // getline(fin,config);
-  // begin=config.find(':',0)+1;
-  // ToRNodes=atoi(config.substr(begin,config.length()-begin).c_str());
-
-  // config="";
-  // getline(fin,config);
-  // begin=config.find(':',0)+1;
-  // LeafNodes=atoi(config.substr(begin,config.length()-begin).c_str());
-
-  // config="";
-  // getline(fin,config);
-  // begin=config.find(':',0)+1;
-  // SpineNodes=atoi(config.substr(begin,config.length()-begin).c_str());
-
-  // config="";
-  // getline(fin,config);
-  // begin=config.find(':',0)+1;
-  // nPods=atoi(config.substr(begin,config.length()-begin).c_str());
-
   fin.close();
 
   ToRNodes=atoi(argv[1]);
@@ -390,8 +360,6 @@ int main(int argc,char *argv[])
   print_node_modify_time=atoi(argv[6]);
   print_node_recv_RS_time=atoi(argv[7]);
   mgmt_interface=argv[8];
-
-  // raft_server_t* raft = raft_new();
 
   Primus *m_Primus=new Primus(level,
     position,

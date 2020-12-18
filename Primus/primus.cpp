@@ -1940,42 +1940,6 @@ Primus::UpdatePathTable(struct link tempLink)
   int affectedNextHopIndex=0;
   int startIndex=0;
 
-  // // // test firepath
-  // m_MessageLogFout << "Try to test firepath, and eventId is " << tempLink.eventId << endl;
-  // if (m_Ident.level==1 && tempLink.eventId != 1 && high.level==2 && low.level==1 && !SameNode(low,m_Ident))// 只有leaf--tor的链路故障才启动kshortestpath算法
-  // {
-  //   int src_index = 2000 + high.position;
-  //   int dst_index = 10000 + low.position;
-  //   if (!tempLink.linkStatus)
-  //   {
-  //     m_MessageLogFout << "try to remove edge" << endl;
-  //     m_graph->remove_edge_(src_index,dst_index);
-  //     m_MessageLogFout << "Remove edge over" << endl;
-  //   }
-  //   else
-  //   {
-  //     m_MessageLogFout << "try to build edge" << endl;
-  //     m_graph->build_edge(src_index,dst_index);
-  //     m_MessageLogFout << "Build edge over" << endl;
-  //   }
-  //   src_index = 10000 + m_Ident.position;
-
-  //   struct timeval beginStamp;
-  //   struct timeval endStamp;
-  //   gettimeofday(&beginStamp, NULL);
-  //   YenTopKShortestPathsAlg yenAlg(*m_graph, m_graph->get_vertex(src_index),m_graph->get_vertex(dst_index));
-  //   gettimeofday(&endStamp, NULL);
-  //   m_MessageLogFout << "time cost: " << (endStamp.tv_sec-beginStamp.tv_sec)*1000+(endStamp.tv_usec-beginStamp.tv_usec)*0.001 << " ms\n"; 
-  //   // int i=0;
-  //   // while(yenAlg.has_next())
-  //   // {
-  //   //   ++i;
-  //   //   yenAlg.next()->PrintOut(cout);
-  //   // }
-  // }
-  // m_MessageLogFout << "Test firepath over" << endl;
-  // // // end
-
   switch (m_Ident.level)
   {
   case 1:// tor

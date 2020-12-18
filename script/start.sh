@@ -1,4 +1,4 @@
-##########################虚拟机测试部分##########################
+########################## 参数部分 ##########################
 rootDirectory="/home/guolab"
 gitDirectory="/home/guolab/PrimusCode2.0"
 spineNodes=8
@@ -10,9 +10,6 @@ print_node_modify_time=0
 print_node_recv_RS_time=0
 mgmt_interface="eth0"
 killall -9 Primus
-killall -9 linkChange
-pssh -i -h $gitDirectory/host/ATChost.txt "killall -9 Primus;killall -9 linkChange;"
-pssh -i -h $gitDirectory/host/master.txt "killall -9 Primus;killall -9 linkChange;"
 # 确保所有网卡都是正常的
 # Master
 ifconfig eth0 up
@@ -57,7 +54,6 @@ rm "$rootDirectory"/ControllerSockTable*.txt;rm "$rootDirectory"/primusLog*.txt;
 rm $gitDirectory/Primus/Primus
 cd $gitDirectory/Primus
 g++ -std=c++0x init.cpp primus.cpp -o Primus -lpthread
-# g++ -std=c++0x init.cpp primus.cpp Graph.cpp YenTopKShortestPathsAlg.cpp DijkstraShortestPathAlg.cpp -o Primus -lpthread
 cd ..
 # # 传输
 echo "transport"
@@ -82,10 +78,3 @@ echo "Node"
 command=''
 command=$command"pssh -t 0 -i -h "$gitDirectory"/host/ATChost.txt "$rootDirectory"/Primus"$tempCommand
 $command &
-
-# pssh -i -h $gitDirectory/host/master.txt "echo \'hello\'"
-# pssh -i -h $gitDirectory/host/ATChost.txt "echo \'hello\'"
-########################## ##########################
-# ./configure --enable-vtysh --enable-user=root --enable-group=root --enable-multipath=64
-
-# taskset -c 0 ./kshortestpath 1 0 16 100 4 100 10000 1>/home/tencent/switch.stdout 2>/home/tencent/switch.stderr &

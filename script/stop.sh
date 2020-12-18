@@ -6,9 +6,9 @@ killall -9 linkChange
 pssh -i -h $gitDirectory/host/master.txt -t 0 "killall -9 Primus;killall -9 linkChange;"
 echo ""
 echo "stop node"
-pssh -i -h $gitDirectory/host/ATChost.txt -t 0 "killall -9 Primus;killall -9 linkChange;" 
+pssh -i -h $gitDirectory/host/node.txt -t 0 "killall -9 Primus;killall -9 linkChange;" 
 #
-pssh -i -h $gitDirectory/host/ATChost.txt "killall zebra; killall bgpd;"
+pssh -i -h $gitDirectory/host/node.txt "killall zebra; killall bgpd;"
 # 确保所有网卡都是正常的
 # Masterß
 ifconfig eth0 up
