@@ -8,6 +8,8 @@ nPods=2
 print_master_recv_all_LRs_time=0
 print_node_modify_time=0
 print_node_recv_RS_time=0
+master_test=0
+node_test=0
 mgmt_interface="eth0"
 killall -9 Primus
 # 确保所有网卡都是正常的
@@ -63,7 +65,7 @@ pscp -h $gitDirectory/host/ATChost.txt -l root $gitDirectory/Primus/Primus $root
 tempCommand=''
 # 1> 与>等价
 # 输出log
-tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" "$print_master_recv_all_LRs_time" "$print_node_modify_time" "$print_node_recv_RS_time" $mgmt_interface 1>$rootDirectory/switch.stdout 2>$rootDirectory/switch.stderr"
+tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" "$print_master_recv_all_LRs_time" "$print_node_modify_time" "$print_node_recv_RS_time" "$master_test" "$node_test" $mgmt_interface 1>$rootDirectory/switch.stdout 2>$rootDirectory/switch.stderr"
 # tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods
 # 
 command=''
