@@ -20,6 +20,8 @@ Primus::Primus(
     int print_master_recv_all_LRs_time,
     int print_node_modify_time,
     int print_node_recv_RS_time,
+    int master_test,
+    int node_test,
     string mgmt_interface)
 {
     m_Ident.level=level; 
@@ -41,6 +43,8 @@ Primus::Primus(
     PRINT_MASTER_RECV_AL_LRS_TIME=print_master_recv_all_LRs_time;
     PRINT_NODE_MODIFY_TIME=print_node_modify_time;
     PRINT_NODE_RECV_RS_TIME=print_node_recv_RS_time;
+    m_MasterTest=master_test;
+    m_NodeTest=node_test;
     MGMT_INTERFACE=mgmt_interface;
 
     affectedNodeNumA=1+m_nPods*(m_ToRNodes+1);
@@ -3725,7 +3729,7 @@ Primus::Start()
 
   if (m_Ident.level==0)//master
   {
-    if (MASTER_TEST && m_Role==2)
+    if (m_MasterTest && m_Role==2)
     {
       pthread_t masterGenerateLinkStatusChangeID;
       threadparama *tempThreadParam=new threadparama();
@@ -3763,7 +3767,7 @@ Primus::Start()
     // ConnectWithMaster("172.16.80.4",MGMT_INTERFACE);
     // ConnectWithMaster("172.16.80.7",MGMT_INTERFACE);
     
-    if (NODE_TEST) 
+    if (m_NodeTest) 
     {
       sleep(5);
       GenerateLinkStatusChange();
