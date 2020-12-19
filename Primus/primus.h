@@ -44,8 +44,8 @@
 // #define PRINT_MASTER_RECV_AL_LRS_TIME false
 // #define PRINT_NODE_MODIFY_TIME false
 // #define PRINT_NODE_RECV_RS_TIME false
-#define MASTER_TEST false
-#define NODE_TEST false
+// #define MASTER_TEST false
+// #define NODE_TEST false
 #define COMMON_PATH "/home/guolab/"
 #define FIREPATH false
 #define PRINT_MESSAGE true
@@ -76,6 +76,8 @@ public:
         int print_master_recv_all_LRs_time,
         int print_node_modify_time,
         int print_node_recv_RS_time,
+        int master_test,
+        int node_test,
         string mgmt_interface);
     ~Primus();
 
@@ -344,6 +346,8 @@ private:
     int m_nPods;
     int m_DefaultLinkTimer;
     int m_DefaultKeepaliveTimer;
+    int m_MasterTest;
+    int m_NodeTest;
 
     // int epollFdTable[MAX_EPOLLFD_NUM];// 主要是控制器使用epollFdTable，node为其他node转发时也会用到 
     int m_EpollFd;//该fd专门用于node处理
