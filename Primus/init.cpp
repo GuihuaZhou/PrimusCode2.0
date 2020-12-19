@@ -26,6 +26,8 @@ vector<string> slaveAddress;
 int print_master_recv_all_LRs_time=false;//
 int print_node_modify_time=false;
 int print_node_recv_RS_time=false;
+int master_test=0;
+int node_test=0;
 string mgmt_interface="eth0";
 
 int
@@ -359,7 +361,9 @@ int main(int argc,char *argv[])
   print_master_recv_all_LRs_time=atoi(argv[5]);//
   print_node_modify_time=atoi(argv[6]);
   print_node_recv_RS_time=atoi(argv[7]);
-  mgmt_interface=argv[8];
+  master_test=atoi(argv[8]);
+  node_test=atoi(argv[9]);
+  mgmt_interface==atoi(argv[10]);
 
   Primus *m_Primus=new Primus(level,
     position,
@@ -374,6 +378,8 @@ int main(int argc,char *argv[])
     print_master_recv_all_LRs_time,
     print_node_modify_time,
     print_node_recv_RS_time,
+    master_test,
+    node_test,
     mgmt_interface);
 
   pid_t pid=waitpid(getDaemon(getpid(),3),NULL,0);
