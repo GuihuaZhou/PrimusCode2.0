@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if ((fp = fopen("/home/guolab/ATCOutput/server-record.txt", "a+")) == NULL)
+	if ((fp = fopen("/home/guolab/server-record.txt", "a+")) == NULL)
 	{
 		printf("Cannot open packet record file.\n");
 		exit(0);

@@ -19,6 +19,10 @@ sleep 2
 echo "start udp client"
 ssh root@10.0.80.50 "/home/guolab/udp-client 192.168.1.2 "$sendInterval" "$packetNum" /home/guolab/udpClientRecord.txt;" &
 sleep 2
+ifconfig eth0 down;# 模拟leader down
+ssh root@10.0.1.68 "ifconfig eth0 down;" # 模拟slave down
+ssh root@10.0.80.21 "ifconfig eth0 down;" # 模拟control link down
+# 2.1--1.1 down
 echo "start change link"
 ssh root@10.0.80.21 "ifconfig eth5 down;"
 sleep 20
@@ -26,5 +30,5 @@ echo "stop process"
 ssh root@10.0.80.50 "killall udp-client;"
 ssh root@10.0.80.40 "killall udp-server;"
 $directory/script/stop.sh
-scp root@10.0.80.40:/home/guolab/udpServerRecord.txt /home/guolab/output/udpServerRecord-primus.txt
+scp root@10.0.80.40:/home/guolab/udpServerRecord.txt /home/guolab/udpServerRecord-primus.txt
 # ########################### Primus data link###############################
