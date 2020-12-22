@@ -32,6 +32,10 @@ Primus开发平台上的所有文件，包括代码和测试脚本
 
 2、Overall routing processing time(Fig.4)
 
+	2.1、准备两台物理机：一台跑master进程，另一台跑多个switch进程。其中master进程开9个接收线程和2个发送线程。
+	2.2、switch进程从200增加到10K，步长为200。
+	2.3、实验脚本为start_test.sh
+
 3、Macro-benchmark(Fig.5)
    3.1、搭建如paper描述的testbed；
    3.2、将实验中需要变化的链路相关信息添加到/tool/linkInfo-1.txt中（分别是链路两端的IP和ifName）；
