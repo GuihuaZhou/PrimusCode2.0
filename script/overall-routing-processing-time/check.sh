@@ -1,0 +1,1 @@
+ps -ef|grep switch | grep -v grep |wc -l
