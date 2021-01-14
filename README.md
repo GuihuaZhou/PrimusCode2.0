@@ -39,7 +39,7 @@ Primus开发平台上的所有文件，包括代码和测试脚本
 # 实验复现
 1、Switch processing time(Fig.3)
 
-   1.1、准备两台物理机，一台作leader，一台作switch。leader的启动命令中选择“master随机产生链路变化”（即第8个参数置为1），leader和switch的拓扑参数（前4个参数）修改为用户想要的拓扑规模；
+   1.1、准备两台物理机，一台作leader，一台作switch。leader的启动命令中选择“master随机产生链路变化”（即第8个参数置为1），leader和switch的拓扑参数（前4个参数）修改为用户想要的拓扑规模，选择“打印node处理LS的时间”；
    
    1.2、启动两台设备上的Primus，在switch的/home/user/CostTime.txt中可以获得processing time，单位：us。
 
