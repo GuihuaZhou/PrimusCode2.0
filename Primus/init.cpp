@@ -23,9 +23,10 @@ int ToRNodes=1;//每个pod里的ToR交换机数
 int defaultLinkTimer=1000;//ms
 int defaultKeepaliveTimer=6;
 vector<string> slaveAddress;
-int print_master_recv_all_LRs_time=false;//
-int print_node_modify_time=false;
-int print_node_recv_RS_time=false;
+int print_message=0;
+int print_master_recv_all_LRs_time=0;//
+int print_node_modify_time=0;
+int print_node_recv_RS_time=0;
 int master_test=0;
 int node_test=0;
 string mgmt_interface="eth0";
@@ -358,12 +359,13 @@ int main(int argc,char *argv[])
   LeafNodes=atoi(argv[2]);
   SpineNodes=atoi(argv[3]);
   nPods=atoi(argv[4]);
-  print_master_recv_all_LRs_time=atoi(argv[5]);//
-  print_node_modify_time=atoi(argv[6]);
-  print_node_recv_RS_time=atoi(argv[7]);
-  master_test=atoi(argv[8]);
-  node_test=atoi(argv[9]);
-  mgmt_interface==atoi(argv[10]);
+  print_message=atoi(argv[5]);
+  print_master_recv_all_LRs_time=atoi(argv[6]);//
+  print_node_modify_time=atoi(argv[7]);
+  print_node_recv_RS_time=atoi(argv[8]);
+  master_test=atoi(argv[9]);
+  node_test=atoi(argv[10]);
+  mgmt_interface==atoi(argv[11]);
 
   Primus *m_Primus=new Primus(level,
     position,
