@@ -3,6 +3,7 @@
 bool PRINT_MASTER_RECV_AL_LRS_TIME=false;
 bool PRINT_NODE_MODIFY_TIME=false;
 bool PRINT_NODE_RECV_RS_TIME=false;
+bool PRINT_MESSAGE=false;
 string MGMT_INTERFACE="eth0";
 ofstream m_MessageLogFout;
 
@@ -17,6 +18,7 @@ Primus::Primus(
     int defaultKeepaliveTimer,
     string leaderAddress,
     vector<string> slaveAddress,
+    int print_message,
     int print_master_recv_all_LRs_time,
     int print_node_modify_time,
     int print_node_recv_RS_time,
@@ -40,6 +42,7 @@ Primus::Primus(
     m_DefaultKeepaliveTimer=defaultKeepaliveTimer;
     m_leaderAddress=leaderAddress;
     m_slaveAddress=slaveAddress;
+    PRINT_MESSAGE=print_message;
     PRINT_MASTER_RECV_AL_LRS_TIME=print_master_recv_all_LRs_time;
     PRINT_NODE_MODIFY_TIME=print_node_modify_time;
     PRINT_NODE_RECV_RS_TIME=print_node_recv_RS_time;
