@@ -377,6 +377,7 @@ int main(int argc,char *argv[])
     defaultKeepaliveTimer,
     leaderAddress,
     slaveAddress,
+    print_message,
     print_master_recv_all_LRs_time,
     print_node_modify_time,
     print_node_recv_RS_time,
