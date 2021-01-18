@@ -48,7 +48,6 @@
 // #define NODE_TEST false
 #define COMMON_PATH "~"
 #define FIREPATH false
-#define PRINT_MESSAGE true
 
 // // vm testbed
 // #define MGMT_INTERFACE "eth0"
@@ -73,6 +72,7 @@ public:
         int defaultKeepaliveTimer,
         string leaderAddress,
         vector<string> slaveAddress,
+        int print_message,
         int print_master_recv_all_LRs_time,
         int print_node_modify_time,
         int print_node_recv_RS_time,
