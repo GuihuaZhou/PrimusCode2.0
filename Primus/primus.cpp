@@ -3738,6 +3738,8 @@ Primus::Start()
 
       if ((pthread_create(&masterGenerateLinkStatusChangeID,NULL,MasterGenerateLinkStatusChange,(void*)tempThreadParam))!=0)
         m_MessageLogFout << "Create MasterGenerateLinkStatusChange failed." << endl;
+      else
+        m_MessageLogFout << "Create MasterGenerateLinkStatusChange successed." << endl;
     }
     if (m_Role==3)
     {
