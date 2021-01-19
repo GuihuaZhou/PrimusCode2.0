@@ -3729,7 +3729,9 @@ Primus::Start()
 
   pthread_mutex_init(&MsgQueueMutex,NULL);
   pthread_mutex_init(&LinkTableMutex,NULL);
-
+    
+  m_MessageLogFout << "m_Ident: " << m_Ident.level << "." << m_Ident.position << ",m_MasterTest: " << m_MasterTest << ",m_Role: " << m_Role << endl;
+ 
   if (m_Ident.level==0)//master
   {
     if (m_MasterTest && m_Role==2)
