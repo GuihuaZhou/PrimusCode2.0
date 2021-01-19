@@ -5,6 +5,7 @@ spineNodes=8
 leafNodes=2
 torNodes=2
 nPods=2
+print_message=0
 print_master_recv_all_LRs_time=0
 print_node_modify_time=0
 print_node_recv_RS_time=0
@@ -65,7 +66,7 @@ pscp -h $gitDirectory/host/ATChost.txt -l root $gitDirectory/Primus/Primus $root
 tempCommand=''
 # 1> 与>等价
 # 输出log
-tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" "$print_master_recv_all_LRs_time" "$print_node_modify_time" "$print_node_recv_RS_time" "$master_test" "$node_test" $mgmt_interface 1>$rootDirectory/switch.stdout 2>$rootDirectory/switch.stderr"
+tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods" "$print_message" "$print_master_recv_all_LRs_time" "$print_node_modify_time" "$print_node_recv_RS_time" "$master_test" "$node_test" $mgmt_interface 1>$rootDirectory/switch.stdout 2>$rootDirectory/switch.stderr"
 # tempCommand=$tempCommand" "$torNodes" "$leafNodes" "$spineNodes" "$nPods
 # 
 command=''
