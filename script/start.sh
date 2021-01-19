@@ -1,6 +1,6 @@
 ########################## 参数部分 ##########################
-rootDirectory="/home/usr"
-gitDirectory="/home/usr/PrimusCode2.0"
+rootDirectory="/home/user"
+gitDirectory="/home/user/PrimusCode2.0"
 spineNodes=8
 leafNodes=2
 torNodes=2
