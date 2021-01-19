@@ -1,4 +1,4 @@
-gitDirectory="/home/guolab/PrimusCode2.0"
+gitDirectory="/home/user/PrimusCode2.0"
 echo ""
 echo "stop master"
 killall -9 Primus
