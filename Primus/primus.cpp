@@ -66,12 +66,12 @@ Primus::Primus(
     logFoutPath.str("");
     logFoutPath << COMMON_PATH << "primusLog-" << m_Ident.level << "." << m_Ident.position << ".txt";
     m_MessageLogFout.open(logFoutPath.str().c_str(),ios::app);
-    if (FIREPATH) 
-    {
-      m_graph = new Graph(level, position, spineNodes, toRNodes, leafNodes, nPods);
-    }
-    else
-      m_graph = NULL;
+//     if (FIREPATH) 
+//     {
+//       m_graph = new Graph(level, position, spineNodes, toRNodes, leafNodes, nPods);
+//     }
+//     else
+//       m_graph = NULL;
 }
 
 Primus::~Primus()
