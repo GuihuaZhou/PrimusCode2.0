@@ -365,7 +365,7 @@ int main(int argc,char *argv[])
   print_node_recv_RS_time=atoi(argv[8]);
   master_test=atoi(argv[9]);
   node_test=atoi(argv[10]);
-  mgmt_interface==atoi(argv[11]);
+  mgmt_interface=atoi(argv[11]);
 
   Primus *m_Primus=new Primus(level,
     position,
