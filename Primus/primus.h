@@ -362,7 +362,7 @@ private:
     // ofstream m_MessageLogFout;
     ofstream m_PathLogFout;
 
-    Graph *m_graph = nullptr;
+    // Graph *m_graph = nullptr;
 
     vector<string> m_slaveAddress;
     string m_leaderAddress;
