@@ -1,6 +1,6 @@
 ########################## 参数部分 ##########################
-rootDirectory="/home/guolab"
-gitDirectory="/home/guolab/PrimusCode2.0"
+rootDirectory="/home/usr"
+gitDirectory="/home/usr/PrimusCode2.0"
 spineNodes=8
 leafNodes=2
 torNodes=2
@@ -37,22 +37,22 @@ ssh root@10.0.80.21 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;ifconfig
 ssh root@10.0.80.10 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 ssh root@10.0.80.11 "ifconfig eth0 up;ifconfig eth1 up;ifconfig eth2 up;"
 # # 删除一些日志文件
-rm $rootDirectory/LinkTable*.txt;
-rm $rootDirectory/PathTable*.txt;
-rm $rootDirectory/NodeSockTable*.txt;
-rm $rootDirectory/ControllerSockTable*.txt;
-rm $rootDirectory/primusLog*.txt;
-rm $rootDirectory/CostTime*.txt;
-rm $rootDirectory/NeighborTable*.txt;
-rm $rootDirectory/Primus/Primus;
-rm $rootDirectory/switch.stdout;
-rm $rootDirectory/switch.stderr;
-rm $rootDirectory/PacketType*;
+rm /var/log/LinkTable*.txt;
+rm /var/log/PathTable*.txt;
+rm /var/log/NodeSockTable*.txt;
+rm /var/log/ControllerSockTable*.txt;
+rm /var/log/primusLog*.txt;
+rm /var/log/CostTime*.txt;
+rm /var/log/NeighborTable*.txt;
+rm /var/log/Primus/Primus;
+rm /var/log/switch.stdout;
+rm /var/log/switch.stderr;
+rm /var/log/PacketType*;
 # master先编译
-pssh -i -h $gitDirectory/host/master.txt "killall -9 Primus;rm "$rootDirectory"/LinkTable*.txt;rm "$rootDirectory"/PathTable*.txt;rm "$rootDirectory"/NodeSockTable*.txt;rm "$rootDirectory"/NeighborTable*.txt;
-rm "$rootDirectory"/ControllerSockTable*.txt;rm "$rootDirectory"/primusLog*.txt;rm "$rootDirectory"/CostTime*.txt;rm "$rootDirectory"/Primus;rm "$rootDirectory"/switch.stdout;rm "$rootDirectory"/switch.stderr;rm "$rootDirectory"/PacketType*;"
-pssh -i -h $gitDirectory/host/ATChost.txt "killall -9 Primus;rm "$rootDirectory"/LinkTable*.txt;rm "$rootDirectory"/PathTable*.txt;rm "$rootDirectory"/NodeSockTable*.txt;rm "$rootDirectory"/NeighborTable*.txt;
-rm "$rootDirectory"/ControllerSockTable*.txt;rm "$rootDirectory"/primusLog*.txt;rm "$rootDirectory"/CostTime*.txt;rm "$rootDirectory"/Primus;rm "$rootDirectory"/switch.stdout;rm "$rootDirectory"/switch.stderr;rm "$rootDirectory"/PacketType*;"
+pssh -i -h $gitDirectory/host/master.txt "killall -9 Primus;rm /var/log/LinkTable*.txt;rm /var/log/PathTable*.txt;rm /var/log/NodeSockTable*.txt;rm /var/log/NeighborTable*.txt;
+rm /var/log/ControllerSockTable*.txt;rm /var/log/primusLog*.txt;rm /var/log/CostTime*.txt;rm /var/log/switch.stdout;rm /var/log/switch.stderr;rm /var/log/PacketType*;"
+pssh -i -h $gitDirectory/host/ATChost.txt "killall -9 Primus;rm /var/log/LinkTable*.txt;rm /var/log/PathTable*.txt;rm /var/log/NodeSockTable*.txt;rm /var/log/NeighborTable*.txt;
+rm /var/log/ControllerSockTable*.txt;rm /var/log/primusLog*.txt;rm /var/log/CostTime*.txt;rm /var/log/switch.stdout;rm /var/log/switch.stderr;rm /var/log/PacketType*;"
 # 编译
 rm $gitDirectory/Primus/Primus
 cd $gitDirectory/Primus
