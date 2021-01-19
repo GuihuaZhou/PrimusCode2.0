@@ -46,7 +46,7 @@
 // #define PRINT_NODE_RECV_RS_TIME false
 // #define MASTER_TEST false
 // #define NODE_TEST false
-#define COMMON_PATH "~"
+#define COMMON_PATH "~/"
 #define FIREPATH false
 
 // // vm testbed
