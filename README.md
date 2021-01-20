@@ -10,13 +10,21 @@ Primus开发平台上的所有文件，包括代码和测试脚本
 
    配置文件内容：
    
-   leader:192.168.1.1 # 通电时管理员指定的leader IP
+   leader:192.168.1.1 
    
-   slave:172.16.1.1,172.16.1.2,172.16.1.3 # 管理员指定的slave IP
+   slave:172.16.1.1,172.16.1.2,172.16.1.3
    
-   level:1 # 0:leader or slave; 1:tor; 2:leafnode; 3:spinenode 
+   level:1 
    
-   position:0 # 本机所处的位置
+   position:0 
+   
+   # 通电时管理员指定的leader IP
+   
+   # 管理员指定的slave IP
+   
+   # 0:leader or slave; 1:tor; 2:leafnode; 3:spinenode 
+   
+   # 本机所处的位置
 
 4、启动Primus命令，例如：Primus 2 2 4 2 0 0 0 0 0 0 eth0
 
@@ -39,7 +47,7 @@ Primus开发平台上的所有文件，包括代码和测试脚本
 # 实验复现
 1、Switch processing time(Fig.3)
 
-   1.1、准备两台物理机，一台作leader，一台作switch。leader的启动命令中选择“master随机产生链路变化”（即第8个参数置为1），leader和switch的拓扑参数（前4个参数）修改为用户想要的拓扑规模，选择“打印node处理LS的时间”；
+   1.1、准备两台物理机，一台作leader，一台作switch。leader的启动命令中选择“master随机产生链路变化”（即第9个参数置为1），leader和switch的拓扑参数（前4个参数）修改为用户想要的拓扑规模，选择“打印node处理LS的时间”；
    
    1.2、启动两台设备上的Primus，在switch的/home/user/CostTime.txt中可以获得processing time，单位：us。
 
