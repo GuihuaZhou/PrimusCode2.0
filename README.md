@@ -18,13 +18,13 @@ Primus开发平台上的所有文件，包括代码和测试脚本
    
    position:0 
    
-   # 通电时管理员指定的leader IP
+   // 通电时管理员指定的leader IP
    
-   # 管理员指定的slave IP
+   // 管理员指定的slave IP
    
-   # 0:leader or slave; 1:tor; 2:leafnode; 3:spinenode 
+   // 0:leader or slave; 1:tor; 2:leafnode; 3:spinenode 
    
-   # 本机所处的位置
+   // 本机所处的位置
 
 4、启动Primus命令，例如：Primus 2 2 4 2 0 0 0 0 0 0 eth0
 
