@@ -32,7 +32,7 @@ Primus开发平台上的所有文件，包括代码和测试脚本
 
 5、我们使用pssh控制启动所有设备（可以自行选择启动所有设备的方法），下载代码至leader上（git clone https://github.com/GuihuaZhou/PrimusCode2.0.git)
 
-   并且需要将node的相关信息添加到/host/node.txt中（有示例）、slave的相关信息添加到/host/master.txt中、tor下挂载的server的相关信息添加到/host/server.txt中、tor下挂载的client的相关信息添加到/host/client.txt中
+   并且需要将网络拓扑中node的相关信息添加到/host/node.txt中（有示例）、slave的相关信息添加到/host/master.txt中、tor下挂载的server的相关信息添加到/host/server.txt中、tor下挂载的client的相关信息添加到/host/client.txt中
 
 6、修改/script/start.sh中的相关参数，运行即可启动所有的设备；修改/script/stop.sh中的相关参数，运行即可关闭所有的设备。
 
