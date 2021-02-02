@@ -24,7 +24,7 @@ Primus开发平台上的所有文件，包括代码和测试脚本
    
    // 0:leader or slave; 1:tor; 2:leafnode; 3:spinenode 
    
-   // 本机所处的位置
+   // 本机在本pod内所处的位置
 
 4、启动Primus命令，例如：Primus 2 2 4 2 0 0 0 0 0 0 eth0
 
