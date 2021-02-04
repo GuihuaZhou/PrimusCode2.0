@@ -63,7 +63,7 @@ Primus开发平台上的所有文件，包括代码和测试脚本
 
    3.1、搭建如paper描述的testbed；
    
-   3.2、将实验中需要变化的链路相关信息添加到/tool/linkInfo-1.txt中（分别是链路两端的IP和ifName）；
+   3.2、将实验中需要变化的链路相关信息添加到/tool/linkInfo-1.txt中（前两行是链路两端设备的管理IP，后两行是链路两端设备的ifName）；
    
    3.3、修改/script/fig5_fig6.sh中第150行的第2个参数为linkInfo-1.txt的路径；
    
@@ -81,7 +81,7 @@ Primus开发平台上的所有文件，包括代码和测试脚本
 
    5.1、搭建如paper描述的testbed；
    
-   5.2、将实验中需要变化的链路相关信息添加到/tool/linkInfo-2.txt中（分别是链路两端的IP和ifName，把控制链路也添加进去）；
+   5.2、将实验中需要变化的链路相关信息添加到/tool/linkInfo-2.txt中（前两行是链路两端设备的管理IP，后两行是链路两端设备的ifName）；
    
    5.3、修改/script/fig5_fig6.sh中第150行的第2个参数为linkInfo-2.txt的路径；
    
