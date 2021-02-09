@@ -51,7 +51,7 @@ rm /var/log/PacketType*;
 # master先编译
 pssh -i -h $gitDirectory/host/master.txt "killall -9 Primus;rm /var/log/LinkTable*.txt;rm /var/log/PathTable*.txt;rm /var/log/NodeSockTable*.txt;rm /var/log/NeighborTable*.txt;
 rm /var/log/ControllerSockTable*.txt;rm /var/log/primusLog*.txt;rm /var/log/CostTime*.txt;rm /var/log/switch.stdout;rm /var/log/switch.stderr;rm /var/log/PacketType*;"
-pssh -i -h $gitDirectory/host/ATChost.txt "killall -9 Primus;rm /var/log/LinkTable*.txt;rm /var/log/PathTable*.txt;rm /var/log/NodeSockTable*.txt;rm /var/log/NeighborTable*.txt;
+pssh -i -h $gitDirectory/host/node.txt "killall -9 Primus;rm /var/log/LinkTable*.txt;rm /var/log/PathTable*.txt;rm /var/log/NodeSockTable*.txt;rm /var/log/NeighborTable*.txt;
 rm /var/log/ControllerSockTable*.txt;rm /var/log/primusLog*.txt;rm /var/log/CostTime*.txt;rm /var/log/switch.stdout;rm /var/log/switch.stderr;rm /var/log/PacketType*;"
 # 编译
 rm $gitDirectory/Primus/Primus
@@ -61,7 +61,7 @@ cd ..
 # # 传输
 echo "transport"
 pscp -h $gitDirectory/host/master.txt -l root $gitDirectory/Primus/Primus $rootDirectory/Primus
-pscp -h $gitDirectory/host/ATChost.txt -l root $gitDirectory/Primus/Primus $rootDirectory/Primus
+pscp -h $gitDirectory/host/node.txt -l root $gitDirectory/Primus/Primus $rootDirectory/Primus
 # # 启动
 tempCommand=''
 # 1> 与>等价
@@ -79,5 +79,5 @@ command=$command"pssh -t 0 -i -h "$gitDirectory"/host/master.txt "$rootDirectory
 $command &
 echo "Node"
 command=''
-command=$command"pssh -t 0 -i -h "$gitDirectory"/host/ATChost.txt "$rootDirectory"/Primus"$tempCommand
+command=$command"pssh -t 0 -i -h "$gitDirectory"/host/node.txt "$rootDirectory"/Primus"$tempCommand
 $command &
