@@ -1,14 +1,12 @@
 # PrimusCode
-Primus开发平台上的所有文件，包括代码和测试脚本
+Contains all files on the Primus development platform, including code and test scripts.
 
-# 运行Primus
+# Run Primus
 1、OS: ubuntu or sonic
 
-2、搭建testbed，拓扑为fattree，规则为：Pod内每个tor与leafnode全连接，每个leafnode与（spinenodes/leafnodes）个spinenode连，即单个pod与spinenode全连接
+2、To build a Fat tree testbed, the rule is: each ToR in the Pod is fully connected to leafnode, and each leafnode is connected to (spinenodes/leafnodes) spinenode, that is, a single pod is fully connected to spinenode.
 
-3、Primus配置文件位置：/usr/local/etc/Primus.conf（每一台设备，包括leader、slave、tor、leafnode、spinenode都需要，默认0.0作leader）
-
-   配置文件内容：
+3、Every device (leader, slave, tor, leafnode, spinenode) needs the following configuration file. the path of the configuration file is /usr/local/etc/Primus.conf.
    
    leader:192.168.1.1 
    
@@ -17,73 +15,67 @@ Primus开发平台上的所有文件，包括代码和测试脚本
    level:1 
    
    position:0 
-   
-   // 通电时管理员指定的leader IP
-   
-   // 管理员指定的slave IP
-   
-   // 0:leader or slave; 1:tor; 2:leafnode; 3:spinenode 
-   
-   // 本机在本pod内所处的位置
 
-4、启动Primus命令，例如：Primus 2 2 4 2 0 0 0 0 0 0 eth0
+4、The command to run Primus, for example:Primus 2 2 4 2 0 0 0 0 0 0 eth0
 
-   分别代表每个pod内的tor数量、每个pod内的leafNode数量、所有的spineNodes数量、pod个数、是否打印message、是否打印master收集齐所有LS的respone的时间、是否打印node处理LS的时间、LS源node是否打印收到leader response的时间、master是否随机产生链路变化、node是否随机产生本地链路变化、管理接口名称
+   (The parameters represent:the number of ToR in each pod, the number of leafNode in each pod, the number of all spineNodes, the number of pod, whether to print the message, whether to print the time when the master collects all the responders of all LSs, whether to print the time of node processing LS, whether the LS source node prints the time when the leader's response is received, whether the master randomly generates link change, whether the node randomly generates a local link change, and the name of the management interface)
 
-5、我们使用pssh控制启动所有设备（可以自行选择启动所有设备的方法），下载代码至leader上（git clone https://github.com/GuihuaZhou/PrimusCode2.0.git)
+5、We use pssh to control and start all devices (you can choose the method to start all devices by yourself), and download the code to the leader（git clone https://github.com/GuihuaZhou/PrimusCode2.0.git)
 
-   并且需要将网络拓扑中node的相关信息添加到/host/node.txt中（有示例）、slave的相关信息添加到/host/master.txt中、tor下挂载的server的相关信息添加到/host/server.txt中、tor下挂载的client的相关信息添加到/host/client.txt中
+   (And you need to add the relevant information of the node in the network topology to /host/node.txt,add the relevant information of the slave to /host/master.txt,add the relevant information of the server mounted under ToR to /host/server.txt,add the relevant information of the client mounted under ToR to /host/client.txt)
 
-6、修改/script/start.sh中的相关参数，运行即可启动所有的设备；修改/script/stop.sh中的相关参数，运行即可关闭所有的设备。
+6、You need to modify the relevant parameters in /script/start.sh and run to start all devices; modify the relevant parameters in /script/stop.sh and run to shut down all devices.
 
-7、代码目录：/Primus/
-   
-   脚本目录：/script/
-   
-   工具目录：/tool/（部分工具需要重新编译）
-   
-   设备地址目录：/host/
-
-# 实验复现
+# Experiment
 1、Switch processing time(Fig.3)
 
-   1.1、准备两台物理机，一台作leader，一台作switch。leader的启动命令中选择“master随机产生链路变化”（即第9个参数置为1），leader和switch的拓扑参数（前4个参数）修改为用户想要的拓扑规模，选择“打印node处理LS的时间”；
+   1.1、Prepare two physical machines, one as the leader and one as the switch. In the leader's startup command, select "master randomly generates link changes" (set the 9th parameter to 1), modify the topology parameters of leader and switch (the first 4 parameters) to the topology scale that the user wants, and select "Print node Time to process LS";
    
-   1.2、启动两台设备上的Primus，在switch的/var/log/CostTime.txt中可以获得processing time，单位：us。
+   1.2、Start Primus on the two devices, you can get the processing time in /var/log/CostTime.txt of the switch, unit: us.
 
 2、Overall routing processing time(Fig.4)
 
-   2.1、准备两台物理机：一台跑master进程，另一台跑多个switch进程。其中master进程开9个接收线程和2个发送线程。
+   2.1、Prepare two physical machines: one to run the master process, and the other to run multiple switch processes. Among them, the master process opens 9 receiving threads and 2 sending threads.
   
-   2.2、switch进程从200增加到10K，步长为200。
+   2.2、The switch process is increased from 200 to 10K with a step size of 200.
    
-   2.3、实验脚本为/script/overall-routing-processing-time/start_test.sh
+   2.3、The experiment script is /script/overall-routing-processing-time/start_test.sh.
 
 3、Macro-benchmark(Fig.5)
 
-   3.1、搭建如paper描述的testbed；
+   3.1、Build a testbed as described in the paper;
    
-   3.2、将实验中需要变化的链路相关信息添加到/tool/linkInfo-1.txt中（前两行是链路两端设备的管理IP，后两行是链路两端的ifName）；
+   3.2、Add the link-related information that needs to be changed in the experiment to /tool/linkInfo-1.txt (the first two lines are the management IPs of the devices at both ends of the link, and the last two lines are the ifNames at both ends of the link);
    
-   3.3、修改/script/fig5_fig6.sh中第150行的第2个参数为linkInfo-1.txt的路径；
+   3.3、Modify the second parameter of line 150 in /script/fig5_fig6.sh to the path of linkInfo-1.txt;
    
-   3.4、运行/script/fig5_fig6.sh，在server的/home/user/server-record.txt中可以获得job completion time。
+   3.4、Run /script/fig5_fig6.sh, and you can get the job completion time in the server's /home/user/server-record.txt.
 
 4、Routing Reaction Time upon Network Changes(Fig.7)
 
-   4.1、搭建如paper描述的testbed；
+   4.1、Build a testbed as described in the paper;
    
-   4.2、运行/script/fig7.sh；
+   4.2、Run /script/fig7.sh；
    
-   4.3、在/home/user/udpServerRecord-primus.txt中可以获得实验结果。
+   4.3、The experimental results can be obtained in /home/user/udpServerRecord-primus.txt.
 
 5、Anatomy of Primus’s Redundancy Efficiency(Fig.6)
 
-   5.1、搭建如paper描述的testbed；
+   5.1、Build a testbed as described in the paper;
    
-   5.2、将实验中需要变化的链路相关信息添加到/tool/linkInfo-2.txt中（前两行是链路两端设备的管理IP，后两行是链路两端的ifName）；
+   5.2、Add the link-related information that needs to be changed in the experiment to /tool/linkInfo-2.txt (the first two lines are the management IPs of the devices at both ends of the link, and the last two lines are the ifNames at both ends of the link);
    
-   5.3、修改/script/fig5_fig6.sh中第150行的第2个参数为linkInfo-2.txt的路径；
+   5.3、Modify the second parameter of line 150 in /script/fig5_fig6.sh to the path of linkInfo-2.txt;
    
-   5.4、运行/script/fig5_fig6.sh，在server的/home/user/server-record.txt中可以获得实验数据。
+   5.4、Run /script/fig5_fig6.sh, the experimental data can be obtained in the server's /home/user/server-record.txt
    
+# Other 
+   The directory of code is /Primus/
+   
+   The directory of script is /script/
+   
+   The directory of tool is /tool/ (Some tools need to be recompiled)
+   
+   The directory of equipment is /host/
+   
+   And we are sorry that the comments in the code may be in Chinese,and we will translate it into English in the future.
